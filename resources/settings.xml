@@ -1,0 +1,6 @@
+<settings>
+     <category label="Settings">
+     <setting label="DRM Zertifikatsprüfung" type="bool" id="checkdrmcert" default="false"/>
+     <setting label="ConfigCache Zeitraum (in Minuten)" type="slider" id="configcachemins" default="120" range="0,1,1440" option="int" />     
+     </category>
+</settings>

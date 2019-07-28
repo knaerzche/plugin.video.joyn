@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.joyn" name="Joyn" version="0.0.2beta" provider-name="knaerzche">
+ <requires>
+        <import addon="xbmc.python" version="2.1.0"/>   
+        <import addon="inputstream.adaptive" version="2.2.21"/>
+        <import addon="script.module.inputstreamhelper" version="0.3.4"/>
+ 	<import addon="script.module.beautifulsoup4" version="4.3.2"/>
+
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>video</provides>
+    </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="en">www.joyn.de VOD and Live TV</summary>
+    <summary lang="de">www.joyn.de VOD und Live TV</summary>
+    <description lang="en">www.joyn.de VOD and Live TV</description>
+    <description lang="de">www.joyn.de VOD und Live TV</description>
+    <website>https://www.joyn.de/</website>
+    <email>knaerzche at gmail dot com</email>
+    <platform>all</platform>
+  </extension>
+</addon>
