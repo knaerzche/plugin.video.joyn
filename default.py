@@ -713,7 +713,7 @@ def channels(stream_type):
 	else:
 		index()
 
-def tvshows(channel_id):
+def tvshows(channel_id, fanart_img):
 	global config, CONST
 	tvshows = get_json_by_type('TVSHOW', {'channelId': channel_id})
 
@@ -721,10 +721,12 @@ def tvshows(channel_id):
 		tv_show_id = str(tvshow['id'])
 		for metadata_lang, metadata in tvshow['metadata'].items():
 			if metadata_lang == 'de':
-				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extract_metadata(metadata, 'TVSHOW', fanart_type='PRIMARY'))
+				extracted_metadata = extract_metadata(metadata, 'TVSHOW')
+				extracted_metadata.update({'fanart' : fanart_img});
+				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata)
 	xbmcplugin.endOfDirectory(pluginhandle)
 
-def season(tv_show_id):
+def season(tv_show_id, fanart_img):
 	global config, CONST
 	seasons = get_json_by_type('SEASON', {'tvShowId' : tv_show_id})
 	for season in seasons['data']:
@@ -732,11 +734,13 @@ def season(tv_show_id):
 		for metadata_lang, metadata in season['metadata'].items():
 			if metadata_lang == 'de':
 				extracted_metadata = extract_metadata(metadata,'SEASON');
+				extracted_metadata.update({'fanart' : fanart_img});
+				extracted_metadata.update({'img' : fanart_img});
 				add_dir(mode='video', season_id=season_id, tv_show_id=tv_show_id,metadata=extracted_metadata)
 				break
 	xbmcplugin.endOfDirectory(pluginhandle)
 
-def video(tv_show_id, season_id):
+def video(tv_show_id, season_id, fanart_img):
 	global config, CONST
 
 	debug('video : tv_show_id: ' + tv_show_id + 'season_id: ' + season_id)
@@ -753,7 +757,8 @@ def video(tv_show_id, season_id):
 
 		for metadata_lang, metadata_values in video['metadata'].items():
 			if metadata_lang == 'de':
-				extracted_metadata = extract_metadata(metadata=metadata_values,selection_type='VIDEO',fanart_type='PRIMARY');
+				extracted_metadata = extract_metadata(metadata=metadata_values,selection_type='VIDEO');
+				extracted_metadata.update({'fanart' : fanart_img});
 				if 'broadcastDate' in metadata_values.keys():
 					aired = datetime.utcfromtimestamp(metadata_values['broadcastDate']).strftime('%Y-%m-%d')
 				break
@@ -837,20 +842,19 @@ def play_video(video_id, stream_type='VOD'):
 def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type=''):
 	global xbmcgui, xbmcplugin,pluginhandle, default_fanart, icon, pluginurl
 
-	url = pluginurl+'?'
-	url += urlencode({
+	params = {
 		'mode' : mode,
 		'tv_show_id': tv_show_id,
 		'season_id' : season_id,
 		'video_id': video_id,
 		'stream_type': stream_type,
 		'channel_id': channel_id,
-	})
-
+	}
 	list_item = xbmcgui.ListItem(metadata['title'])
 
 	if 'img' in metadata and metadata['img'] is not '':
 		list_item.setArt({ 'thumb': metadata['img']})
+		params.update({'parent_img': metadata['img']});
 	else:
 		list_item.setArt({ 'thumb': icon})
 
@@ -860,6 +864,9 @@ def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id
 		list_item.setArt({'fanart': metadata['fanart']})
 	else:
 		list_item.setArt({'fanart': default_fanart})
+
+	url = pluginurl+'?'
+	url += urlencode(params)
 
 	return xbmcplugin.addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item, isFolder=True)
 
@@ -938,17 +945,21 @@ if 'mode' in param_keys:
 		stream_type = params['stream_type']
 	else:
 		stream_type = 'VOD'
+	if 'parent_img' in param_keys:
+		parent_img = params['parent_img']
+	else:
+		parent_img = ''
 
 	if mode == 'season' and 'tv_show_id' in param_keys:
-		season(params['tv_show_id'])
+		season(params['tv_show_id'],parent_img)
 	elif mode == 'video' and 'tv_show_id' in param_keys and 'season_id' in param_keys:
-		video(params['tv_show_id'],params['season_id'])
+		video(params['tv_show_id'],params['season_id'],parent_img)
 	elif mode == 'play_video' and 'video_id' in param_keys:
 		play_video(params['video_id'], stream_type)
 	elif mode == 'channels':
 		channels(stream_type)
 	elif mode == 'tvshows' and 'channel_id' in param_keys:
-		tvshows(params['channel_id'])
+		tvshows(params['channel_id'],parent_img)
 	else:
 		index()
 else:
