@@ -29,7 +29,6 @@ import gzip
 import ssl
 import base64
 import hashlib
-from bs4 import BeautifulSoup
 import xml.etree.ElementTree as ET
 from math import floor
 
@@ -471,11 +470,10 @@ def get_config():
 		else:
 			config['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0 Win64 x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
-		js_sources=BeautifulSoup(get_url(CONST['BASE_URL']),'html.parser').findAll('script',{'src':True})
-
-		for js_source in js_sources:
-			if 'main' in js_source['src']:
-				main_js =  get_url(CONST['BASE_URL'] + js_source['src'])
+		html_content = get_url(CONST['BASE_URL']);
+		for match in re.findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
+			if match.find('/main') is not -1:
+				main_js =  get_url(CONST['BASE_URL'] + match)
 				for key in config['CONFIG']:
 					find_str = key + ':"'
 					start = main_js.find(find_str)

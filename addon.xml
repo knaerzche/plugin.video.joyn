@@ -4,8 +4,6 @@
         <import addon="xbmc.python" version="2.1.0"/>   
         <import addon="inputstream.adaptive" version="2.2.21"/>
         <import addon="script.module.inputstreamhelper" version="0.3.4"/>
- 	<import addon="script.module.beautifulsoup4" version="4.3.2"/>
-
     </requires>
     <extension point="xbmc.python.pluginsource" library="default.py">
         <provides>video</provides>
