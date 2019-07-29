@@ -427,7 +427,11 @@ def get_config():
 			expire_secs = CONST['CONFIG_CACHE_EXPIRES']
 
 		expire_time = datetime.now() - timedelta(seconds=expire_secs)
-		filetime = datetime.fromtimestamp(os.path.getctime(cached_config_path))
+
+		if platform.system() == 'Windows':
+			filetime = datetime.fromtimestamp(os.path.getctime(cached_config_path))
+		else:
+			filetime = datetime.fromtimestamp(os.path.getmtime(cached_config_path))
 
 		with open(cached_config_path) as cached_config_infile:
 				try:
@@ -436,7 +440,7 @@ def get_config():
 					log('Could not load cached config ' + cached_config_path + ' ... recreating it')
 					pass
 
-		if filetime <= expire_time:
+		if filetime >= expire_time:
 			recreate_config = False;
 			config = cached_config;
 			debug('get_config(): Use Cache: ' + cached_config_path)
