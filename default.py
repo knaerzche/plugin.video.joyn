@@ -13,15 +13,13 @@ PY2 = sys.version_info[0] == 2
 PY3 = sys.version_info[0] == 3
 if PY2:
 	from urllib import quote, unquote, quote_plus, unquote_plus, urlencode  # Python 2.X
-	from urllib2 import build_opener, HTTPCookieProcessor, Request, urlopen  # Python 2.X
+	from urllib2 import build_opener, Request, urlopen  # Python 2.X
 	from urlparse import urljoin, urlparse, urlunparse , urlsplit, parse_qs # Python 2.X
 elif PY3:
 	from urllib.parse import quote, unquote, quote_plus, unquote_plus, urlencode, urljoin, urlparse, urlunparse, urlsplit, parse_qs  # Python 3+
-	from urllib.request import build_opener, HTTPCookieProcessor, Request, urlopen  # Python 3+
+	from urllib.request import build_opener, Request, urlopen  # Python 3+
 import json
 import xbmcvfs
-import shutil
-import socket
 import time
 from datetime import datetime, timedelta
 import io
@@ -31,7 +29,6 @@ import base64
 import hashlib
 import xml.etree.ElementTree as ET
 from math import floor
-
 from inputstreamhelper import Helper
 
 try:
