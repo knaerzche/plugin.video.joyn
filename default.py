@@ -917,7 +917,7 @@ pluginquery = sys.argv[2]
 addon = xbmcaddon.Addon()
 addon_path = xbmc.translatePath(addon.getAddonInfo('path')).encode('utf-8').decode('utf-8')
 icon = os.path.join(addon_path, 'icon.png')
-default_fanart = os.path.join(addon_path, 'icon.png')
+default_fanart = os.path.join(addon_path, 'fanart.jpg')
 xbmcplugin.setContent(pluginhandle, 'tvshows')
 
 if not  addon_enabled(CONST['INPUTSTREAM_ADDON']):
