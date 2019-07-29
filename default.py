@@ -42,7 +42,6 @@ except AttributeError:
 else:
 	ssl._create_default_https_context = _create_unverified_https_context
 
-
 CONST = {
 	'BASE_URL' 		: 'https://www.joyn.de',
 	'PSF_CONFIG_URL'	: 'https://psf.player.v0.maxdome.cloud/config/psf.json',
@@ -148,8 +147,7 @@ def debug(content):
 
 def log(msg, level=xbmc.LOGNOTICE):
 	msg = py2_enc(msg)
-	xbmc.log("["+addon.getAddonInfo('id')+"-"+addon.getAddonInfo('version')+"]"+msg, level)
-
+	xbmc.log('['+addon.getAddonInfo('id')+'-'+addon.getAddonInfo('version')+']'+msg, level)
 
 def get_url(url, additional_headers=None, additional_query_string=None, post_data=None):
 
@@ -173,7 +171,6 @@ def get_url(url, additional_headers=None, additional_query_string=None, post_dat
 			else:
 				url += '?' + urlencode(additional_query_string)
 
-
 		if post_data is not None:
 			request = Request(url, data=post_data, headers=headers)
 		else:
@@ -185,12 +182,13 @@ def get_url(url, additional_headers=None, additional_query_string=None, post_dat
 			response_content =  py3_dec(gzip.GzipFile(fileobj=io.BytesIO(response.read())).read())
 		else:
 			response_content = py3_dec(response.read())
+		opener.close()
 
 	except Exception as e:
-		failing('Failed to load url: ' + url + ' headers: ' + json.dumps(additional_headers) + ' qs: ' + json.dumps(additional_query_string) + ' post_data: ' +  json.dumps(post_data) + 'Exception: ' +  str(e))
-		pass
 
-	opener.close()
+		failing('Failed to load url: ' + url + ' headers: ' + json.dumps(additional_headers) + ' qs: ' + json.dumps(additional_query_string) + ' post_data: '
+			+  json.dumps(post_data) + 'Exception: ' +  str(e))
+		pass
 
 	return response_content
 
@@ -203,8 +201,12 @@ def post_json(url, data=None, additional_headers=None, additional_query_string=N
 	return get_json_response(url, additional_headers, additional_query_string, json.dumps(data))
 
 def get_json_response(url, headers=None, params=None, post_data=None):
-	return json.loads(get_url(url, headers, params, post_data))
-
+	try:
+		return json.loads(get_url(url, headers, params, post_data))
+	except ValueError:
+		failing('Could not decode json from url ' + url)
+		raise
+	return None
 
 def get_header_string(headers):
 	header_string = ''
@@ -217,13 +219,11 @@ def base64_encode_urlsafe(string):
     encoded = base64.urlsafe_b64encode(string)
     return encoded.rstrip(b'=')
 
-
 def get_joyn_json_response(url, headers=None, params=None):
 	if headers is not None:
 		headers.append(('key', config['CONFIG']['header_7TV_key']))
 	else:
 		headers = [('key', config['CONFIG']['header_7TV_key'])]
-
 
 	decoded_json = get_json_response(url, headers, params)
 	if decoded_json[py2_uni('status')] == 200:
@@ -254,7 +254,6 @@ def decrypt(key, value):
 		y = value[0] = value[0] - mx & 4294967295
 		sum = sum - 2654435769 & 4294967295
 
-
 	length = len(value)
 	n = length - 1 << 2
 	m = value[length -1]
@@ -270,7 +269,6 @@ def decrypt(key, value):
 		ret+= _unichr(value[i] >> 24 & 255)
 
 	return ret[0:n]
-
 
 def uc_slice(hex_string, start_pos=None, end_pos=None):
 	unit8s = []
@@ -385,6 +383,34 @@ def build_signature(video_id, encoded_client_data, entitlement_token):
 
 	return sha_output
 
+def get_mpd_tree(url):
+	mpd_contents = get_url(url);
+	if len(mpd_contents) > 0:
+		try:
+			mpd_tree = ET.fromstring(mpd_contents)
+			mpd_tree_ns = '{' + mpd_tree.tag.split('}')[0].strip('{') + '}'
+			if mpd_tree is not None and mpd_tree.tag is not None and mpd_tree.tag == mpd_tree_ns + 'MPD':
+				return {'tree' : mpd_tree, 'ns': mpd_tree_ns}
+		except Exception as e:
+			debug('Could not parse mpd with url: ' + url + ' Exception: ' + str(e))
+			pass
+	return None
+
+def query_mpd_tree(mpd_tree, query_path):
+	query = '.'
+	for query_param in query_path:
+		query += '/' + mpd_tree['ns'] +  query_param
+
+	try:
+		mpd_element = mpd_tree['tree'].find(query);
+		if mpd_element is not None:
+			return mpd_element.text
+	except Exception as e:
+		debug('Could not query mpd - Exception: ' + str(e))
+		pass
+
+	return None
+
 def get_config():
 	global config, CONST, addon
 
@@ -394,7 +420,7 @@ def get_config():
 	config = {}
 
 	if os.path.exists(cached_config_path):
-		expire_config_mins = addon.getSetting("configcachemins")
+		expire_config_mins = addon.getSetting('configcachemins')
 		if expire_config_mins is not '':
 			expire_secs = int(expire_config_mins) * 60
 		else:
@@ -442,7 +468,6 @@ def get_config():
 		else:
 			config['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0 Win64 x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
-
 		js_sources=BeautifulSoup(get_url(CONST['BASE_URL']),'html.parser').findAll('script',{'src':True})
 
 		for js_source in js_sources:
@@ -463,7 +488,7 @@ def get_config():
 		find_str = 'call(this,['
 		start = psf_vars.find(find_str + '"exports')
 		length = psf_vars[start:].rfind('])')
-		psf_vars = psf_vars[(start+len(find_str)):(start+length)].split(",")
+		psf_vars = psf_vars[(start+len(find_str)):(start+length)].split(',')
 		for i in range(len(psf_vars)):
 			psf_vars[i] = psf_vars[i][1:-1]
 		config['PSF_VARS'] = psf_vars
@@ -474,7 +499,6 @@ def get_config():
 		except Exception as e:
 			failing('Could not decrypt config: ' + str(e))
 			sys.exit(0)
-
 
 		with open (cached_config_path, 'w') as cached_config_outfile:
 			json.dump(config,cached_config_outfile)
@@ -497,7 +521,6 @@ def get_json_by_type(type, replacements={}):
 
 	return get_joyn_json_response(url=CONST['MIDDLEWARE_URL'] + CONST['PATH'][type]['PATH'] , params=valued_query_params)
 
-
 def get_video_listitem(video_data,stream_type='VOD'):
 	global xbmcgui, CONST, config, addon
 
@@ -506,15 +529,17 @@ def get_video_listitem(video_data,stream_type='VOD'):
 		if set_mpd_props(list_item, video_data['videoUrl'], stream_type) is not False:
 			if 'drm' in video_data.keys() and video_data['drm'] == 'widevine' and 'licenseUrl' in video_data.keys():
 				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.widevine.alpha')
-				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'] + '|' + get_header_string({'User-Agent' : config['USER_AGENT'], 'Content-Type': 'application/octet-stream'}) + '|R{SSM}|')
+				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'] + '|' +
+					get_header_string({'User-Agent' : config['USER_AGENT'], 'Content-Type': 'application/octet-stream'}) + '|R{SSM}|')
 				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.stream_headers',  get_header_string({'User-Agent' : config['USER_AGENT']}))
-				if addon.getSetting("checkdrmcert") == 'true' and 'certificateUrl' in video_data.keys():
-					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate', video_data['certificateUrl'] + '|' +  get_header_string({'User-Agent' : config['USER_AGENT']}))
+				if addon.getSetting('checkdrmcert') == 'true' and 'certificateUrl' in video_data.keys():
+					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate', video_data['certificateUrl'] + '|'
+						+  get_header_string({'User-Agent' : config['USER_AGENT']}))
 		else:
 			failing('Could not get valid MPD')
 
 	else:
-		return list_item.setPath(path=video_data['videoUrl'] + '|' + get_header_string({'User-Agent' : config['USER_AGENT']}) )
+		return list_item.setPath(path=video_data['videoUrl'] + '|' + get_header_string({'User-Agent' : config['USER_AGENT']}))
 
 	return list_item
 
@@ -529,45 +554,23 @@ def set_mpd_props(list_item, url, stream_type='VOD'):
 	parts = urlparse(url)
 	query_dict = parse_qs(parts.query)
 
-
 	if 'filter' in query_dict.keys():
 		query_dict.update({'filter' : ''})
 		new_parts = list(parts)
 		new_parts[4] = urlencode(query_dict)
 		new_mpd_url = urlunparse(new_parts)
-
 		debug('Stripped out filter from mpd url is ' + new_mpd_url)
-		mpd_contents = get_url(new_mpd_url)
+		test_mpd_tree = get_mpd_tree(new_mpd_url)
+		if test_mpd_tree is not None:
+			mpd_tree = test_mpd_tree
+			url = new_mpd_url
 
-		if len(mpd_contents) > 0:
-			try:
-				test_mpd_tree = ET.fromstring(mpd_contents)
-				test_mpd_tree_ns = '{' + test_mpd_tree.tag.split('}')[0].strip('{') + '}'
-
-				if test_mpd_tree is not None and test_mpd_tree.tag is not None and test_mpd_tree.tag == test_mpd_tree_ns + 'MPD':
-
-					mpd_tree = test_mpd_tree
-					mpd_tree_ns = test_mpd_tree_ns
-					url = new_mpd_url
-
-			except Exception as e:
-				log('Could not parse filter stripped mpd with url: ' + new_mpd_url + ' Exception: ' + str(e))
-				pass
 	if mpd_tree is None:
-		mpd_contents = get_url(url)
-		if len(mpd_contents) > 0:
-			try:
-				test_mpd_tree = ET.fromstring(mpd_contents)
-				test_mpd_tree_ns = ns = '{' + test_mpd_tree.tag.split('}')[0].strip('{') + '}'
+		test_mpd_tree = get_mpd_tree(url);
+		if test_mpd_tree is not None:
+			mpd_tree = test_mpd_tree;
 
-				if test_mpd_tree is not None and test_mpd_tree.tag is not None and test_mpd_tree.tag == test_mpd_tree_ns + 'MPD':
-					mpd_tree = test_mpd_tree
-					mpd_tree_ns = test_mpd_tree_ns
-
-			except Exception as e:
-				failing('Could not parse orginal mpd with url: ' + url + ' Exception: ' + str(e))
-
-	if mpd_tree is not None and mpd_tree_ns is not None:
+	if mpd_tree is not None:
 
 		list_item.setProperty('inputstreamaddon', CONST['INPUTSTREAM_ADDON'])
 		list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.manifest_type', 'mpd')
@@ -575,73 +578,53 @@ def set_mpd_props(list_item, url, stream_type='VOD'):
 		if stream_type == 'LIVE':
 			list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.manifest_update_parameter', 'full')
 
-		toplevel_base_url = ''
-		top_level_base_url_element = mpd_tree.find('./' + mpd_tree_ns + 'BaseURL')
+		toplevel_base_url = None
 
 		# the mpd has a Base URL at toplevel at a remote location
 		# inputstream adaptive currently can't handle this correctly
 		# it's known that this Base URL can be used to retrieve a 'better' mpd
-		if top_level_base_url_element is not None and top_level_base_url_element.text.find('http') == 0:
-				debug("Found MPD with Base URL at toplevel : " + top_level_base_url_element.tag + " ==> " + top_level_base_url_element.text)
-				if top_level_base_url_element.text.find('http') == 0:
-					toplevel_base_url =  top_level_base_url_element.text
+		toplevel_base_url_res = query_mpd_tree(mpd_tree, ['BaseURL'])
+		if toplevel_base_url_res is not None and toplevel_base_url_res.find('http') == 0:
+			debug('Found MPD with Base URL at toplevel : ' + toplevel_base_url_res)
+			toplevel_base_url =  toplevel_base_url_res
 
-		if len(toplevel_base_url) :
+		if toplevel_base_url is not None :
 			if stream_type == 'VOD':
 				new_mpd_url = toplevel_base_url + '.mpd?filter='
-				new_mpd_contents = get_url(new_mpd_url)
-				if len(new_mpd_contents) > 0:
-					try:
-						new_mpd_tree = ET.fromstring(new_mpd_contents)
-						new_mpd_tree_ns = '{' + new_mpd_tree.tag.split('}')[0].strip('{') + '}'
-						if new_mpd_tree.tag is not None and new_mpd_tree.tag == new_mpd_tree_ns + 'MPD':
-							log('Replacing MPD url ' + url + ' with ' + new_mpd_url)
-							mpd_tree = new_mpd_tree
-							mpd_tree_ns = new_mpd_tree_ns
-							url = new_mpd_url
-							toplevel_base_url = ''
-							mpd_contents = new_mpd_contents
-							top_level_base_url_element = mpd_tree.find('./' + mpd_tree_ns + 'BaseURL')
-							if top_level_base_url_element is not None and top_level_base_url_element.text.find('http') == 0:
-								debug("Found MPD with Base URL at toplevel in REPLACED url: " + top_level_base_url_element.tag + " ==> " + top_level_base_url_element.text + 'URL: ' + new_mpd_url)
-								toplevel_base_url =  top_level_base_url_element.text
-					except Exception as e:
-						log('Could not parse BaseURL extracted mpd with url: ' + new_mpd_url + 'Exception: ' + str(e))
-						pass
-
+				test_mpd_tree = get_mpd_tree(new_mpd_url);
+				if test_mpd_tree is not None:
+					mpd_tree = test_mpd_tree
+					url = new_mpd_url
+					toplevel_base_url = None
+					toplevel_base_url_res = query_mpd_tree(mpd_tree, ['BaseURL'])
+					if toplevel_base_url_res is not None and toplevel_base_url_res.find('http') == 0:
+						debug('Found MPD with Base URL at toplevel in REPLACED url: ' + toplevel_base_url_res + 'URL: ' + new_mpd_url)
+						toplevel_base_url =  toplevel_base_url_res
+					else:
+						toplevel_base_url = None
 			elif stream_type == 'LIVE':
-				period_base_url =  mpd_tree.find('./' + mpd_tree_ns + 'Period/' + mpd_tree_ns + 'BaseURL')
-				if period_base_url is not None and period_base_url.text[0] == '/' and period_base_url.text[-1] == '/':
-					new_mpd_url = toplevel_base_url + period_base_url.text + 'cenc-default.mpd'
+				period_base_url_res = query_mpd_tree(mpd_tree, ['Period','BaseURL']);
+				if period_base_url_res is not None and period_base_url_res[0] == '/' and period_base_url_res[-1] == '/':
+					new_mpd_url = toplevel_base_url + period_base_url_res + 'cenc-default.mpd'
+					test_mpd_tree = get_mpd_tree(new_mpd_url);
+					if test_mpd_tree is not None:
+						mpd_tree = test_mpd_tree
+						url = new_mpd_url
+						toplevel_base_url = None
+						toplevel_base_url_res = query_mpd_tree(mpd_tree, ['BaseURL'])
+						if toplevel_base_url_res is not None and toplevel_base_url_res.find('http') == 0:
+							debug('Found MPD with Base URL at toplevel in REPLACED url: ' + toplevel_base_url_res + 'URL: ' + new_mpd_url)
+							toplevel_base_url =  toplevel_base_url_res
+						else:
+							toplevel_base_url = None
 
-					new_mpd_contents = get_url(new_mpd_url)
-					if len(new_mpd_contents) > 0:
-						try:
-							new_mpd_tree = ET.fromstring(new_mpd_contents)
-							new_mpd_tree_ns = '{' + new_mpd_tree.tag.split('}')[0].strip('{') + '}'
-							if new_mpd_tree.tag is not None and new_mpd_tree.tag == new_mpd_tree_ns + 'MPD':
-								log('Replacing MPD url ' + url + ' with ' + new_mpd_url)
-								mpd_tree = new_mpd_tree
-								mpd_tree_ns = new_mpd_tree_ns
-								url = new_mpd_url
-								toplevel_base_url = ''
-								mpd_contents = new_mpd_contents
-								top_level_base_url_element = mpd_tree.find('./' + mpd_tree_ns + 'BaseURL')
-								if top_level_base_url_element is not None and top_level_base_url_element.text.find('http') == 0:
-									debug("Found MPD with Base URL at toplevel in REPLACED url: " + top_level_base_url_element.tag + " ==> " + top_level_base_url_element.text + 'URL: ' + new_mpd_url)
-									toplevel_base_url =  top_level_base_url_element.text
-
-						except Exception as e:
-							log('Could not parse BaseURL extracted mpd with url: ' + new_mpd_url + 'Exception: ' + str(e))
-							pass
-
-		if toplevel_base_url is not '' :
-			debug("Writing MPD file to local disc, since it has a remote top Level Base URL ...")
+		if toplevel_base_url is not None :
+			mpd_contents = get_url(url)
+			debug('Writing MPD file to local disc, since it has a remote top Level Base URL ...')
 			sha_1 = hashlib.sha1()
 			sha_1.update(url)
-		        sha_output = sha_1.hexdigest()
-			mpd_filepath = get_xbmc_file_path(CONST['TEMP_DIR'],  get_sha_output + '.mpd')
 
+			mpd_filepath = get_xbmc_file_path(CONST['TEMP_DIR'],  sha_1.hexdigest() + '.mpd')
 			with open (mpd_filepath, 'w') as mpd_filepath_out:
 				mpd_filepath_out.write(mpd_contents)
 
@@ -655,43 +638,57 @@ def set_mpd_props(list_item, url, stream_type='VOD'):
 
 	return False
 
+def extract_metadata(metadata, selection_type, img_type='PRIMARY', description_type='main', title_type='main', fanart_type=''):
+	extracted_metadata = {
+		'img'   : '',
+		'title' : '',
+		'description' : '',
+		'fanart': '',
+	};
+
+	if 'descriptions' in metadata.keys():
+		for description in metadata['descriptions']:
+			if description['type'] == description_type:
+				extracted_metadata.update({'description' : description['text']})
+				break
+	if 'titles' in metadata.keys():
+		for title in metadata['titles']:
+			if title['type'] == title_type:
+				extracted_metadata.update({'title' : title['text']})
+				break
+	if 'images' in metadata.keys():
+		for image in metadata['images']:
+			if image['type'] == img_type:
+				extracted_metadata.update({'img' : image['url'] + '/' + CONST['PATH'][selection_type]['IMG_PROFILE']})
+			if image['type'] == fanart_type:
+				extracted_metadata.update({'fanart' : image['url'] + '/' + CONST['PATH'][selection_type]['IMG_PROFILE']})
+
+	return extracted_metadata
+
 def index():
 	global pluginhandle
 
-	add_dir(name='VOD', desc='Video on demand', mode='channels', stream_type='VOD')
-	add_dir(name='Live', desc='Live TV', mode='channels',stream_type='LIVE')
+	add_dir(metadata={'title' : 'VOD', 'description' : 'Video on demand'}, mode='channels', stream_type='VOD')
+	add_dir(metadata={'title' : 'Live', 'description' : 'Live TV'}, mode='channels',stream_type='LIVE')
 	xbmcplugin.endOfDirectory(pluginhandle)
 
 def channels(stream_type):
 	global config
 
+	brands = get_json_by_type('BRAND')
 	if stream_type == 'VOD':
-		brands = get_json_by_type('BRAND')
+
 		for brand in brands['data']:
 			channel_id = str(brand['channelId'])
-			desc = ''
-			name = ''
-			img = ''
 			for metadata_lang, metadata in brand['metadata'].items():
 				if metadata_lang == 'de':
 					if metadata['hasVodContent'] == True:
-						for description in metadata['descriptions']:
-							if description['type'] == 'seo':
-								desc = description['text']
-								break
-						for title in metadata['titles']:
-							if title['type'] == 'main':
-								name = title['text']
-								break
-						for image in metadata['images']:
-							if image['type'] == 'BRAND_LOGO':
-								img = image['url'] + '/' + CONST['PATH']['BRAND']['IMG_PROFILE']
-								break
-						debug('ADD CHANNEL: name=' + name + ', mode=\'tvhshow\', stream_type=' + stream_type + ', channel_id=' + channel_id + ', img=' + img + ', desc=' + desc)
-						add_dir(name=name, mode='tvshows', stream_type=stream_type, channel_id=channel_id, img=img, desc=desc)
+						extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO')
+						add_dir(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata)
+					break
 		xbmcplugin.endOfDirectory(pluginhandle)
+
 	elif stream_type == 'LIVE':
-		brands = get_json_by_type('BRAND')
 
 		for brand in brands['data']:
 			for metadata_lang, metadata in brand['metadata'].items():
@@ -699,82 +696,36 @@ def channels(stream_type):
 					if 'livestreams' in metadata.keys():
 						for livestream in metadata['livestreams']:
 							stream_id = livestream['streamId']
-							img = ''
-							name = ''
-							for title in metadata['titles']:
-								if title['type'] == 'main':
-									name = title['text']
-									break
-							for image in metadata['images']:
-								if image['type'] == 'BRAND_LOGO':
-									img = image['url'] + '/' + CONST['PATH']['BRAND']['IMG_PROFILE']
-							debug('ADD LIVETV: name=' + name + ', mode=\'play_video\' img=' + img + ', video_id=' + stream_id)
-							add_link(name=name, mode='play_video', video_id=stream_id, iconimage=img, stream_type='LIVE')
+							add_link(metadata= extract_metadata(metadata=metadata, selection_type='BRAND',
+									img_type='BRAND_LOGO'), mode='play_video', video_id=stream_id, stream_type='LIVE')
+					break
 
 		xbmcplugin.endOfDirectory(pluginhandle)
 
 	else:
 		index()
 
-def tvshows(channel_id, stream_type):
+def tvshows(channel_id):
 	global config, CONST
+	tvshows = get_json_by_type('TVSHOW', {'channelId': channel_id})
 
-	if stream_type == 'VOD':
-		tvshows = get_json_by_type('TVSHOW', {'channelId': channel_id})
-		for tvshow in tvshows['data']:
-
-			tv_show_id = str(tvshow['id'])
-			desc = ''
-			name = ''
-			img = ''
-
-			for metadata_lang, metadata in tvshow['metadata'].items():
-				if metadata_lang == 'de':
-					for description in metadata['descriptions']:
-						if description['type'] == 'main':
-							desc = description['text']
-							break
-					for title in metadata['titles']:
-						if title['type'] == 'main':
-							name = title['text']
-							break
-					for image in metadata['images']:
-
-						if image['type'] == 'PRIMARY':
-							img = image['url'] + '/' + CONST['PATH']['TVSHOW']['IMG_PROFILE']
-							break
-				debug('ADD TVSHOW: name=' + name + ', mode=\'tvhshow\', stream_type=' + stream_type + ', tv_show_id=' + tv_show_id + ', img=' + img + ', desc=' + desc)
-				add_dir(name=name, mode='season', tv_show_id=tv_show_id, img=img, desc=desc)
-		xbmcplugin.endOfDirectory(pluginhandle)
-	else:
-		index()
+	for tvshow in tvshows['data']:
+		tv_show_id = str(tvshow['id'])
+		for metadata_lang, metadata in tvshow['metadata'].items():
+			if metadata_lang == 'de':
+				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extract_metadata(metadata, 'TVSHOW', fanart_type='PRIMARY'))
+	xbmcplugin.endOfDirectory(pluginhandle)
 
 def season(tv_show_id):
 	global config, CONST
 	seasons = get_json_by_type('SEASON', {'tvShowId' : tv_show_id})
 	for season in seasons['data']:
 		season_id = season['id']
-		title = ''
-		img = ''
-		desc = ''
-		for season_metadata_lang, season_metadata_values in season['metadata'].items():
-			if season_metadata_lang == 'de':
-				for season_metadata_image in season_metadata_values['images']:
-					if season_metadata_image['type'] == 'PRIMARY':
-						img = season_metadata_image['url'] + '/' + CONST['PATH']['SEASON']['IMG_PROFILE']
-						break
-				for season_metadata_title in season_metadata_values['titles']:
-					if season_metadata_title['type'] == 'main':
-						title = season_metadata_title['text']
-						break
-				for season_metadata_description in season_metadata_values['descriptions']:
-					if season_metadata_description['type'] == 'main':
-						desc = season_metadata_description['text']
-						break
-		debug ('id: ' + season_id + '\n' + 'img: ' + img + '\n' + 'title: ' + title + '\n' + 'desc: ' + desc)
-
-		add_dir(name=title, mode='video', season_id=season_id, tv_show_id=tv_show_id, img=img, desc=desc)
-
+		for metadata_lang, metadata in season['metadata'].items():
+			if metadata_lang == 'de':
+				extracted_metadata = extract_metadata(metadata,'SEASON');
+				add_dir(mode='video', season_id=season_id, tv_show_id=tv_show_id,metadata=extracted_metadata)
+				break
 	xbmcplugin.endOfDirectory(pluginhandle)
 
 def video(tv_show_id, season_id):
@@ -785,9 +736,6 @@ def video(tv_show_id, season_id):
 
 	for video in videos['data']:
 		video_id = video['id']
-		title = ''
-		img = ''
-		desc = ''
 		genres = []
 		season = ''
 		series = ''
@@ -797,20 +745,10 @@ def video(tv_show_id, season_id):
 
 		for metadata_lang, metadata_values in video['metadata'].items():
 			if metadata_lang == 'de':
-				for metadata_image in metadata_values['images']:
-					if metadata_image['type'] == 'PRIMARY':
-						img = metadata_image['url'] + '/' + CONST['PATH']['VIDEO']['IMG_PROFILE']
-						break
-				for metadata_title in metadata_values['titles']:
-					if metadata_title['type'] == 'main':
-						title = metadata_title['text']
-						break
-				for metadata_description in metadata_values['descriptions']:
-					if metadata_description['type'] == 'main':
-						desc = metadata_description['text']
-						break
+				extracted_metadata = extract_metadata(metadata=metadata_values,selection_type='VIDEO',fanart_type='PRIMARY');
 				if 'broadcastDate' in metadata_values.keys():
 					aired = datetime.utcfromtimestamp(metadata_values['broadcastDate']).strftime('%Y-%m-%d')
+				break
 
 		if 'tvShow' in video.keys():
 			if 'genres' in video['tvShow'].keys():
@@ -832,8 +770,7 @@ def video(tv_show_id, season_id):
 		if 'duration' in video.keys():
 			duration = video['duration']/1000
 
-		debug ('ADD VIDEO: video_id: ' + video_id  + ' img: ' + img + ' title: ' + title + ' desc: ' + desc + ' genres: ' + json.dumps(genres) + ' season: ' + season + ' series: ' + series + ' episode: ' + episode + ' aired: ' + aired + ' duration: ' + str(duration))
-		add_link(name=title, mode='play_video', video_id=video_id, iconimage=img, duration=duration, desc=desc, genre=genres,  staffel=season, episode=episode, serie=series, aired=aired)
+		add_link(mode='play_video', metadata=extracted_metadata, video_id=video_id, duration=duration, genres=genres, season=season, episode=episode, series=series, aired=aired)
 
 	xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -846,12 +783,9 @@ def play_video(video_id, stream_type='VOD'):
 		'content_id' 	: video_id,
 		'content_type'	: stream_type,
 	}
+	entitlement_request_headers = [('x-api-key', config['PSF_CONFIG']['default'][stream_type.lower()]['apiGatewayKey'])]
 
-	headers = [
-			('x-api-key', config['PSF_CONFIG']['default'][stream_type.lower()]['apiGatewayKey']),
-	]
-
-	entitlement_data = post_json(config['PSF_CONFIG']['default'][stream_type.lower()]['entitlementBaseUrl'] + CONST['ENTITLEMENT_URL'], entitlement_request_data, headers)
+	entitlement_data = post_json(config['PSF_CONFIG']['default'][stream_type.lower()]['entitlementBaseUrl'] + CONST['ENTITLEMENT_URL'], entitlement_request_data, entitlement_request_headers)
 	video_url = config['PSF_CONFIG']['default'][stream_type.lower()]['playoutBaseUrl']
 
 	if stream_type == 'VOD':
@@ -866,7 +800,6 @@ def play_video(video_id, stream_type='VOD'):
 				'tvshowid'	: video_metadata['tracking']['tvShow']['id'],
 		}
 
-
 		if 'agofCode' in video_metadata['tracking']:
 			client_data.update({'agofCode' : video_metadata['tracking']['agofCode']})
 		video_url += 'playout/video/' + video_metadata['tracking']['id']
@@ -879,7 +812,6 @@ def play_video(video_id, stream_type='VOD'):
 		}
 
 		video_url += 'playout/channel/' + video_id
-
 
 	encoded_client_data = base64_encode_urlsafe(json.dumps(client_data))
 	signature = build_signature(video_id, encoded_client_data, entitlement_data['entitlement_token'])
@@ -894,10 +826,10 @@ def play_video(video_id, stream_type='VOD'):
 	video_response = get_json_response(url=video_url, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
 	xbmcplugin.setResolvedUrl(pluginhandle, True, get_video_listitem(video_response, stream_type))
 
-def add_dir(name, mode, desc='', img='', fanart='', channel_id='', tv_show_id='', season_id='', video_id='', stream_type=''):
-	global xbmcgui, xbmcplugin,pluginhandle
+def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type=''):
+	global xbmcgui, xbmcplugin,pluginhandle, default_fanart, icon, pluginurl
 
-	url = sys.argv[0]+'?'
+	url = pluginurl+'?'
 	url += urlencode({
 		'mode' : mode,
 		'tv_show_id': tv_show_id,
@@ -907,41 +839,44 @@ def add_dir(name, mode, desc='', img='', fanart='', channel_id='', tv_show_id=''
 		'channel_id': channel_id,
 	})
 
-	list_item = xbmcgui.ListItem(name)
-	list_item.addAvailableArtwork(url=img,art_type='thumb',cache=img)
-	list_item.setArt({ 'thumb': img})
+	list_item = xbmcgui.ListItem(metadata['title'])
 
-	list_item.setInfo(type="Video", infoLabels={"Title": name, "Plot": desc})
-	if fanart is not '':
-		list_item.setArt({'fanart': fanart})
-	elif img is not '':
-		list_item.setArt({'fanart': img})
+	if 'img' in metadata and metadata['img'] is not '':
+		list_item.setArt({ 'thumb': metadata['img']})
 	else:
-		list_item.setArt({'fanart': defaultFanart})
+		list_item.setArt({ 'thumb': icon})
+
+	list_item.setInfo(type='Video', infoLabels={'Title': metadata['title'], 'Plot': metadata['description']})
+
+	if 'fanart' in metadata and metadata['fanart'] is not '':
+		list_item.setArt({'fanart': metadata['fanart']})
+	else:
+		list_item.setArt({'fanart': default_fanart})
 
 	return xbmcplugin.addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item, isFolder=True)
 
+def add_link(mode, video_id, metadata, duration='', genres='', season='', episode='', series='', aired='', stream_type='VOD'):
+	global xbmcgui, xbmcplugin, pluginhandle, pluginurl
 
-def add_link(name, mode, video_id, iconimage, duration="", desc="", genre="", staffel=-1, episode=-1, serie="", aired='', stream_type='VOD'):
-	global xbmcgui, xbmcplugin, pluginhandle
-
-	url = sys.argv[0]+'?'
+	url = pluginurl+'?'
 	url += urlencode({
 		'video_id': video_id,
 		'mode' : mode,
 		'stream_type': stream_type,
 	})
 
-	list_item = xbmcgui.ListItem(name, iconImage=icon, thumbnailImage=iconimage)
+	list_item = xbmcgui.ListItem(metadata['title'], iconImage=icon, thumbnailImage= metadata['img'])
 	if stream_type == 'LIVE':
-		list_item.setInfo(type="Video", infoLabels={"Title": name + ' (LIVE)'})
+		list_item.setInfo(type='Video', infoLabels={'Title': metadata['title'] + ' (LIVE)'})
 	else:
-		list_item.setInfo(type="Video", infoLabels={"Title": name, "Duration": duration, "Plot": desc, "Genre": genre, "Season": staffel, "Episode": episode, "TVShowTitle": serie, "Aired": aired, "mediatype": "episode"})
+		list_item.setInfo(type='Video',
+			infoLabels={'Title': metadata['title'], 'Duration': duration, 'Plot': metadata['description'], 'Genre': genres, 'Season': season, 'Episode': episode,
+				'TVShowTitle': series, 'Aired': aired, 'mediatype': 'episode'})
 		list_item.addStreamInfo('Video', {'Duration': duration})
-	if iconimage != icon:
-		list_item.setArt({'fanart': iconimage})
+	if metadata['fanart'] != '':
+		list_item.setArt({'fanart': metadata['fanart']})
 	else:
-		list_item.setArt({'fanart': defaultFanart})
+		list_item.setArt({'fanart': default_fanart})
 
 	list_item.setProperty('IsPlayable', 'True')
 
@@ -959,32 +894,33 @@ def get_xbmc_file_path(directory, filename):
 	return os.path.join(xbmc_directory, filename)
 
 def addon_enabled(addon_id):
-    result = xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Addons.GetAddonDetails","id":1,\
-                                   "params":{"addonid":"%s", "properties": ["enabled"]}}' % addon_id)
-    return False if '"error":' in result or '"enabled":false' in result else True
+	result = xbmc.executeJSONRPC('{"jsonrpc":"2.0","method":"Addons.GetAddonDetails","id":1,\
+		"params":{"addonid":"%s", "properties": ["enabled"]}}' % addon_id)
+	return False if '"error":' in result or '"enabled":false' in result else True
 
-
+pluginurl = sys.argv[0]
 pluginhandle = int(sys.argv[1])
+pluginquery = sys.argv[2]
 addon = xbmcaddon.Addon()
-addonPath = xbmc.translatePath(addon.getAddonInfo('path')).encode('utf-8').decode('utf-8')
-icon = os.path.join(addonPath, 'icon.png')
-defaultFanart = os.path.join(addonPath, 'fanart.jpg')
+addon_path = xbmc.translatePath(addon.getAddonInfo('path')).encode('utf-8').decode('utf-8')
+icon = os.path.join(addon_path, 'icon.png')
+default_fanart = os.path.join(addon_path, 'icon.png')
 xbmcplugin.setContent(pluginhandle, 'tvshows')
 
 if not  addon_enabled(CONST['INPUTSTREAM_ADDON']):
         dialog = xbmcgui.Dialog()
-        dialog.notification("Inputstream nicht aktiviert", 'Inputstream nicht aktiviert', xbmcgui.NOTIFICATION_ERROR)
+        dialog.notification('Inputstream nicht aktiviert', 'Inputstream nicht aktiviert', xbmcgui.NOTIFICATION_ERROR)
         sys.exit(0)
 
 is_helper = Helper('mpd', drm='widevine')
 if not is_helper.check_inputstream():
 	dialog = xbmcgui.Dialog()
-	dialog.notification("Widevine nicht gefunden", 'Ohne Widevine kann das Addon nicht verwendet werden.', xbmcgui.NOTIFICATION_ERROR)
+	dialog.notification('Widevine nicht gefunden', 'Ohne Widevine kann das Addon nicht verwendet werden.', xbmcgui.NOTIFICATION_ERROR)
 	sys.exit(0)
 
 config = get_config()
 params = dict( (k, v if len(v)>1 else v[0] )
-           for k, v in parse_qs(sys.argv[2][1:]).iteritems() )
+           for k, v in parse_qs(pluginquery[1:]).iteritems() )
 param_keys = params.keys()
 
 if 'mode' in param_keys:
@@ -995,9 +931,7 @@ if 'mode' in param_keys:
 	else:
 		stream_type = 'VOD'
 
-	if mode == 'channel' and 'path' in param_keys:
-		channel(params['path'])
-	elif mode == 'season' and 'tv_show_id' in param_keys:
+	if mode == 'season' and 'tv_show_id' in param_keys:
 		season(params['tv_show_id'])
 	elif mode == 'video' and 'tv_show_id' in param_keys and 'season_id' in param_keys:
 		video(params['tv_show_id'],params['season_id'])
@@ -1006,7 +940,7 @@ if 'mode' in param_keys:
 	elif mode == 'channels':
 		channels(stream_type)
 	elif mode == 'tvshows' and 'channel_id' in param_keys:
-		tvshows(params['channel_id'], stream_type)
+		tvshows(params['channel_id'])
 	else:
 		index()
 else:
