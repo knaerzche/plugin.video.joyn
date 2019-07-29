@@ -418,6 +418,7 @@ def get_config():
 
 	recreate_config = True
 	config = {}
+	cached_config = None
 
 	if os.path.exists(cached_config_path):
 		expire_config_mins = addon.getSetting('configcachemins')
@@ -429,15 +430,17 @@ def get_config():
 		expire_time = datetime.now() - timedelta(seconds=expire_secs)
 		filetime = datetime.fromtimestamp(os.path.getctime(cached_config_path))
 
-		if filetime >= expire_time:
-			debug('get_config(): Use Cache: ' + cached_config_path)
-			with open(cached_config_path) as cached_config_infile:
+		with open(cached_config_path) as cached_config_infile:
 				try:
-					config = json.load(cached_config_infile)
-					recreate_config = False
+					cached_config = json.load(cached_config_infile)
 				except ValueError:
 					log('Could not load cached config ' + cached_config_path + ' ... recreating it')
 					pass
+
+		if filetime <= expire_time:
+			recreate_config = False;
+			config = cached_config;
+			debug('get_config(): Use Cache: ' + cached_config_path)
 
 	if recreate_config == True:
 		debug('get_config(): create config')
@@ -493,12 +496,17 @@ def get_config():
 			psf_vars[i] = psf_vars[i][1:-1]
 		config['PSF_VARS'] = psf_vars
 
-		try:
-			config['PSF_CLIENT_CONFIG'] = json.loads(py3_dec(base64.b64decode(decrypt(uc_string_to_long_array(config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]),uc_string_to_long_array(uc_slices_to_string(uc_slice(config['PLAYER_CONFIG']['toolkit']['psf'])))))))
+		if (cached_config is not None and
+		    cached_config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] == config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] and
+	            cached_config['PLAYER_CONFIG']['toolkit']['psf'] == config['PLAYER_CONFIG']['toolkit']['psf']):
+			config['PSF_CLIENT_CONFIG'] = cached_config['PSF_CLIENT_CONFIG']
+		else:
+			try:
+				config['PSF_CLIENT_CONFIG'] = json.loads(py3_dec(base64.b64decode(decrypt(uc_string_to_long_array(config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]),uc_string_to_long_array(uc_slices_to_string(uc_slice(config['PLAYER_CONFIG']['toolkit']['psf'])))))))
 
-		except Exception as e:
-			failing('Could not decrypt config: ' + str(e))
-			sys.exit(0)
+			except Exception as e:
+				failing('Could not decrypt config: ' + str(e))
+				sys.exit(0)
 
 		with open (cached_config_path, 'w') as cached_config_outfile:
 			json.dump(config,cached_config_outfile)
