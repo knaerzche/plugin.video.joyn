@@ -91,15 +91,36 @@ CONST = {
 								'IMG_PROFILE'	:	'profile:original',
 
 							  },
+					'EPG'		: {
+								'PATH'		: 'epg',
+								'QUERY_PARAMS'	: {
+											'skip'	 	: '0',
+											'from'	 	: '##from##',
+											'to'	 	: '##to##',
+											'sortBy' 	: 'startTime',
+											'sortAscending'	: 'true',
+											'limit'		: '5000',
+										  },
+								'SELECTION'	: '{totalCount,data{id,title,description,tvShow,type,tvChannelName,channelId,startTime,endTime,video,images(subType:"cover"){url,subType}}}',
+								'IMG_PROFILE'	: 'profile:original',
+							  },
 
 				  },
+	'EPG'			: {
+					'REQUEST_HOURS'		: 12,
+					'REQUEST_OFFSET_HOURS'	: 2,
+				  },
+	'TEXT_TEMPLATES'	: {
+					'LIVETV_TITLE'		: '[B]{:s}[/B] - {:s}',
+					'LIVETV_UNTIL'		: '[CR]bis {:%H:%M} Uhr[CR][CR]',
+					'LIVETV_UNTIL_AND_NEXT'	: '[CR]bis {:%H:%M} Uhr, danach {:s}[CR][CR]',
+				 },
 
 	'CACHE_DIR'		: 'cache',
 	'TEMP_DIR'		: 'tmp',
-
 	'CONFIG_CACHE_FILE'	: 'config.json',
 	'CONFIG_CACHE_EXPIRES'	: 3600,
-	'INPUTSTREAM_ADDON'	: 'inputstream.adaptive'
+	'INPUTSTREAM_ADDON'	: 'inputstream.adaptive',
 
 }
 
@@ -672,6 +693,30 @@ def extract_metadata(metadata, selection_type, img_type='PRIMARY', description_t
 
 	return extracted_metadata
 
+
+def extract_metadata_from_epg(epg_channel_data):
+	extracted_metadata = {};
+
+	for idx, program_data in enumerate(epg_channel_data):
+		endTime = datetime.fromtimestamp(program_data['endTime'])
+		if  endTime > datetime.now():
+			extracted_metadata['title'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_TITLE']).format(program_data['tvChannelName'], program_data['tvShow']['title'])
+
+			if len(epg_channel_data) > (idx+2):
+				extracted_metadata['description'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL_AND_NEXT']).format(endTime,epg_channel_data[idx+1]['tvShow']['title'])
+			else:
+				extracted_metadata['description'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL']).format(endTime)
+
+			if program_data['description'] is not None:
+				extracted_metadata['description'] += program_data['description']
+
+			for image in program_data['images']:
+				if image['subType'] == 'cover':
+					extracted_metadata['fanart'] = image['url'] + '/' + CONST['PATH']['EPG']['IMG_PROFILE']
+			break
+
+	return extracted_metadata;
+
 def index():
 	global pluginhandle
 
@@ -679,38 +724,44 @@ def index():
 	add_dir(metadata={'title' : 'Live', 'description' : 'Live TV'}, mode='channels',stream_type='LIVE')
 	xbmcplugin.endOfDirectory(pluginhandle)
 
+def get_epg():
+
+	epg = {}
+
+	raw_epg = get_json_by_type('EPG',{
+			'from' : (datetime.now() - timedelta(hours=CONST['EPG']['REQUEST_OFFSET_HOURS'])).strftime('%Y-%m-%d %H:%M:00'),
+			'to': (datetime.now() + timedelta(hours=CONST['EPG']['REQUEST_HOURS'])).strftime('%Y-%m-%d %H:%M:00')}
+		);
+
+	for raw_epg_data in raw_epg['data']:
+		if raw_epg_data['channelId'] not in epg.keys():
+			epg.update({raw_epg_data['channelId'] : []})
+		epg[raw_epg_data['channelId']].append(raw_epg_data);
+
+	return epg
+
 def channels(stream_type):
 	global config
 
 	brands = get_json_by_type('BRAND')
-	if stream_type == 'VOD':
+	if stream_type == 'LIVE':
+		epg = get_epg()
 
-		for brand in brands['data']:
-			channel_id = str(brand['channelId'])
-			for metadata_lang, metadata in brand['metadata'].items():
-				if metadata_lang == 'de':
-					if metadata['hasVodContent'] == True:
-						extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO')
-						add_dir(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata)
-					break
-		xbmcplugin.endOfDirectory(pluginhandle)
-
-	elif stream_type == 'LIVE':
-
-		for brand in brands['data']:
-			for metadata_lang, metadata in brand['metadata'].items():
-				if metadata_lang == 'de':
-					if 'livestreams' in metadata.keys():
-						for livestream in metadata['livestreams']:
-							stream_id = livestream['streamId']
-							add_link(metadata= extract_metadata(metadata=metadata, selection_type='BRAND',
-									img_type='BRAND_LOGO'), mode='play_video', video_id=stream_id, stream_type='LIVE')
-					break
-
-		xbmcplugin.endOfDirectory(pluginhandle)
-
-	else:
-		index()
+	for brand in brands['data']:
+		channel_id = brand['channelId']
+		for metadata_lang, metadata in brand['metadata'].items():
+			if metadata_lang == 'de':
+				extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO')
+				if stream_type == 'VOD' and metadata['hasVodContent'] == True:
+					add_dir(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata)
+				elif stream_type == 'LIVE' and 'livestreams' in metadata.keys():
+					for livestream in metadata['livestreams']:
+						stream_id = livestream['streamId']
+						if channel_id in epg.keys():
+							extracted_metadata.update(extract_metadata_from_epg(epg[channel_id]))
+						add_link(metadata=extracted_metadata,mode='play_video', video_id=stream_id, stream_type='LIVE')
+				break
+	xbmcplugin.endOfDirectory(handle=pluginhandle,cacheToDisc=False,updateListing=True)
 
 def tvshows(channel_id, fanart_img):
 	global config, CONST
@@ -880,8 +931,9 @@ def add_link(mode, video_id, metadata, duration='', genres='', season='', episod
 	})
 
 	list_item = xbmcgui.ListItem(metadata['title'], iconImage=icon, thumbnailImage= metadata['img'])
+
 	if stream_type == 'LIVE':
-		list_item.setInfo(type='Video', infoLabels={'Title': metadata['title'] + ' (LIVE)'})
+		list_item.setInfo(type='Video', infoLabels={'Title': metadata['title'], 'Plot': metadata['description']})
 	else:
 		list_item.setInfo(type='Video',
 			infoLabels={'Title': metadata['title'], 'Duration': duration, 'Plot': metadata['description'], 'Genre': genres, 'Season': season, 'Episode': episode,
