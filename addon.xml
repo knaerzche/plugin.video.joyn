@@ -17,11 +17,11 @@
     <email>knaerzche at gmail dot com</email>
     <platform>all</platform>
 	<assets>
-            <icon>icon.png</icon>
-            <fanart>fanart.jpg</fanart>
-            <screenshot>resources/ss_live.png</screenshot>
-            <screenshot>resources/ss_season.png</screenshot>
-            <screenshot>resources/ss_video.png</screenshot>
+            <icon>resources/icon.png</icon>
+            <fanart>resources/fanart.jpg</fanart>
+            <screenshot>resources/ss_live.jpg</screenshot>
+            <screenshot>resources/ss_season.jpg</screenshot>
+            <screenshot>resources/ss_video.jpg</screenshot>
         </assets>
  </extension>
 </addon>

@@ -792,7 +792,7 @@ def channels(stream_type):
 		channel_id = str(brand['channelId'])
 		for metadata_lang, metadata in brand['metadata'].items():
 			if metadata_lang == 'de':
-				extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO')
+				extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO', description_type='seo')
 				if stream_type == 'VOD' and metadata['hasVodContent'] == True:
 					add_dir(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata)
 				elif stream_type == 'LIVE' and 'livestreams' in metadata.keys():
@@ -1011,8 +1011,8 @@ pluginhandle = int(sys.argv[1])
 pluginquery = sys.argv[2]
 addon = xbmcaddon.Addon()
 addon_path = xbmc.translatePath(addon.getAddonInfo('path')).encode('utf-8').decode('utf-8')
-icon = os.path.join(addon_path, 'icon.png')
-default_fanart = os.path.join(addon_path, 'fanart.jpg')
+icon = addon.getAddonInfo('icon')
+default_fanart = addon.getAddonInfo('fanart')
 xbmcplugin.setContent(pluginhandle, 'tvshows')
 
 if not  addon_enabled(CONST['INPUTSTREAM_ADDON']):
