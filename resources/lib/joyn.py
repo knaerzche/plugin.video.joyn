@@ -561,19 +561,21 @@ def get_config():
 
 	return config
 
-def get_json_by_type(type, replacements={}):
+def get_json_by_type(type, replacements={}, additional_params={}):
 	global CONST
 
 	valued_query_params = {}
 
-	for key, value in CONST['PATH'][type]['QUERY_PARAMS'].items():
-		if re.search('^##(.)+##$', value) is not None:
-			key = value[2:-2]
-			if (key in replacements.keys()):
-				value = replacements[key]
-		valued_query_params.update({key : value})
+	if 'search' not in additional_params.keys():
+		for key, value in CONST['PATH'][type]['QUERY_PARAMS'].items():
+			if re.search('^##(.)+##$', value) is not None:
+				key = value[2:-2]
+				if (key in replacements.keys()):
+					value = replacements[key]
+			valued_query_params.update({key : value})
 
 	valued_query_params.update({'selection' : CONST['PATH'][type]['SELECTION']})
+	valued_query_params.update(additional_params)
 
 	return get_joyn_json_response(url=CONST['MIDDLEWARE_URL'] + CONST['PATH'][type]['PATH'] , params=valued_query_params)
 
@@ -748,8 +750,10 @@ def extract_metadata_from_epg(epg_channel_data):
 def index():
 	global pluginhandle
 
-	add_dir(metadata={'title' : 'VOD', 'description' : 'Video on demand'}, mode='channels', stream_type='VOD')
-	add_dir(metadata={'title' : 'Live', 'description' : 'Live TV'}, mode='channels',stream_type='LIVE')
+	add_dir(metadata={'title' : 'VOD Kanäle', 'description' : 'Video on demand gruppiert nach Kanälen'}, mode='channels', stream_type='VOD')
+	add_dir(metadata={'title' : 'VOD Suche', 'description' : 'Suche nach Serien in Video on demand'}, mode='search')
+	add_dir(metadata={'title' : 'Live TV', 'description' : 'Live TV'}, mode='channels',stream_type='LIVE')
+
 	xbmcplugin.endOfDirectory(pluginhandle)
 
 def get_epg():
@@ -931,6 +935,25 @@ def play_video(video_id, stream_type='VOD'):
 	video_response = get_json_response(url=video_url, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
 	xbmcplugin.setResolvedUrl(pluginhandle, True, get_video_listitem(video_response, stream_type))
 
+def search(stream_type='VOD'):
+
+	dialog = xbmcgui.Dialog()
+	search_term = dialog.input('Suche', type=xbmcgui.INPUT_ALPHANUM)
+
+	if len(search_term) > 0:
+		request_params = {'search': search_term.lower(), 'hasVodContent': 'true'}
+		tvshows = get_json_by_type(type='TVSHOW',additional_params=request_params)
+		if len(tvshows['data']) > 0:
+			for tvshow in tvshows['data']:
+				tv_show_id = str(tvshow['id'])
+				if 'metadata' in tvshow.keys() and 'de' in tvshow['metadata'].keys():
+					extracted_metadata = extract_metadata(metadata=tvshow['metadata']['de'], selection_type='TVSHOW')
+					add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata)
+			xbmcplugin.endOfDirectory(handle=pluginhandle)
+		else:
+			dialog = xbmcgui.Dialog()
+			dialog.notification('Keine Ergebnisse', 'für "' + search_term + '" gefunden', icon)
+
 def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type=''):
 	global xbmcgui, xbmcplugin,pluginhandle, default_fanart, icon, pluginurl
 
@@ -1017,13 +1040,13 @@ xbmcplugin.setContent(pluginhandle, 'tvshows')
 
 if not  addon_enabled(CONST['INPUTSTREAM_ADDON']):
         dialog = xbmcgui.Dialog()
-        dialog.notification('Inputstream nicht aktiviert', 'Inputstream nicht aktiviert', xbmcgui.NOTIFICATION_ERROR)
+        dialog.notification('Inputstream nicht aktiviert', 'Inputstream nicht aktiviert', icon)
         sys.exit(0)
 
 is_helper = Helper('mpd', drm='widevine')
 if not is_helper.check_inputstream():
 	dialog = xbmcgui.Dialog()
-	dialog.notification('Widevine nicht gefunden', 'Ohne Widevine kann das Addon nicht verwendet werden.', xbmcgui.NOTIFICATION_ERROR)
+	dialog.notification('Widevine nicht gefunden', 'Ohne Widevine kann das Addon nicht verwendet werden.', icon)
 	sys.exit(0)
 
 config = get_config()
@@ -1053,6 +1076,8 @@ if 'mode' in param_keys:
 		channels(stream_type)
 	elif mode == 'tvshows' and 'channel_id' in param_keys:
 		tvshows(params['channel_id'],parent_img)
+	elif mode == 'search':
+		search(stream_type)
 	else:
 		index()
 else:
