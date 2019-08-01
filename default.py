@@ -118,8 +118,12 @@ CONST = {
 
 	'CACHE_DIR'		: 'cache',
 	'TEMP_DIR'		: 'tmp',
-	'CONFIG_CACHE_FILE'	: 'config.json',
-	'CONFIG_CACHE_EXPIRES'	: 3600,
+	'CACHE'			: {
+					'CONFIG'	: { 'key' : 'config', 'expires' : 3600 },
+					'EPG'		: { 'key' : 'epg', 'expires': 28800 },
+					'BRANDS'	: { 'key' : 'brands', 'expires' : 36000 },
+				  },
+
 	'INPUTSTREAM_ADDON'	: 'inputstream.adaptive',
 
 }
@@ -428,40 +432,65 @@ def query_mpd_tree(mpd_tree, query_path):
 
 	return None
 
+def get_cache(cache_name, override_expire_secs=None):
+
+	cache_path = get_xbmc_file_path(CONST['CACHE_DIR'], CONST['CACHE'][cache_name]['key'] + '.json')
+
+	if (override_expire_secs is not None):
+		expire_datetime = datetime.now() - timedelta(seconds=override_expire_secs)
+	else:
+		expire_datetime = datetime.now() - timedelta(seconds=CONST['CACHE'][cache_name]['expires'])
+
+	res = {
+		'data': None,
+		'is_expired' : True,
+	};
+
+	if os.path.exists(cache_path):
+		if platform.system() == 'Windows':
+			filetime = datetime.fromtimestamp(os.path.getctime(cache_path))
+		else:
+			filetime = datetime.fromtimestamp(os.path.getmtime(cache_path))
+
+		with open(cache_path) as cache_infile:
+				try:
+					res['data'] = json.load(cache_infile)
+				except ValueError:
+					log('Could decode file from cache: ' + cache_path )
+					pass
+
+		if filetime >= expire_datetime:
+			res['is_expired'] = False
+
+	return res;
+
+def set_cache(cache_name, data):
+
+	cache_path = get_xbmc_file_path(CONST['CACHE_DIR'], CONST['CACHE'][cache_name]['key'] + '.json')
+
+	with open (cache_path, 'w') as cache_outfile:
+			json.dump(data,cache_outfile)
+
 def get_config():
 	global config, CONST, addon
 
-	cached_config_path = get_xbmc_file_path(CONST['CACHE_DIR'], CONST['CONFIG_CACHE_FILE'])
 
 	recreate_config = True
 	config = {}
 	cached_config = None
 
-	if os.path.exists(cached_config_path):
-		expire_config_mins = addon.getSetting('configcachemins')
-		if expire_config_mins is not '':
-			expire_secs = int(expire_config_mins) * 60
-		else:
-			expire_secs = CONST['CONFIG_CACHE_EXPIRES']
+	expire_config_mins = addon.getSetting('configcachemins')
+	if expire_config_mins is not '':
+		confg_cache_res = get_cache('CONFIG', (int(expire_config_mins) * 60))
+	else:
+		confg_cache_res = get_cache('CONFIG')
 
-		expire_time = datetime.now() - timedelta(seconds=expire_secs)
+	if confg_cache_res['data'] is not None:
+		cached_config =  confg_cache_res['data']
 
-		if platform.system() == 'Windows':
-			filetime = datetime.fromtimestamp(os.path.getctime(cached_config_path))
-		else:
-			filetime = datetime.fromtimestamp(os.path.getmtime(cached_config_path))
-
-		with open(cached_config_path) as cached_config_infile:
-				try:
-					cached_config = json.load(cached_config_infile)
-				except ValueError:
-					log('Could not load cached config ' + cached_config_path + ' ... recreating it')
-					pass
-
-		if filetime >= expire_time:
-			recreate_config = False;
-			config = cached_config;
-			debug('get_config(): Use Cache: ' + cached_config_path)
+	if confg_cache_res['is_expired'] is False:
+		recreate_config = False;
+		config = cached_config;
 
 	if recreate_config == True:
 		debug('get_config(): create config')
@@ -528,8 +557,7 @@ def get_config():
 				failing('Could not decrypt config: ' + str(e))
 				sys.exit(0)
 
-		with open (cached_config_path, 'w') as cached_config_outfile:
-			json.dump(config,cached_config_outfile)
+		set_cache('CONFIG', config)
 
 	return config
 
@@ -734,6 +762,7 @@ def get_epg():
 		);
 
 	for raw_epg_data in raw_epg['data']:
+		raw_epg_data['channelId'] = str(raw_epg_data['channelId'])
 		if raw_epg_data['channelId'] not in epg.keys():
 			epg.update({raw_epg_data['channelId'] : []})
 		epg[raw_epg_data['channelId']].append(raw_epg_data);
@@ -743,12 +772,24 @@ def get_epg():
 def channels(stream_type):
 	global config
 
-	brands = get_json_by_type('BRAND')
+	cached_brands = get_cache('BRANDS')
+	if cached_brands['data'] is not None and cached_brands['is_expired'] is False:
+		brands = cached_brands['data']
+	else:
+		brands = get_json_by_type('BRAND')
+		set_cache('BRANDS', brands)
+
 	if stream_type == 'LIVE':
-		epg = get_epg()
+		cached_epg =  get_cache('EPG')
+
+		if cached_epg['data'] is not None and cached_epg['is_expired'] is False:
+			epg = cached_epg['data']
+		else:
+			epg = get_epg()
+			set_cache('EPG',epg)
 
 	for brand in brands['data']:
-		channel_id = brand['channelId']
+		channel_id = str(brand['channelId'])
 		for metadata_lang, metadata in brand['metadata'].items():
 			if metadata_lang == 'de':
 				extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO')
@@ -759,9 +800,10 @@ def channels(stream_type):
 						stream_id = livestream['streamId']
 						if channel_id in epg.keys():
 							extracted_metadata.update(extract_metadata_from_epg(epg[channel_id]))
+
 						add_link(metadata=extracted_metadata,mode='play_video', video_id=stream_id, stream_type='LIVE')
 				break
-	xbmcplugin.endOfDirectory(handle=pluginhandle,cacheToDisc=False,updateListing=True)
+	xbmcplugin.endOfDirectory(handle=pluginhandle,cacheToDisc=False)
 
 def tvshows(channel_id, fanart_img):
 	global config, CONST
