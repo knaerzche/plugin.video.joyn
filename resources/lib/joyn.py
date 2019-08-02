@@ -104,6 +104,11 @@ CONST = {
 								'SELECTION'	: '{totalCount,data{id,title,description,tvShow,type,tvChannelName,channelId,startTime,endTime,video,images(subType:"cover"){url,subType}}}',
 								'IMG_PROFILE'	: 'profile:original',
 							  },
+					'FETCH'		: {	'PATH'		: 'fetch/',
+								'QUERY_PARAMS'	: {},
+								'SELECTION'	: '{data{id,visibilities, channelId ,agofCodes,duration,metadata{de}}}',
+								'IMG_PROFILE'	: 'profile:original',
+							  },
 
 				  },
 	'EPG'			: {
@@ -561,7 +566,7 @@ def get_config():
 
 	return config
 
-def get_json_by_type(type, replacements={}, additional_params={}):
+def get_json_by_type(type, replacements={}, additional_params={}, url_annex=''):
 	global CONST
 
 	valued_query_params = {}
@@ -577,7 +582,7 @@ def get_json_by_type(type, replacements={}, additional_params={}):
 	valued_query_params.update({'selection' : CONST['PATH'][type]['SELECTION']})
 	valued_query_params.update(additional_params)
 
-	return get_joyn_json_response(url=CONST['MIDDLEWARE_URL'] + CONST['PATH'][type]['PATH'] , params=valued_query_params)
+	return get_joyn_json_response(url=CONST['MIDDLEWARE_URL'] + CONST['PATH'][type]['PATH'] + url_annex , params=valued_query_params)
 
 def get_video_listitem(video_data,stream_type='VOD'):
 	global xbmcgui, CONST, config, addon
@@ -750,8 +755,9 @@ def extract_metadata_from_epg(epg_channel_data):
 def index():
 	global pluginhandle
 
-	add_dir(metadata={'title' : 'VOD Kanäle', 'description' : 'Video on demand gruppiert nach Kanälen'}, mode='channels', stream_type='VOD')
-	add_dir(metadata={'title' : 'VOD Suche', 'description' : 'Suche nach Serien in Video on demand'}, mode='search')
+	add_dir(metadata={'title' : 'Mediatheken', 'description' : 'Mediatheken von www.joyn.de'}, mode='channels', stream_type='VOD')
+	add_dir(metadata={'title' : 'Rubriken', 'description' : 'Mediatheken gruppiert in Rubriken'}, mode='categories', stream_type='VOD')
+	add_dir(metadata={'title' : 'Suche', 'description' : 'Suche in den Mediatheken'}, mode='search')
 	add_dir(metadata={'title' : 'Live TV', 'description' : 'Live TV'}, mode='channels',stream_type='LIVE')
 
 	xbmcplugin.endOfDirectory(pluginhandle)
@@ -954,7 +960,32 @@ def search(stream_type='VOD'):
 			dialog = xbmcgui.Dialog()
 			dialog.notification('Keine Ergebnisse', 'für "' + search_term + '" gefunden', icon)
 
-def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type=''):
+def categories(stream_type='VOD'):
+
+	cats = get_joyn_json_response(CONST['MIDDLEWARE_URL']  + 'ui?path=/')
+	if 'blocks' in cats.keys():
+		for block in cats['blocks']:
+			if 'type' in block.keys() and 'configuration' in block.keys() and block['type'] == 'StandardLane':
+				cat_name = block['configuration']['Headline']
+				fetch_ids = []
+				for block_item in block['items']:
+					fetch_ids.append(block_item['fetch']['id'])
+				add_dir('fetch_categories', {'title' : cat_name, 'description': ''}, fetch_ids=json.dumps(fetch_ids))
+
+		xbmcplugin.endOfDirectory(handle=pluginhandle)
+
+def fetch_categories(categories, stream_type='VOD'):
+
+	for category in categories:
+		category_data = get_json_by_type('FETCH', url_annex=category)
+		for tvshow in category_data['data']:
+			tv_show_id = str(tvshow['id'])
+			if 'metadata' in tvshow.keys() and 'de' in tvshow['metadata'].keys():
+				extracted_metadata = extract_metadata(metadata=tvshow['metadata']['de'], selection_type='TVSHOW')
+				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata)
+	xbmcplugin.endOfDirectory(handle=pluginhandle)
+
+def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type='', fetch_ids=''):
 	global xbmcgui, xbmcplugin,pluginhandle, default_fanart, icon, pluginurl
 
 	params = {
@@ -964,7 +995,9 @@ def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id
 		'video_id': video_id,
 		'stream_type': stream_type,
 		'channel_id': channel_id,
+		'fetch_ids' : fetch_ids
 	}
+
 	list_item = xbmcgui.ListItem(metadata['title'])
 
 	if 'img' in metadata and metadata['img'] is not '':
@@ -1078,6 +1111,10 @@ if 'mode' in param_keys:
 		tvshows(params['channel_id'],parent_img)
 	elif mode == 'search':
 		search(stream_type)
+	elif mode == 'categories':
+		categories(stream_type)
+	elif mode == 'fetch_categories' and 'fetch_ids' in param_keys:
+		fetch_categories(json.loads(params['fetch_ids']), stream_type)
 	else:
 		index()
 else:
