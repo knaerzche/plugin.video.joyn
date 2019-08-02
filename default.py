@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
 #entrypoint
-from resources.lib import joyn
+from resources.lib import plugin

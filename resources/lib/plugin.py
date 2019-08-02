@@ -15,9 +15,11 @@ if PY2:
 	from urllib import quote, unquote, quote_plus, unquote_plus, urlencode  # Python 2.X
 	from urllib2 import build_opener, Request, urlopen  # Python 2.X
 	from urlparse import urljoin, urlparse, urlunparse , urlsplit, parse_qs # Python 2.X
+	from HTMLParser import HTMLParser
 elif PY3:
 	from urllib.parse import quote, unquote, quote_plus, unquote_plus, urlencode, urljoin, urlparse, urlunparse, urlsplit, parse_qs  # Python 3+
 	from urllib.request import build_opener, Request, urlopen  # Python 3+
+	from html.parser import HTMLParser
 import json
 import xbmcvfs
 import time
@@ -58,7 +60,8 @@ CONST = {
 
 											},
 								'SELECTION'	:	'{data{id,channelId,visibilities,duration,metadata{de}}}',
-								'IMG_PROFILE'	:	'profile:original',
+								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+								'ART'		:	{},
 							  },
 
 					'VIDEO'		: {
@@ -70,14 +73,26 @@ CONST = {
 												'skip'			: '0',
 											},
 								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,agofCode,path(context:"web", region:"de", type:"cmsPath"){path},tvShow,season,episode,duration,metadata{de},visibilities{endsAt}}}',
-								'IMG_PROFILE'	:	'profile:original',
-							  } ,
+								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
+											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
+											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
+											},
+
+							  },
 
 					'BRAND'		: {
 								'PATH'		:	'brands',
 								'QUERY_PARAMS' 	: 	{},
 								'SELECTION'	:	'{data{id,channelId,agofCodes,metadata{de}}}',
-								'IMG_PROFILE'	:	'profile:original',
+								'TEXTS'		:	{'title' : 'main', 'description' : 'seo'},
+								'ART'		:	{'BRAND_LOGO'  : {
+													'icon'   : 'profile:nextgen-web-artlogo-183x75',
+													'thumb'  : 'profile:original',
+													'poster' : 'profile:original',
+												},
+											},
 							  },
 
 					'TVSHOW'	: {
@@ -88,7 +103,12 @@ CONST = {
 												'skip'			: '0',
 											},
 								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,metadata{de{ageRatings,copyrights ,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},seo,channelObject{classIdentifier,bundleId},type,bundleId,classIdentifier,titles,descriptions}},baseUrl,path(context:"web", region:"de", type:"cmsPath"),brand,channelId,tvShow,season,episode,status}}',
-								'IMG_PROFILE'	:	'profile:original',
+								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
+											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
+											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
+											},
 
 							  },
 					'EPG'		: {
@@ -107,7 +127,12 @@ CONST = {
 					'FETCH'		: {	'PATH'		: 'fetch/',
 								'QUERY_PARAMS'	: {},
 								'SELECTION'	: '{data{id,visibilities, channelId ,agofCodes,duration,metadata{de}}}',
-								'IMG_PROFILE'	: 'profile:original',
+								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
+											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
+											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
+											},
 							  },
 
 				  },
@@ -701,53 +726,56 @@ def set_mpd_props(list_item, url, stream_type='VOD'):
 
 	return False
 
-def extract_metadata(metadata, selection_type, img_type='PRIMARY', description_type='main', title_type='main', fanart_type=''):
+def extract_metadata(metadata, selection_type):
 	extracted_metadata = {
-		'img'   : '',
-		'title' : '',
-		'description' : '',
-		'fanart': '',
+		'art': {},
+		'infoLabels' : {},
 	};
 
-	if 'descriptions' in metadata.keys():
+	path = CONST['PATH'][selection_type]
+
+	if 'descriptions' in metadata.keys() and 'description' in path['TEXTS'].keys():
 		for description in metadata['descriptions']:
-			if description['type'] == description_type:
-				extracted_metadata.update({'description' : description['text']})
+			if description['type'] == path['TEXTS']['description']:
+				extracted_metadata['infoLabels'].update({'Plot' : description['text']})
 				break
-	if 'titles' in metadata.keys():
+	if 'titles' in metadata.keys() and 'title' in path['TEXTS'].keys():
 		for title in metadata['titles']:
-			if title['type'] == title_type:
-				extracted_metadata.update({'title' : title['text']})
+			if title['type'] ==  path['TEXTS']['title']:
+				extracted_metadata['infoLabels'].update({'Title' : title['text']})
 				break
-	if 'images' in metadata.keys():
+	if 'images' in metadata.keys() and 'ART' in path.keys():
 		for image in metadata['images']:
-			if image['type'] == img_type:
-				extracted_metadata.update({'img' : image['url'] + '/' + CONST['PATH'][selection_type]['IMG_PROFILE']})
-			if image['type'] == fanart_type:
-				extracted_metadata.update({'fanart' : image['url'] + '/' + CONST['PATH'][selection_type]['IMG_PROFILE']})
+			if image['type'] in path['ART'].keys():
+				for art_type, img_profile in path['ART'][image['type']].items():
+					extracted_metadata['art'].update({art_type : image['url'] + '/' + img_profile})
 
 	return extracted_metadata
 
 
 def extract_metadata_from_epg(epg_channel_data):
-	extracted_metadata = {};
+	extracted_metadata = {
+		'art': {},
+		'infoLabels' : {},
+	};
+
 
 	for idx, program_data in enumerate(epg_channel_data):
 		endTime = datetime.fromtimestamp(program_data['endTime'])
 		if  endTime > datetime.now():
-			extracted_metadata['title'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_TITLE']).format(program_data['tvChannelName'], program_data['tvShow']['title'])
+			extracted_metadata['infoLabels']['Title'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_TITLE']).format(program_data['tvChannelName'], program_data['tvShow']['title'])
 
 			if len(epg_channel_data) > (idx+2):
-				extracted_metadata['description'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL_AND_NEXT']).format(endTime,epg_channel_data[idx+1]['tvShow']['title'])
+				extracted_metadata['infoLabels']['Plot'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL_AND_NEXT']).format(endTime,epg_channel_data[idx+1]['tvShow']['title'])
 			else:
-				extracted_metadata['description'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL']).format(endTime)
+				extracted_metadata['infoLabels']['Plot'] = py2_uni(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL']).format(endTime)
 
 			if program_data['description'] is not None:
-				extracted_metadata['description'] += program_data['description']
+				extracted_metadata['infoLabels']['Plot'] += program_data['description']
 
 			for image in program_data['images']:
 				if image['subType'] == 'cover':
-					extracted_metadata['fanart'] = image['url'] + '/' + CONST['PATH']['EPG']['IMG_PROFILE']
+					extracted_metadata['art']['thumb'] = image['url'] + '/' + CONST['PATH']['EPG']['IMG_PROFILE']
 			break
 
 	return extracted_metadata;
@@ -755,10 +783,10 @@ def extract_metadata_from_epg(epg_channel_data):
 def index():
 	global pluginhandle
 
-	add_dir(metadata={'title' : 'Mediatheken', 'description' : 'Mediatheken von www.joyn.de'}, mode='channels', stream_type='VOD')
-	add_dir(metadata={'title' : 'Rubriken', 'description' : 'Mediatheken gruppiert in Rubriken'}, mode='categories', stream_type='VOD')
-	add_dir(metadata={'title' : 'Suche', 'description' : 'Suche in den Mediatheken'}, mode='search')
-	add_dir(metadata={'title' : 'Live TV', 'description' : 'Live TV'}, mode='channels',stream_type='LIVE')
+	add_dir(metadata={'infoLabels': {'Title' : 'Mediatheken', 'Plot' : 'Mediatheken von www.joyn.de'},'art': {}}, mode='channels', stream_type='VOD')
+	add_dir(metadata={'infoLabels': {'Title' : 'Rubriken', 'Plot' : 'Mediatheken gruppiert in Rubriken'}, 'art': {}}, mode='categories', stream_type='VOD')
+	add_dir(metadata={'infoLabels': {'Title' : 'Suche', 'Plot' : 'Suche in den Mediatheken'}, 'art': {}}, mode='search')
+	add_dir(metadata={'infoLabels': {'Title' : 'Live TV', 'Plot' : 'Live TV'}, 'art': {}}, mode='channels',stream_type='LIVE')
 
 	xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -802,7 +830,7 @@ def channels(stream_type):
 		channel_id = str(brand['channelId'])
 		for metadata_lang, metadata in brand['metadata'].items():
 			if metadata_lang == 'de':
-				extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND',img_type='BRAND_LOGO', description_type='seo')
+				extracted_metadata = extract_metadata(metadata=metadata, selection_type='BRAND')
 				if stream_type == 'VOD' and metadata['hasVodContent'] == True:
 					add_dir(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata)
 				elif stream_type == 'LIVE' and 'livestreams' in metadata.keys():
@@ -824,11 +852,10 @@ def tvshows(channel_id, fanart_img):
 		for metadata_lang, metadata in tvshow['metadata'].items():
 			if metadata_lang == 'de':
 				extracted_metadata = extract_metadata(metadata, 'TVSHOW')
-				extracted_metadata.update({'fanart' : fanart_img});
-				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata)
+				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata, parent_fanart=fanart_img)
 	xbmcplugin.endOfDirectory(pluginhandle)
 
-def season(tv_show_id, fanart_img):
+def season(tv_show_id, parent_fanart_img, parent_img):
 	global config, CONST
 	seasons = get_json_by_type('SEASON', {'tvShowId' : tv_show_id})
 	for season in seasons['data']:
@@ -836,8 +863,7 @@ def season(tv_show_id, fanart_img):
 		for metadata_lang, metadata in season['metadata'].items():
 			if metadata_lang == 'de':
 				extracted_metadata = extract_metadata(metadata,'SEASON');
-				extracted_metadata.update({'fanart' : fanart_img});
-				extracted_metadata.update({'img' : fanart_img});
+				extracted_metadata['art'].update({'thumb' : parent_img, 'fanart' : parent_fanart_img});
 				add_dir(mode='video', season_id=season_id, tv_show_id=tv_show_id,metadata=extracted_metadata)
 				break
 	xbmcplugin.endOfDirectory(pluginhandle)
@@ -850,42 +876,38 @@ def video(tv_show_id, season_id, fanart_img):
 
 	for video in videos['data']:
 		video_id = video['id']
-		genres = []
-		season = ''
-		series = ''
-		episode = ''
-		aired = ''
-		duration = ''
 
 		for metadata_lang, metadata_values in video['metadata'].items():
 			if metadata_lang == 'de':
 				extracted_metadata = extract_metadata(metadata=metadata_values,selection_type='VIDEO');
-				extracted_metadata.update({'fanart' : fanart_img});
 				if 'broadcastDate' in metadata_values.keys():
-					aired = datetime.utcfromtimestamp(metadata_values['broadcastDate']).strftime('%Y-%m-%d')
+					extracted_metadata['infoLabels'].update({'Aired' : datetime.utcfromtimestamp(metadata_values['broadcastDate']).strftime('%Y-%m-%d')})
 				break
 
+		extracted_metadata['infoLabels'].update({'Genre' : []})
 		if 'tvShow' in video.keys():
 			if 'genres' in video['tvShow'].keys():
 				for genre in video['tvShow']['genres']:
-					genres.append(genre['title'])
+					extracted_metadata['infoLabels']['Genre'].append(genre['title'])
 			if 'titles' in video['tvShow'].keys():
 				for title_key, title_value in video['tvShow']['titles'].items():
 					if title_key == 'default':
-						series = title_value
+						extracted_metadata['infoLabels'].update({'TVShowTitle' : HTMLParser().unescape(title_value)})
+						break
 		if 'season' in video.keys():
 			if 'titles' in video['season'].keys():
 				for season_title_key, season_title_value in video['season']['titles'].items():
 					if season_title_key == 'default':
-						season = season_title_value
+						extracted_metadata['infoLabels'].update({'Season' : season_title_value})
 						break
-		if 'episode' in video.keys():
-			if 'number' in video['episode'].keys():
-				episode = 'Episode ' + str(video['episode']['number'])
+		if 'episode' in video.keys() and 'number' in video['episode'].keys():
+			extracted_metadata['infoLabels'].update({'Episode' : 'Episode ' + str(video['episode']['number'])})
 		if 'duration' in video.keys():
-			duration = video['duration']/1000
+			extracted_metadata['infoLabels'].update({'Duration' : (video['duration']/1000)})
 
-		add_link(mode='play_video', metadata=extracted_metadata, video_id=video_id, duration=duration, genres=genres, season=season, episode=episode, series=series, aired=aired)
+		extracted_metadata['infoLabels'].update({'mediatype' : 'episode'});
+
+		add_link(mode='play_video', metadata=extracted_metadata, video_id=video_id,parent_fanart=fanart_img)
 
 	xbmcplugin.endOfDirectory(pluginhandle)
 
@@ -954,11 +976,11 @@ def search(stream_type='VOD'):
 				tv_show_id = str(tvshow['id'])
 				if 'metadata' in tvshow.keys() and 'de' in tvshow['metadata'].keys():
 					extracted_metadata = extract_metadata(metadata=tvshow['metadata']['de'], selection_type='TVSHOW')
-					add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata)
+					add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata,parent_fanart=default_fanart)
 			xbmcplugin.endOfDirectory(handle=pluginhandle)
 		else:
 			dialog = xbmcgui.Dialog()
-			dialog.notification('Keine Ergebnisse', 'für "' + search_term + '" gefunden', icon)
+			dialog.notification('Keine Ergebnisse', 'für "' + search_term + '" gefunden', default_icon)
 
 def categories(stream_type='VOD'):
 
@@ -970,7 +992,7 @@ def categories(stream_type='VOD'):
 				fetch_ids = []
 				for block_item in block['items']:
 					fetch_ids.append(block_item['fetch']['id'])
-				add_dir('fetch_categories', {'title' : cat_name, 'description': ''}, fetch_ids=json.dumps(fetch_ids))
+				add_dir(metadata={'infoLabels': {'Title' : cat_name, 'description' : ''}, 'art': {}}, mode='fetch_categories', fetch_ids=json.dumps(fetch_ids))
 
 		xbmcplugin.endOfDirectory(handle=pluginhandle)
 
@@ -982,11 +1004,10 @@ def fetch_categories(categories, stream_type='VOD'):
 			tv_show_id = str(tvshow['id'])
 			if 'metadata' in tvshow.keys() and 'de' in tvshow['metadata'].keys():
 				extracted_metadata = extract_metadata(metadata=tvshow['metadata']['de'], selection_type='TVSHOW')
-				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata)
+				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata,parent_fanart=default_fanart)
 	xbmcplugin.endOfDirectory(handle=pluginhandle)
 
-def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type='', fetch_ids=''):
-	global xbmcgui, xbmcplugin,pluginhandle, default_fanart, icon, pluginurl
+def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type='VOD', fetch_ids='', parent_fanart=''):
 
 	params = {
 		'mode' : mode,
@@ -998,27 +1019,38 @@ def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id
 		'fetch_ids' : fetch_ids
 	}
 
-	list_item = xbmcgui.ListItem(metadata['title'])
+	list_item = xbmcgui.ListItem(metadata['infoLabels']['Title'])
+	list_item.setInfo(type='Video', infoLabels=metadata['infoLabels'])
 
-	if 'img' in metadata and metadata['img'] is not '':
-		list_item.setArt({ 'thumb': metadata['img']})
-		params.update({'parent_img': metadata['img']});
-	else:
-		list_item.setArt({ 'thumb': icon})
+	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
+		metadata['art'].update({'poster' : metadata['art']['thumb']})
+	elif 'thumb' not in metadata['art']:
+		metadata['art'].update({ 'thumb' : default_thumb})
+		metadata['art'].update({ 'poster' : default_thumb})
 
-	list_item.setInfo(type='Video', infoLabels={'Title': metadata['title'], 'Plot': metadata['description']})
+	if 'icon' not in metadata['art']:
+		metadata['art'].update({ 'icon' : default_icon})
 
-	if 'fanart' in metadata and metadata['fanart'] is not '':
-		list_item.setArt({'fanart': metadata['fanart']})
-	else:
-		list_item.setArt({'fanart': default_fanart})
+	if 'fanart' not in metadata['art']:
+		if parent_fanart is not '':
+			metadata['art'].update({'fanart': parent_fanart})
+		else:
+			metadata['art'].update({'fanart': default_fanart})
+
+	params.update({'parent_img': metadata['art']['poster']})
+	params.update({'parent_fanart': metadata['art']['fanart']})
+
+	if 'fanart' in metadata['art'] and parent_fanart is not '':
+		metadata['art'].update({'fanart': parent_fanart})
+
+	list_item.setArt(metadata['art'])
 
 	url = pluginurl+'?'
 	url += urlencode(params)
 
 	return xbmcplugin.addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item, isFolder=True)
 
-def add_link(mode, video_id, metadata, duration='', genres='', season='', episode='', series='', aired='', stream_type='VOD'):
+def add_link(mode, video_id, metadata, stream_type='VOD', parent_fanart=''):
 	global xbmcgui, xbmcplugin, pluginhandle, pluginurl
 
 	url = pluginurl+'?'
@@ -1028,20 +1060,29 @@ def add_link(mode, video_id, metadata, duration='', genres='', season='', episod
 		'stream_type': stream_type,
 	})
 
-	list_item = xbmcgui.ListItem(metadata['title'], iconImage=icon, thumbnailImage= metadata['img'])
+	list_item = xbmcgui.ListItem(metadata['infoLabels']['Title'])
+	list_item.setInfo(type='Video', infoLabels=metadata['infoLabels'])
 
-	if stream_type == 'LIVE':
-		list_item.setInfo(type='Video', infoLabels={'Title': metadata['title'], 'Plot': metadata['description']})
-	else:
-		list_item.setInfo(type='Video',
-			infoLabels={'Title': metadata['title'], 'Duration': duration, 'Plot': metadata['description'], 'Genre': genres, 'Season': season, 'Episode': episode,
-				'TVShowTitle': series, 'Aired': aired, 'mediatype': 'episode'})
-		list_item.addStreamInfo('Video', {'Duration': duration})
-	if metadata['fanart'] != '':
-		list_item.setArt({'fanart': metadata['fanart']})
-	else:
-		list_item.setArt({'fanart': default_fanart})
+	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
+		metadata['art'].update({'poster' : metadata['art']['thumb']})
+	elif 'thumb' not in metadata['art']:
+		metadata['art'].update({ 'thumb' : default_thumb})
+		metadata['art'].update({ 'poster' : default_thumb})
 
+	if 'icon' not in metadata['art']:
+		metadata['art'].update({ 'icon' : default_icon})
+
+	if 'fanart' not in metadata['art']:
+		if parent_fanart is not '':
+			metadata['art'].update({'fanart': parent_fanart})
+		else:
+			metadata['art'].update({'fanart': default_fanart})
+
+
+	if 'fanart' in metadata['art'] and parent_fanart is not '':
+		metadata['art'].update({'fanart': parent_fanart})
+
+	list_item.setArt(metadata['art'])
 	list_item.setProperty('IsPlayable', 'True')
 
 	return xbmcplugin.addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item)
@@ -1066,20 +1107,20 @@ pluginurl = sys.argv[0]
 pluginhandle = int(sys.argv[1])
 pluginquery = sys.argv[2]
 addon = xbmcaddon.Addon()
-addon_path = xbmc.translatePath(addon.getAddonInfo('path')).encode('utf-8').decode('utf-8')
-icon = addon.getAddonInfo('icon')
+default_icon = addon.getAddonInfo('icon')
 default_fanart = addon.getAddonInfo('fanart')
+default_thumb = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources','thumb.gif')
 xbmcplugin.setContent(pluginhandle, 'tvshows')
 
 if not  addon_enabled(CONST['INPUTSTREAM_ADDON']):
         dialog = xbmcgui.Dialog()
-        dialog.notification('Inputstream nicht aktiviert', 'Inputstream nicht aktiviert', icon)
+        dialog.notification('Inputstream nicht aktiviert', 'Inputstream nicht aktiviert', default_icon)
         sys.exit(0)
 
 is_helper = Helper('mpd', drm='widevine')
 if not is_helper.check_inputstream():
 	dialog = xbmcgui.Dialog()
-	dialog.notification('Widevine nicht gefunden', 'Ohne Widevine kann das Addon nicht verwendet werden.', icon)
+	dialog.notification('Widevine nicht gefunden', 'Ohne Widevine kann das Addon nicht verwendet werden.', default_icon)
 	sys.exit(0)
 
 config = get_config()
@@ -1099,16 +1140,21 @@ if 'mode' in param_keys:
 	else:
 		parent_img = ''
 
+	if 'parent_fanart' in param_keys:
+		parent_fanart = params['parent_fanart']
+	else:
+		parent_fanart = ''
+
 	if mode == 'season' and 'tv_show_id' in param_keys:
-		season(params['tv_show_id'],parent_img)
+		season(params['tv_show_id'],parent_fanart, parent_img)
 	elif mode == 'video' and 'tv_show_id' in param_keys and 'season_id' in param_keys:
-		video(params['tv_show_id'],params['season_id'],parent_img)
+		video(params['tv_show_id'],params['season_id'],parent_fanart)
 	elif mode == 'play_video' and 'video_id' in param_keys:
 		play_video(params['video_id'], stream_type)
 	elif mode == 'channels':
 		channels(stream_type)
 	elif mode == 'tvshows' and 'channel_id' in param_keys:
-		tvshows(params['channel_id'],parent_img)
+		tvshows(params['channel_id'],parent_fanart)
 	elif mode == 'search':
 		search(stream_type)
 	elif mode == 'categories':
