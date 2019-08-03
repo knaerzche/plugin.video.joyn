@@ -1,5 +1,7 @@
 0.0.2.1
 - Tidy up, fix season images
-0.3.0.0
+0.0.3.0
 - Add Categories, Search and EPG for Live TV
 - Unify artwork
+0.0.3.1
+Increase EPG offset

@@ -195,7 +195,7 @@ def decrypt(key, value):
 		return None
 
 	n = m
-	ret = u''
+	ret = py2_enc('')
 	for i in range(length):
 		ret+= _unichr(value[i] & 255)
 		ret+= _unichr(value[i] >> 8 & 255)
@@ -273,7 +273,7 @@ def uc_slice(hex_string, start_pos=None, end_pos=None):
 	return res
 
 def uc_slices_to_string(uc_slices):
-	uc_string = u''
+	uc_string = py2_enc('')
 
 	for codepoint in uc_slices:
 		uc_string += _unichr(codepoint)

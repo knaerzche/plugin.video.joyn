@@ -80,7 +80,7 @@ CONST = {
 											'to'	 	: '##to##',
 											'sortBy' 	: 'startTime',
 											'sortAscending'	: 'true',
-											'limit'		: '5000',
+											'limit'		: '10000',
 										  },
 								'SELECTION'	: '{totalCount,data{id,title,description,tvShow,type,tvChannelName,channelId,startTime,endTime,video,images(subType:"cover"){url,subType}}}',
 								'IMG_PROFILE'	: 'profile:original',
@@ -98,8 +98,8 @@ CONST = {
 
 				  },
 	'EPG'			: {
-					'REQUEST_HOURS'		: 12,
-					'REQUEST_OFFSET_HOURS'	: 2,
+					'REQUEST_HOURS'		: 20,
+					'REQUEST_OFFSET_HOURS'	: 10,
 				  },
 	'TEXT_TEMPLATES'	: {
 					'LIVETV_TITLE'		: '[B]{:s}[/B] - {:s}',
@@ -111,7 +111,7 @@ CONST = {
 	'TEMP_DIR'		: 'tmp',
 	'CACHE'			: {
 					'CONFIG'	: { 'key' : 'config', 'expires' : 3600 },
-					'EPG'		: { 'key' : 'epg', 'expires': 28800 },
+					'EPG'		: { 'key' : 'epg', 'expires': 36000 },
 					'BRANDS'	: { 'key' : 'brands', 'expires' : 36000 },
 				  },
 
