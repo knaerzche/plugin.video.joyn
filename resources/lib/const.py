@@ -51,7 +51,6 @@ CONST = {
 								'ART'		:	{'BRAND_LOGO'  : {
 													'icon'   : 'profile:nextgen-web-artlogo-183x75',
 													'thumb'  : 'profile:original',
-													'poster' : 'profile:original',
 												},
 											},
 							  },
@@ -80,7 +79,7 @@ CONST = {
 											'to'	 	: '##to##',
 											'sortBy' 	: 'startTime',
 											'sortAscending'	: 'true',
-											'limit'		: '10000',
+											'limit'		: '5000',
 										  },
 								'SELECTION'	: '{totalCount,data{id,title,description,tvShow,type,tvChannelName,channelId,startTime,endTime,video,images(subType:"cover"){url,subType}}}',
 								'IMG_PROFILE'	: 'profile:original',

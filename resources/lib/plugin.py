@@ -138,6 +138,8 @@ def get_json_response(url, headers=None, params=None, post_data=None):
 	try:
 		return json.loads(get_url(url, headers, params, post_data))
 	except ValueError:
+		dialog = xbmcgui.Dialog()
+		dialog.notification('Fehler', 'Bitte erneut versuchen', default_icon)
 		failing('Could not decode json from url ' + url)
 		raise
 	return None
@@ -467,6 +469,8 @@ def get_config():
 				config['PSF_CLIENT_CONFIG'] = json.loads(py3_dec(base64.b64decode(decrypt(uc_string_to_long_array(config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]),uc_string_to_long_array(uc_slices_to_string(uc_slice(config['PLAYER_CONFIG']['toolkit']['psf'])))))))
 
 			except Exception as e:
+				dialog = xbmcgui.Dialog()
+				dialog.notification('Fehler', 'Konfiguration konnte nicht entschlüsselt werden.', default_icon)
 				failing('Could not decrypt config: ' + str(e))
 				sys.exit(0)
 
@@ -507,6 +511,8 @@ def get_video_listitem(video_data,stream_type='VOD'):
 					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate', video_data['certificateUrl'] + '|'
 						+  get_header_string({'User-Agent' : config['USER_AGENT']}))
 		else:
+			dialog = xbmcgui.Dialog()
+			dialog.notification('Fehler', 'Konnte keine gültigen Video-Stream finden.', default_icon)
 			failing('Could not get valid MPD')
 
 	else:
@@ -658,7 +664,7 @@ def extract_metadata_from_epg(epg_channel_data):
 
 			for image in program_data['images']:
 				if image['subType'] == 'cover':
-					extracted_metadata['art']['thumb'] = image['url'] + '/' + CONST['PATH']['EPG']['IMG_PROFILE']
+					extracted_metadata['art']['poster'] = image['url'] + '/' + CONST['PATH']['EPG']['IMG_PROFILE']
 			break
 
 	return extracted_metadata;
@@ -720,8 +726,9 @@ def channels(stream_type):
 					for livestream in metadata['livestreams']:
 						stream_id = livestream['streamId']
 						if channel_id in epg.keys():
-							extracted_metadata.update(extract_metadata_from_epg(epg[channel_id]))
-
+							epg_metadata = extract_metadata_from_epg(epg[channel_id])
+							extracted_metadata['infoLabels'].update(epg_metadata['infoLabels'])
+							extracted_metadata['art'].update(epg_metadata['art'])
 						add_link(metadata=extracted_metadata,mode='play_video', video_id=stream_id, stream_type='LIVE')
 				break
 	xbmcplugin.endOfDirectory(handle=pluginhandle,cacheToDisc=False)
@@ -908,8 +915,8 @@ def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id
 	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
 		metadata['art'].update({'poster' : metadata['art']['thumb']})
 	elif 'thumb' not in metadata['art']:
-		metadata['art'].update({ 'thumb' : default_thumb})
-		metadata['art'].update({ 'poster' : default_thumb})
+		metadata['art'].update({ 'thumb' : default_logo})
+		metadata['art'].update({ 'poster' : default_logo})
 
 	if 'icon' not in metadata['art']:
 		metadata['art'].update({ 'icon' : default_icon})
@@ -949,8 +956,8 @@ def add_link(mode, video_id, metadata, stream_type='VOD', parent_fanart=''):
 	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
 		metadata['art'].update({'poster' : metadata['art']['thumb']})
 	elif 'thumb' not in metadata['art']:
-		metadata['art'].update({ 'thumb' : default_thumb})
-		metadata['art'].update({ 'poster' : default_thumb})
+		metadata['art'].update({ 'thumb' : default_logo})
+		metadata['art'].update({ 'poster' : default_logo})
 
 	if 'icon' not in metadata['art']:
 		metadata['art'].update({ 'icon' : default_icon})
@@ -992,7 +999,7 @@ pluginquery = sys.argv[2]
 addon = xbmcaddon.Addon()
 default_icon = addon.getAddonInfo('icon')
 default_fanart = addon.getAddonInfo('fanart')
-default_thumb = os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources','thumb.gif')
+default_logo = xbmc.translatePath(os.path.join(xbmcaddon.Addon().getAddonInfo('path'), 'resources','logo.gif')).encode('utf-8').decode('utf-8')
 xbmcplugin.setContent(pluginhandle, 'tvshows')
 
 if not  addon_enabled(CONST['INPUTSTREAM_ADDON']):
