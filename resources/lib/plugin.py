@@ -24,6 +24,15 @@ elif compat.PY3:
 	from html.parser import HTMLParser
 
 
+try:
+	from multiprocessing.dummy import Pool as ThreadPool
+	from multiprocessing import cpu_count
+	from functools import partial
+	multi_threading = True
+except ImportError:
+	multi_threading = False
+	pass
+
 def index():
 
 	add_dir(metadata={'infoLabels': {'Title' : 'Mediatheken', 'Plot' : 'Mediatheken von www.joyn.de'},'art': {}}, mode='channels', stream_type='VOD')
@@ -206,9 +215,29 @@ def categories(stream_type='VOD'):
 
 def fetch_categories(categories, stream_type='VOD'):
 
-	for category in categories:
-		category_data = libjoyn.get_json_by_type('FETCH', url_annex=category)
-		for tvshow in category_data['data']:
+	xbmc_helper.log_debug('fetch_categories - multithreading : ' + str(multi_threading))
+	fetch_results = []
+
+	#before threading can be done, the first request needs to be done seperatly to initialize the thread context for urlib and stuff
+	frst_fetch_result = libjoyn.get_json_by_type('FETCH', {}, {}, categories[0])
+	if len(categories) > 1:
+		if multi_threading is True:
+			thread_count = cpu_count() -1
+			xbmc_helper.log_debug('fetch_categories - number of threads : ' + str(thread_count))
+			thread_pool = ThreadPool(thread_count)
+			fetch_results = thread_pool.map(partial(libjoyn.get_json_by_type, 'FETCH', {}, {}), categories[1:])
+			thread_pool.close()
+			thread_pool.join()
+		else:
+			for category in categories[1:]:
+				fetch_results.append(libjoyn.get_json_by_type('FETCH', {}, {},category))
+
+		fetch_results.insert(0, frst_fetch_result)
+	else:
+		fetch_results = [frst_fetch_result]
+
+	for category in fetch_results:
+		for tvshow in category['data']:
 			tv_show_id = str(tvshow['id'])
 			if 'metadata' in tvshow.keys() and 'de' in tvshow['metadata'].keys():
 				extracted_metadata = libjoyn.extract_metadata(metadata=tvshow['metadata']['de'], selection_type='TVSHOW')
