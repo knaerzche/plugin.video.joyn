@@ -72,7 +72,10 @@ def get_json_response(url, config, headers=None, params=None, post_data=None):
 	try:
 		return loads(get_url(url, config, headers, params, post_data))
 	except ValueError:
-		xbmc_helper.notification('Fehler', 'Bitte erneut versuchen')
+		xbmc_helper.notification(
+			xbmc_helper.translation('ERROR').format('Decoding'),
+			xbmc_helper.translation('MSG_ERR_TRY_AGAIN')
+		)
 		raise
 	return None
 

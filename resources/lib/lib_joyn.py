@@ -373,7 +373,10 @@ class lib_joyn:
 				if description['type'] == path['TEXTS']['description']:
 					extracted_metadata['infoLabels'].update({'Plot' : description['text']})
 					break
-		if 'titles' in metadata.keys() and 'title' in path['TEXTS'].keys():
+
+		if selection_type == 'SEASON' and 'seasonNumber' in metadata.keys() and metadata['seasonNumber'] is not None:
+			extracted_metadata['infoLabels'].update({'Title' : xbmc_helper.translation('SEASON_NO').format(str(metadata['seasonNumber']))})
+		elif 'titles' in metadata.keys() and 'title' in path['TEXTS'].keys():
 			for title in metadata['titles']:
 				if title['type'] ==  path['TEXTS']['title']:
 					extracted_metadata['infoLabels'].update({'Title' : title['text']})
@@ -398,14 +401,14 @@ class lib_joyn:
 		for idx, program_data in enumerate(epg_channel_data):
 			endTime = datetime.fromtimestamp(program_data['endTime'])
 			if  endTime > datetime.now():
-				extracted_metadata['infoLabels']['Title'] = compat._unicode(CONST['TEXT_TEMPLATES']['LIVETV_TITLE']).format(
+				extracted_metadata['infoLabels']['Title'] = compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(
 											program_data['tvChannelName'], program_data['tvShow']['title'])
 
-				if len(epg_channel_data) > (idx+2):
-					extracted_metadata['infoLabels']['Plot'] = compat._unicode(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL_AND_NEXT']).format(
+				if len(epg_channel_data) > (idx+1):
+					extracted_metadata['infoLabels']['Plot'] = compat._unicode(xbmc_helper.translation('LIVETV_UNTIL_AND_NEXT')).format(
 											endTime,epg_channel_data[idx+1]['tvShow']['title'])
 				else:
-					extracted_metadata['infoLabels']['Plot'] = compat._unicode(CONST['TEXT_TEMPLATES']['LIVETV_UNTIL']).format(endTime)
+					extracted_metadata['infoLabels']['Plot'] =  compat._unicode(xbmc_helper.translation('LIVETV_UNTIL')).format(endTime)
 
 				if program_data['description'] is not None:
 					extracted_metadata['infoLabels']['Plot'] += program_data['description']
@@ -513,7 +516,10 @@ class lib_joyn:
 								)
 
 				except Exception as e:
-					xbmc_helper.notification('Fehler', 'Konfiguration konnte nicht entschlüsselt werden.', default_icon)
+					xbmc_helper.notification(
+							xbmc_helper.translation('ERROR').format('Decrypt'),
+							xbmc_helper.translation('MSG_ERROR_CONFIG_DECRYPTION'),
+					)
 					xbmc_helper.log_error('Could not decrypt config: ' + str(e))
 					exit(0)
 

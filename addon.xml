@@ -1,34 +1,40 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.joyn" name="Joyn" version="0.0.4.0" provider-name="knaerzche">
- <requires>
-        <import addon="xbmc.python" version="2.1.0"/>   
-        <import addon="inputstream.adaptive" version="2.2.21"/>
-        <import addon="script.module.inputstreamhelper" version="0.3.4"/>
-        <import addon="script.module.uepg" version="1.0.5"/>
-    </requires>
-    <extension point="xbmc.python.pluginsource" library="default.py">
-        <provides>video</provides>
-    </extension>
-  <extension point="xbmc.addon.metadata">
-    <summary lang="en">www.joyn.de VOD and Live TV</summary>
-    <summary lang="de">www.joyn.de VOD und Live TV</summary>
-    <description lang="en">www.joyn.de VOD and Live TV</description>
-    <description lang="de">www.joyn.de VOD und Live TV</description>
-    <website>https://www.joyn.de/</website>
-    <source>https://github.com/knaerzche/plugin.video.joyn</source>
-    <forum>https://www.kodinerds.net/index.php/Thread/66679-Pre-Release-Joyn-VOD-Live/?postID=537817</forum>
-    <news>v0.0.3.2 (03.08.2019)
-      [new] Add EPG, search, categories
-    </news>
-    <email>knaerzche at gmail dot com</email>
-    <platform>all</platform>
-	<assets>
-            <icon>resources/icon.png</icon>
-            <fanart>resources/fanart.jpg</fanart>
-	    <clearlogo>resources/logo.gif</clearlogo>
-            <screenshot>resources/screenshot01.jpg</screenshot>
-            <screenshot>resources/screenshot02.jpg</screenshot>
-            <screenshot>resources/screenshot03.jpg</screenshot>
-        </assets>
- </extension>
+<addon id="plugin.video.joyn" name="Joyn" version="0.0.4.2" provider-name="knaerzche">
+	<requires>
+		<import addon="xbmc.python" version="2.1.0"/>
+		<import addon="inputstream.adaptive" version="2.2.21"/>
+		<import addon="script.module.inputstreamhelper" version="0.3.4"/>
+		<import addon="script.module.uepg" version="1.0.5"/>
+	</requires>
+	<extension point="xbmc.python.pluginsource" library="default.py">
+		<provides>video</provides>
+	</extension>
+	<extension point="xbmc.addon.metadata">
+		<summary lang="en_GB">www.joyn.de VOD and Live TV</summary>
+		<summary lang="de_DE">www.joyn.de VOD und Live TV</summary>
+		<description lang="en_GB">www.joyn.de VOD and Live TV</description>
+		<description lang="de_DE">www.joyn.de VOD und Live TV</description>
+		<language></language>
+		<platform>all</platform>
+		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
+		<forum>https://www.kodinerds.net/index.php/Thread/66679-Pre-Release-Joyn-VOD-Live/?postID=537817</forum>
+		<website>https://www.joyn.de/</website>
+		<email>knaerzche at gmail dot com</email>
+		<source>https://github.com/knaerzche/plugin.video.joyn</source>
+		<assets>
+			<icon>resources/icon.png</icon>
+			<fanart>resources/fanart.jpg</fanart>
+			<clearlogo>resources/logo.gif</clearlogo>
+			<screenshot>resources/screenshot01.jpg</screenshot>
+			<screenshot>resources/screenshot02.jpg</screenshot>
+			<screenshot>resources/screenshot03.jpg</screenshot>
+		</assets>
+		<news>
+v0.0.3.2 (03.08.2019)
+[new] Add EPG, search, categories
+v0.0.4.2 (13.08.2019)
+[new] Add Favorites, Last seen, EPG via uEPG, more sort methods for videos, full PY3.7 compat
+[fixed] Season names
+		</news>
+	</extension>
 </addon>

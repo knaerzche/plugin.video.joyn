@@ -51,8 +51,14 @@ def get_int_setting(setting_id):
 
 
 def notification(msg, description, icon=NOTIFICATION_ERROR):
-	dialog = Dialog()
-	dialog.notification(msg, description, icon)
+	return Dialog().notification(msg, description, icon)
+
+def dialog(msg):
+	return Dialog().ok(addon.getAddonInfo('id'), msg)
+
+
+def dialog_id(id):
+	return dialog(translation(id))
 
 
 def log_error(content):
@@ -70,6 +76,11 @@ def log_debug(content):
 def _log(msg, level=LOGNOTICE):
 	msg = compat._encode(msg)
 	log('['+addon.getAddonInfo('id')+'-'+addon.getAddonInfo('version')+']'+msg, level)
+
+
+def translation(id):
+
+	return  compat._encode(addon.getLocalizedString(CONST['MSG_IDS'][id]))
 
 
 def get_addon_params(pluginquery):

@@ -5,3 +5,9 @@
 - Unify artwork
 0.0.3.1
 Increase EPG offset
+v0.0.4.1
+ - Add Favorites, Last seen, EPG via uEPG, more sort methods for videos
+ - fixed Season name, speedup categories fetching
+ - full PY 3.7 compat
+v0.0.4.2
+- Add sort by date for watchlist
