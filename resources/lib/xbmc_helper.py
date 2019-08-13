@@ -6,7 +6,9 @@ from xbmc import translatePath, executeJSONRPC, log, LOGERROR, LOGDEBUG, LOGNOTI
 from xbmcvfs import mkdirs, exists
 from xbmcaddon import Addon
 from xbmcgui import Dialog, NOTIFICATION_ERROR
+from json import loads, dumps
 import resources.lib.compat as compat
+from resources.lib.const import CONST
 
 if compat.PY2:
 	from urlparse import parse_qs
@@ -73,3 +75,40 @@ def _log(msg, level=LOGNOTICE):
 def get_addon_params(pluginquery):
 	return dict( (k, v if len(v)>1 else v[0] )
            for k, v in parse_qs(pluginquery[1:]).items() )
+
+
+def get_data(filename, dir_type='DATA_DIR'):
+	data_file_path = get_file_path(CONST[dir_type], filename)
+	data = None
+
+	if os.path.exists(data_file_path):
+		with open(data_file_path, 'r') as data_infile:
+			 data = data_infile.read()
+	return data
+
+
+def set_data(filename, data, dir_type='DATA_DIR'):
+
+	data_file_path = get_file_path(CONST[dir_type], filename)
+
+	with open (data_file_path, 'w') as data_outfile:
+		data_outfile.write(data)
+
+
+def get_json_data(filename, dir_type='DATA_DIR'):
+
+	data = get_data(filename, dir_type)
+
+	if data is not None:
+		try:
+			data = loads(get_data(filename, dir_type))
+		except ValueError:
+			log('Could not decode data as json: ' + filename )
+			pass
+
+	return data
+
+
+def set_json_data (filename, data, dir_type='DATA_DIR'):
+
+	set_data(filename, dumps(data), dir_type)

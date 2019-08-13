@@ -94,6 +94,29 @@ CONST = {
 											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
 											},
 							  },
+					'TVSHOWS'	: {	'PATH'		: 'tvshows',
+								'QUERY_PARAMS'	: {
+											'ids' 	: '##ids##',
+											'limit'	: '1000',
+										},
+								'SELECTION'	: '{totalCount,data{id,type,startTime,endTime,metadata{de{ageRatings,copyrights ,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},seo,channelObject{classIdentifier,bundleId},type,bundleId,classIdentifier,titles,descriptions}},baseUrl,path(context:"web", region:"de", type:"cmsPath"),brand,channelId,tvShow,season,episode,status}}',
+								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
+											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
+											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
+											},
+							  },
+					'SEASONS'	: {
+								'PATH'	      	: 	'seasons',
+								'QUERY_PARAMS' 	: 	{	'ids'	: '##ids##',
+												'limit'	: '1000',
+
+											},
+								'SELECTION'	:	'{data{id,channelId,visibilities,duration,metadata{de}}}',
+								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+								'ART'		:	{},
+							  },
 
 				  },
 	'EPG'			: {
@@ -108,12 +131,13 @@ CONST = {
 
 	'CACHE_DIR'		: 'cache',
 	'TEMP_DIR'		: 'tmp',
+	'DATA_DIR'		: 'data',
 	'CACHE'			: {
 					'CONFIG'	: { 'key' : 'config', 'expires' : 3600 },
 					'EPG'		: { 'key' : 'epg', 'expires': 36000 },
 					'BRANDS'	: { 'key' : 'brands', 'expires' : 36000 },
 				  },
-
+	'LASTSEEN_ITEM_COUNT'	: 20,
 	'INPUTSTREAM_ADDON'	: 'inputstream.adaptive',
 
 }

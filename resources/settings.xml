@@ -1,6 +1,7 @@
 <settings>
      <category label="Settings">
      <setting label="DRM Zertifikatsprüfung" type="bool" id="checkdrmcert" default="false"/>
-     <setting label="ConfigCache Zeitraum (in Minuten)" type="slider" id="configcachemins" default="120" range="0,1,1440" option="int" />     
+     <setting label="ConfigCache Zeitraum (in Minuten)" type="slider" id="configcachemins" default="120" range="0,1,1440" option="int" />
+     <setting label="Anzahl Zuletzt gesehen" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int" />
      </category>
 </settings>

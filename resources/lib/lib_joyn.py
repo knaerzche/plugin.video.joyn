@@ -200,7 +200,29 @@ class lib_joyn:
 
 		video_url = self.config['PSF_CONFIG']['default'][stream_type.lower()]['playoutBaseUrl']
 
-		client_data = self.get_client_data(video_id, stream_type)
+		client_data = {}
+		if stream_type == 'VOD':
+			video_metadata = self.get_joyn_json_response(CONST['MIDDLEWARE_URL'] + 'metadata/video/' + video_id)
+
+			client_data.update({
+					'startTime' 	: '0',
+					'videoId' 	: video_metadata['tracking']['id'],
+					'duration'	: video_metadata['tracking']['duration'],
+					'brand'		: video_metadata['tracking']['channel'],
+					'genre'		: video_metadata['tracking']['genres'],
+					'tvshowid'	: video_metadata['tracking']['tvShow']['id'],
+			})
+
+			if 'agofCode' in video_metadata['tracking'].keys():
+				client_data.update({'agofCode' : video_metadata['tracking']['agofCode']})
+
+		elif stream_type == 'LIVE':
+			client_data.update({
+					'videoId' 	: None,
+					'channelId'	: video_id,
+
+			})
+
 		if stream_type == 'VOD':
 			video_url += 'playout/video/' + client_data['videoId']
 
@@ -220,52 +242,69 @@ class lib_joyn:
 
 		video_url += '?' + urlencode(video_url_params)
 
-		return request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
+		video_data = request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
 
+		if 'video_metadata' in locals() and 'video' in video_metadata.keys():
+			video_data.update({'tv_show_id' : video_metadata['tracking']['tvShow']['id'], 'season_id' : video_metadata['video']['metadata']['de']['seasonObject']['id']})
 
-	def get_client_data(self, video_id, stream_type):
-
-		client_data = {}
-		if stream_type == 'VOD':
-			video_metadata = self.get_joyn_json_response(CONST['MIDDLEWARE_URL'] + 'metadata/video/' + video_id)
-
-			client_data.update({
-					'startTime' 	: '0',
-					'videoId' 	: video_metadata['tracking']['id'],
-					'duration'	: video_metadata['tracking']['duration'],
-					'brand'		: video_metadata['tracking']['channel'],
-					'genre'		: video_metadata['tracking']['genres'],
-					'tvshowid'	: video_metadata['tracking']['tvShow']['id'],
-			})
-
-			if 'agofCode' in video_metadata['tracking']:
-				client_data.update({'agofCode' : video_metadata['tracking']['agofCode']})
-
-		elif stream_type == 'LIVE':
-			client_data.update({
-					'videoId' 	: None,
-					'channelId'	: video_id,
-
-			})
-
-		return client_data
+		return video_data
 
 
 	def get_epg(self):
 
-		epg = {}
-		raw_epg = self.get_json_by_type('EPG',{
-				'from' : (datetime.now() - timedelta(hours=CONST['EPG']['REQUEST_OFFSET_HOURS'])).strftime('%Y-%m-%d %H:%M:00'),
-				'to': (datetime.now() + timedelta(hours=CONST['EPG']['REQUEST_HOURS'])).strftime('%Y-%m-%d %H:%M:00')}
-			);
+		cached_epg =  cache.get_json('EPG')
+		if cached_epg['data'] is not None and cached_epg['is_expired'] is False:
+			epg = cached_epg['data']
+		else:
+			epg = {}
+			raw_epg = self.get_json_by_type('EPG',{
+					'from' : (datetime.now() - timedelta(hours=CONST['EPG']['REQUEST_OFFSET_HOURS'])).strftime('%Y-%m-%d %H:%M:00'),
+					'to': (datetime.now() + timedelta(hours=CONST['EPG']['REQUEST_HOURS'])).strftime('%Y-%m-%d %H:%M:00')}
+				);
 
-		for raw_epg_data in raw_epg['data']:
-			raw_epg_data['channelId'] = str(raw_epg_data['channelId'])
-			if raw_epg_data['channelId'] not in epg.keys():
-				epg.update({raw_epg_data['channelId'] : []})
-			epg[raw_epg_data['channelId']].append(raw_epg_data);
+			for raw_epg_data in raw_epg['data']:
+				raw_epg_data['channelId'] = str(raw_epg_data['channelId'])
+				if raw_epg_data['channelId'] not in epg.keys():
+					epg.update({raw_epg_data['channelId'] : []})
+				epg[raw_epg_data['channelId']].append(raw_epg_data);
+
+			cache.set_json('EPG',epg)
 
 		return epg
+
+
+	def get_brands(self):
+
+		cached_brands = cache.get_json('BRANDS')
+		if cached_brands['data'] is not None and cached_brands['is_expired'] is False:
+			brands = cached_brands['data']
+		else:
+			brands = self.get_json_by_type('BRAND')
+			cache.set_json('BRANDS', brands)
+
+		return brands
+
+
+	def get_categories(self):
+
+		raw_cats = self.get_joyn_json_response(CONST['MIDDLEWARE_URL']  + 'ui?path=/')
+		categories = {}
+
+		if 'blocks' in raw_cats.keys():
+			for block in raw_cats['blocks']:
+				if 'type' in block.keys() and 'configuration' in block.keys() and block['type'] == 'StandardLane':
+					categories.update({block['configuration']['Headline'] : []})
+					for block_item in block['items']:
+						categories[block['configuration']['Headline']].append(block_item['fetch']['id'])
+
+		return categories;
+
+	@staticmethod
+	def combine_tvshow_season_data(tvshow_data, season_data):
+		combined_title =  tvshow_data['infoLabels']['Title'] + ' - ' + season_data['infoLabels']['Title']
+		season_data['infoLabels'].update({'Title' : combined_title})
+		season_data.update({'art' : tvshow_data['art']})
+		return season_data
 
 
 	@staticmethod
