@@ -118,15 +118,15 @@ def drop_favorites(favorite_item, siltent=False, fav_type=''):
 	for favorite in favorites:
 		if 'tv_show_id' in favorite_item.keys() and 'tv_show_id' in favorite.keys():
 			if favorite_item['tv_show_id'] == favorite['tv_show_id'] and favorite_item['season_id'] == favorite['season_id']:
-				favorites.remove(favorite_item)
+				favorites.remove(favorite)
 				found = True
 		elif 'channel_id' in favorite_item.keys() and 'channel_id' in favorite.keys():
 			if favorite_item['channel_id'] == favorite['channel_id']:
-				favorites.remove(favorite_item)
+				favorites.remove(favorite)
 				found = True
 		elif 'category_name' in favorite_item.keys() and 'category_name' in favorite.keys():
 			if favorite_item['category_name'] == favorite['category_name']:
-				favorites.remove(favorite_item)
+				favorites.remove(favorite)
 				found = True
 
 	favorites = xbmc_helper.set_json_data('favorites', favorites)
@@ -164,7 +164,7 @@ def show_lastseen(max_lastseen_count):
 		if max_lastseen_count == 0:
 			lastseen = []
 		else:
-			lastseen = lastseen[:(max_lastseen_count-1)]
+			lastseen = lastseen[:max_lastseen_count]
 
 	if len(lastseen) > 0:
 		tvshow_ids = []
@@ -289,7 +289,7 @@ def show_favorites():
 				xbmc_helper.translation('MSG_FAVS_UNAVAILABLE'),
 				default_icon)
 
-	endOfDirectory(pluginhandle)
+	endOfDirectory(handle=pluginhandle,cacheToDisc=False)
 
 
 def get_uepg_params():
