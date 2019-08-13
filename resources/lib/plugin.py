@@ -18,11 +18,12 @@ import resources.lib.xbmc_helper as xbmc_helper
 import resources.lib.request_helper as request_helper
 from resources.lib.lib_joyn import lib_joyn as lib_joyn
 
+
 if compat.PY2:
-	from urllib import urlencode
+	from urllib import urlencode, quote
 	from HTMLParser import HTMLParser
 elif compat.PY3:
-	from urllib.parse import urlencode
+	from urllib.parse import urlencode, quote
 	from html.parser import HTMLParser
 
 
@@ -262,13 +263,24 @@ def show_favorites():
 		endOfDirectory(pluginhandle)
 
 
+def get_uepg_params():
+
+	params = 'json=' +  quote(dumps(libjoyn.get_uepg_data(pluginurl)))
+	params += '&refresh_path=' + quote(pluginurl + '?mode=epg')
+	params += '&refresh_interval=' + quote('7200')
+	params += '&row_count=' + quote('5')
+
+	return params
+
 def index():
+
 	show_lastseen(xbmc_helper.get_int_setting('max_lastseen'))
 	add_dir(metadata={'infoLabels': {'Title' : 'Mediatheken', 'Plot' : 'Mediatheken von www.joyn.de'},'art': {}}, mode='channels', stream_type='VOD')
 	add_dir(metadata={'infoLabels': {'Title' : 'Rubriken', 'Plot' : 'Mediatheken gruppiert in Rubriken'}, 'art': {}}, mode='categories', stream_type='VOD')
 	add_dir(metadata={'infoLabels': {'Title' : 'Favoriten', 'Plot' : 'Favoriten'}, 'art': {}}, mode='show_favs')
 	add_dir(metadata={'infoLabels': {'Title' : 'Suche', 'Plot' : 'Suche in den Mediatheken'}, 'art': {}}, mode='search')
 	add_dir(metadata={'infoLabels': {'Title' : 'Live TV', 'Plot' : 'Live TV'}, 'art': {}}, mode='channels',stream_type='LIVE')
+	add_dir(metadata={'infoLabels': {'Title' : 'EPG', 'Plot' : 'EPG'}, 'art': {}}, mode='epg',stream_type='LIVE')
 
 	endOfDirectory(handle=pluginhandle,cacheToDisc=False)
 
@@ -648,6 +660,13 @@ if 'mode' in param_keys:
 
 	elif mode == 'drop_fav' and 'favorite_item' in param_keys:
 		drop_favorites(loads(params['favorite_item']))
+	elif mode == 'epg':
+		params = {
+			'refresh_path' : pluginurl + '?mode=epg',
+			'refresh_interval' : '7200',
+			'row_count' : '5',
+		}
+		executebuiltin('RunScript(script.module.uepg,' + get_uepg_params() + ')')
 
 	else:
 		index()

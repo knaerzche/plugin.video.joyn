@@ -9,6 +9,7 @@ from hashlib import sha1
 from math import floor
 from sys import exit
 from datetime import datetime, timedelta
+from copy import deepcopy
 from resources.lib.const import CONST
 import resources.lib.compat as compat
 import resources.lib.request_helper as request_helper
@@ -298,6 +299,57 @@ class lib_joyn:
 						categories[block['configuration']['Headline']].append(block_item['fetch']['id'])
 
 		return categories;
+
+
+	def get_uepg_data(self, pluginurl):
+
+		brands = self.get_brands()
+		epg = self.get_epg()
+		uEPG_data = []
+		channel_num = 0
+
+		for brand in brands['data']:
+			channel_id = str(brand['channelId'])
+			if 'metadata' in brand.keys() and 'de' in brand['metadata'].keys() and 'livestreams' in  brand['metadata']['de'].keys():
+				for livestream in brand['metadata']['de']['livestreams']:
+					stream_id = livestream['streamId']
+					brand_metadata = extracted_metadata = self.extract_metadata(metadata= brand['metadata']['de'], selection_type='BRAND')
+					if channel_id in epg.keys():
+						channel_num += 1
+						uEPG_channel = {
+							'channelnumber'  :channel_num,
+							'isfavorite' : False,
+							'channellogo' : brand_metadata['art']['icon'],
+						}
+
+						guidedata = []
+						first = True
+						for channel_epg_data in epg[channel_id]:
+							if first is True:
+								uEPG_channel.update({
+									'channelname' : channel_epg_data['tvChannelName']
+								})
+							first = False
+							art = deepcopy(brand_metadata['art'])
+							if 'images' in 	channel_epg_data:
+								for image in channel_epg_data['images']:
+									if image['subType'] == 'cover':
+										art.update({'thumb' : image['url'] + '/' +  CONST['PATH']['EPG']['IMG_PROFILE']})
+							guidedata.append({
+								'mediatype' : 'episode',
+								'label'	: channel_epg_data['tvShow']['title'],
+								'plot' : channel_epg_data['description'],
+								'title' : channel_epg_data['tvShow']['title'],
+								'starttime' : channel_epg_data['startTime'],
+								'duration' : (channel_epg_data['endTime'] - channel_epg_data['startTime']),
+								'art' : art,
+								'url' : pluginurl + '?' + urlencode({'mode' : 'play_video', 'stream_type': 'LIVE', 'video_id' : stream_id})
+							})
+
+						uEPG_channel.update({'guidedata' : guidedata})
+						uEPG_data.append(uEPG_channel)
+		return uEPG_data
+
 
 	@staticmethod
 	def combine_tvshow_season_data(tvshow_data, season_data):
