@@ -1,3 +1,4 @@
+
 0.0.2.1
 - Tidy up, fix season images
 0.0.3.0
@@ -11,3 +12,9 @@ v0.0.4.1
  - full PY 3.7 compat
 v0.0.4.2
 - Add sort by date for watchlist
+v1.0.0
+bump inputstreamhelper version requirement
+automatic country detection; prepare mult-country support
+increase script.module.inputstreamhelper version dependency
+open inputstream.adaptive, uEPG setting from addon settings
+clear cache from addon settings

@@ -39,7 +39,7 @@ class lib_joyn:
 		else:
 			headers = [('key', self.config['CONFIG']['header_7TV_key'])]
 
-		decoded_json = request_helper.get_json_response(url, self.	config, headers, params)
+		decoded_json = request_helper.get_json_response(url, self.config, headers, params)
 
 		if decoded_json[compat._unicode('status')] == 200:
 			return decoded_json[compat._unicode('response')]
@@ -177,7 +177,7 @@ class lib_joyn:
 				list_item.setPath(mpd_filepath)
 
 			else:
-				list_item.setPath( mpdparser.mpd_url + '|' + request_helper.get_header_string({'User-Agent' : self.config['USER_AGENT']}))
+				list_item.setPath(request_helper.add_user_agend_header_string(mpdparser.mpd_url, self.config['USER_AGENT']))
 
 			return True
 
@@ -246,7 +246,8 @@ class lib_joyn:
 		video_data = request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
 
 		if 'video_metadata' in locals() and 'video' in video_metadata.keys():
-			video_data.update({'tv_show_id' : video_metadata['tracking']['tvShow']['id'], 'season_id' : video_metadata['video']['metadata']['de']['seasonObject']['id']})
+			video_data.update({'tv_show_id' : video_metadata['tracking']['tvShow']['id'],
+				'season_id' : video_metadata['video']['metadata'][CONST['COUNTRIES'][self.config['country']]['language']]['seasonObject']['id']})
 
 		return video_data
 
@@ -310,16 +311,24 @@ class lib_joyn:
 
 		for brand in brands['data']:
 			channel_id = str(brand['channelId'])
-			if 'metadata' in brand.keys() and 'de' in brand['metadata'].keys() and 'livestreams' in  brand['metadata']['de'].keys():
-				for livestream in brand['metadata']['de']['livestreams']:
+			if 'metadata' in brand.keys() and CONST['COUNTRIES'][self.config['country']]['language'] in brand['metadata'].keys() and \
+					'livestreams' in  brand['metadata'][CONST['COUNTRIES'][self.config['country']]['language']].keys():
+
+				for livestream in brand['metadata'][CONST['COUNTRIES'][self.config['country']]['language']]['livestreams']:
 					stream_id = livestream['streamId']
-					brand_metadata = extracted_metadata = self.extract_metadata(metadata= brand['metadata']['de'], selection_type='BRAND')
+					brand_metadata = extracted_metadata = self.extract_metadata(
+						metadata= brand['metadata'][CONST['COUNTRIES'][self.config['country']]['language']],
+							selection_type='BRAND')
+
+					for art_key, art_value in brand_metadata['art'].items():
+						brand_metadata['art'].update({art_key : request_helper.add_user_agend_header_string(art_value, self.config['USER_AGENT'])})
+
 					if channel_id in epg.keys():
 						channel_num += 1
 						uEPG_channel = {
 							'channelnumber'  :channel_num,
 							'isfavorite' : False,
-							'channellogo' : brand_metadata['art']['icon'],
+							'channellogo' : brand_metadata['art']['icon']
 						}
 
 						guidedata = []
@@ -334,7 +343,9 @@ class lib_joyn:
 							if 'images' in 	channel_epg_data:
 								for image in channel_epg_data['images']:
 									if image['subType'] == 'cover':
-										art.update({'thumb' : image['url'] + '/' +  CONST['PATH']['EPG']['IMG_PROFILE']})
+										art.update({'thumb' :  request_helper.add_user_agend_header_string(
+											image['url'] + '/' +  CONST['PATH']['EPG']['IMG_PROFILE'], self.config['USER_AGENT'])})
+
 							guidedata.append({
 								'mediatype' : 'episode',
 								'label'	: channel_epg_data['tvShow']['title'],
@@ -427,6 +438,7 @@ class lib_joyn:
 		recreate_config = True
 		config = {}
 		cached_config = None
+		addon_version = xbmc_helper.get_addon_version()
 
 		expire_config_mins = xbmc_helper.get_int_setting('configcachemins')
 		if expire_config_mins is not None:
@@ -437,7 +449,7 @@ class lib_joyn:
 		if confg_cache_res['data'] is not None:
 			cached_config =  confg_cache_res['data']
 
-		if confg_cache_res['is_expired'] is False:
+		if confg_cache_res['is_expired'] is False and  'ADDON_VERSION' in cached_config.keys() and cached_config['ADDON_VERSION'] == addon_version:
 			recreate_config = False;
 			config = cached_config;
 
@@ -455,6 +467,8 @@ class lib_joyn:
 				'PSF_CLIENT_CONFIG'	: {},
 				'IS_ANDROID'		: False,
 				'IS_ARM'		: False,
+				'ADDON_VERSION'		: addon_version,
+				'country'		: None,
 
 			}
 
@@ -481,6 +495,29 @@ class lib_joyn:
 					)
 				exit(0)
 
+			county_setting = xbmc_helper.get_setting('country')
+			xbmc_helper.log_debug("COUNTRY SETTING : " + county_setting)
+			if county_setting is '' or county_setting is '0':
+				ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'], config=config, silent=True)
+				xbmc_helper.log_debug('IP API Response is : ' + dumps(ip_api_response))
+				if ip_api_response is not None and ip_api_response != '' and 'countryCode' in ip_api_response.keys():
+					if ip_api_response['countryCode'] in CONST['COUNTRIES'].keys():
+						config.update({'country' : ip_api_response['countryCode']})
+					else:
+						xbmc_helper.dialog_settings(
+								xbmc_helper.translation('MSG_COUNTRY_INVALID').format(ip_api_response.get('country', 'Unknown'))
+						)
+						exit(0)
+
+			else:
+				for supported_country_key, supported_country in CONST['COUNTRIES'].items():
+					if supported_country['setting_id'] == county_setting:
+						config.update({'country' : supported_country_key})
+						break
+
+			if config['country'] is None:
+				xbmc_helper.dialog_settings(xbmc_helper.translation('MSG_COUNTRY_NOT_DETECTED'))
+				exit(0)
 			main_js_src = None
 			for match in findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
 				if match.find('/main') is not -1:

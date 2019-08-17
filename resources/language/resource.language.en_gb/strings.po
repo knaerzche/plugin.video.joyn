@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-08-13 15:51+0000\n"
+"POT-Creation-Date: 2019-08-17 12:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -31,14 +31,38 @@ msgid "DRM certificate check"
 msgstr ""
 
 msgctxt "#30102"
-msgid "ConfigCache Time (in minutes)"
+msgid "How often to renew config (in minutes)"
 msgstr ""
 
 msgctxt "#30103"
 msgid "Count of lastseen items"
 msgid ""
 
-#empty strings from id 30104 to 30229
+msgctxt "#30104"
+msgid "Clear cache"
+msgstr ""
+
+msgctxt "#30105"
+msgid "Country"
+msgstr ""
+
+msgctxt "#30106"
+msgid "Detect automatically"
+msgstr ""
+
+msgctxt "#30107"
+msgid "Germany"
+msgstr ""
+
+msgctxt "#30108"
+msgid "inputstream settings"
+msgstr ""
+
+msgctxt "#30109"
+msgid "uEPG settings"
+msgstr ""
+
+#empty strings from id 30110 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30349
@@ -55,7 +79,15 @@ msgctxt "#30502"
 msgid "[COLOR orangered]ATTENTION : ... *[/COLOR][COLOR yellow]Widevine[/COLOR][COLOR orangered]* was not found !!![/COLOR][CR]Without Widevine this Addon can not be used !!!"
 msgstr ""
 
-#empty strings from id 30503 to 30520
+msgctxt "#30503"
+msgid "Cancel"
+msgstr ""
+
+msgctxt "#30504"
+msgid "Open addon Settings"
+msgstr ""
+
+#empty strings from id 30505 to 30520
 # WARNING/INFORMATION-MESSAGES-NOTIFICATION
 
 msgctxt "#30521"
@@ -102,7 +134,15 @@ msgctxt "#30531"
 msgid "Could not access URL {:s}, check your Internet connection"
 msgstr ""
 
-#empty strings from id 30532 to 30600
+msgctxt "#30532"
+msgid "Your coutry could not be automatically detected - please set it in the addon settings"
+msgstr ""
+
+msgctxt "#30533"
+msgid "It looks like you are located in {:s} - this country is currently not supported by Joyn.[CR]If you are sure, that your are located in an other country, please set it in the addon settings (at your own risk)"
+msgstr ""
+
+#empty strings from id 30534 to 30600
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"
@@ -211,5 +251,13 @@ msgstr ""
 
 msgctxt "#30658"
 msgid "{:s} years and older only"
+msgstr ""
+
+msgctxt "#30659"
+msgid "Cache was cleared"
+msgstr ""
+
+msgctxt "#30660"
+msgid "Cache could not be cleared"
 msgstr ""
 

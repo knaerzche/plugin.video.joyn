@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-08-13 15:51+0000\n"
+"POT-Creation-Date: 2019-08-17 12:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -31,15 +31,38 @@ msgid "DRM certificate check"
 msgstr "DRM Zertifikatsprüfung"
 
 msgctxt "#30102"
-msgid "ConfigCache Time (in minutes)"
-msgstr "ConfigCache Zeitraum (in Minuten)"
+msgid "How often to renew config (in minutes)"
+msgstr "Wie oft Konfiguration neu herunterladen (in Minuten)"
 
 msgctxt "#30103"
 msgid "Count of lastseen items"
 msgstr "Anzahl zuletzt gesehen"
 
+msgctxt "#30104"
+msgid "Clear Cache"
+msgstr "Cache leeren"
 
-#empty strings from id 30104 to 30229
+msgctxt "#30105"
+msgid "Country"
+msgstr "Land"
+
+msgctxt "#30106"
+msgid "Detect automatically"
+msgstr "Automatisch erkennen"
+
+msgctxt "#30107"
+msgid "Germany"
+msgstr "Deutschland"
+
+msgctxt "#30108"
+msgid "inputstream settings"
+msgstr "inputstream Einstellungen"
+
+msgctxt "#30109"
+msgid "uEPG settings"
+msgstr "uEPG Einstellungen"
+
+#empty strings from id 30110 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30349
@@ -56,7 +79,15 @@ msgctxt "#30502"
 msgid "[COLOR orangered]ATTENTION : ... *[/COLOR][COLOR yellow]Widevine[/COLOR][COLOR orangered]* was not found !!![/COLOR][CR]Without Widevine this Addon can not be used !!!"
 msgstr "[COLOR orangered]ACHTUNG : ... *[/COLOR][COLOR yellow]Widevine[/COLOR][COLOR orangered]* wurde nicht gefunden !!![/COLOR][CR]Ohne Widevine kann dieses Addon nicht verwendet werden !!!"
 
-#empty strings from id 30503 to 30520
+msgctxt "#30503"
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgctxt "#30504"
+msgid "Open addon Settings"
+msgstr "Addon Settings öffnen"
+
+#empty strings from id 30505 to 30520
 # WARNING/INFORMATION-MESSAGES-NOTIFICATION
 
 msgctxt "#30521"
@@ -103,7 +134,15 @@ msgctxt "#30531"
 msgid "Could not access URL {:s}, check your Internet connection"
 msgstr "Konnte nicht auf URL zugreifen: {:s}. Bitte Internetzugang prüfen"
 
-#empty strings from id 30532 to 30600
+msgctxt "#30532"
+msgid "Your coutry could not be automatically detected - please set it in the addon settings"
+msgstr "Land konnte nicht automatisch ermittelt werden - bitte in den Addon Einstellungen setzen"
+
+msgctxt "#30533"
+msgid "It looks like you are located in {:s} - this country is currently not supported by this Joyn addon.[CR]If you are sure, that your are located in an other country, please set it in the addon settings (at your own risk)"
+msgstr "Es scheint, dass Sie in aus {:s} kommen. Dieses Land wird derzeit von Joyn-Addon nicht unterstützt.[CR]Wenn Sie sicher sind, dass Sie aus einem andern Land kommen, bitte in den Addon Einstellungen setzen (auf eigene Gefahr)"
+
+#empty strings from id 30534 to 30600
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"
@@ -213,4 +252,12 @@ msgstr "[CR]bis {:%H:%M} Uhr, danach: {:s}[CR][CR]"
 msgctxt "#30658"
 msgid "{:s} years and older only"
 msgstr "Ab {:s} Jahren"
+
+msgctxt "#30659"
+msgid "Cache was cleared"
+msgstr "Cache wurde geleert"
+
+msgctxt "#30660"
+msgid "Cache could not be cleared"
+msgstr "Cache konnte nicht geleert werden"
 

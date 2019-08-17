@@ -68,15 +68,18 @@ def post_json(url, config, data=None, additional_headers=None, additional_query_
 	return get_json_response(url, config, additional_headers, additional_query_string, dumps(data))
 
 
-def get_json_response(url, config, headers=None, params=None, post_data=None):
+def get_json_response(url, config, headers=None, params=None, post_data=None, silent=False):
 	try:
 		return loads(get_url(url, config, headers, params, post_data))
 	except ValueError:
-		xbmc_helper.notification(
-			xbmc_helper.translation('ERROR').format('Decoding'),
-			xbmc_helper.translation('MSG_ERR_TRY_AGAIN')
-		)
-		raise
+		if silent is False:
+			xbmc_helper.notification(
+				xbmc_helper.translation('ERROR').format('Decoding'),
+				xbmc_helper.translation('MSG_ERR_TRY_AGAIN')
+			)
+			raise
+		else:
+			pass
 	return None
 
 
@@ -94,3 +97,10 @@ def base64_encode_urlsafe(string):
 		return encoded.rstrip(b'=').encode('utf-8').decode('utf-8')
 	else:
 		return urlsafe_b64encode(string.encode('utf-8')).decode('utf-8')
+
+
+def add_user_agend_header_string(uri, user_agent):
+
+	if uri.startswith('http'):
+		return uri + '|' + get_header_string({'User-Agent' : user_agent})
+	return uri

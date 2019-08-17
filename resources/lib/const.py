@@ -7,8 +7,17 @@ CONST = {
 	'PSF_URL'		: 'https://psf.player.v0.maxdome.cloud/dist/playback-source-fetcher.min.js',
 	'MIDDLEWARE_URL'	: 'https://middleware.p7s1.io/joyn/v1/',
 	'ENTITLEMENT_URL'	: 'entitlement-token/anonymous',
+	'IP_API_URL'		: 'http://ip-api.com/json',
+
 	'PSF_VARS_IDX'		: {
 					'SECRET' : 1184
+				  },
+
+	'COUNTRIES'		: {
+					 'DE' : {
+							'language'    : 'de',
+							'setting_id'  : '1',
+						},
 				  },
 
 	'PATH'			: {
@@ -52,8 +61,9 @@ CONST = {
 								'SELECTION'	:	'{data{id,channelId,agofCodes,metadata{de}}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'seo'},
 								'ART'		:	{'BRAND_LOGO'  : {
-													'icon'   : 'profile:nextgen-web-artlogo-183x75',
-													'thumb'  : 'profile:original',
+													'icon'   	: 'profile:nextgen-web-artlogo-183x75',
+													'thumb'  	: 'profile:original',
+													'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
 												},
 											},
 							  },
@@ -189,6 +199,12 @@ CONST = {
 					'SEASON_NO'			: 30621,
 					'MSG_CONFIG_VALUES_INCOMPLETE'	: 30530,
 					'MSG_NO_ACCESS_TO_URL'		: 30531,
+					'MSG_COUNTRY_NOT_DETECTED'	: 30532,
+					'MSG_COUNTRY_INVALID'		: 30533,
+					'CANCEL'			: 30503,
+					'OPEN_ADDON_SETTINGS'		: 30504,
+					'CACHE_WAS_CLEARED'		: 30659,
+					'CACHE_COULD_NOT_BE_CLEARED'	: 30660,
 				},
 
 }

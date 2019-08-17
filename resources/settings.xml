@@ -1,9 +1,20 @@
 <settings>
 	<category label="Settings">
-		<setting label="30101" type="bool" id="checkdrmcert" default="false"/>
-		<setting type="sep"/>
+		<setting label="30105" type="select" id="country" lvalues="30106|30107" />
+		<setting type="sep" />
+		<setting label="30101" type="bool" id="checkdrmcert" default="false" />
+		<setting type="sep" />
 		<setting label="30102" type="slider" id="configcachemins" default="120" range="0,1,1440" option="int" />
-		<setting type="sep"/>
+		<setting type="sep" />
 		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int" />
+		<setting type="sep" />
+		<setting label="30104" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)" />
+		<setting type="sep" />
+		<setting label="30108" type="action" id="inputstream_adaptive_settings"
+			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;forein_addon_id=inputstream.adaptive)"
+			enable="System.HasAddon(inputstream.adaptive)" option="close" />
+		<setting label="30109" type="action" id="uepg_settings"
+			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;forein_addon_id=script.module.uepg)"
+			enable="System.HasAddon(script.module.uepg)" option="close" />
 	</category>
 </settings>
