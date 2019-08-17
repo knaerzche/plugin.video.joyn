@@ -95,7 +95,15 @@ msgctxt "#30529"
 msgid "Some items from watchlist are no longer available - the have been removed automatically"
 msgstr "Eingige Elemente aus der Watchlist sind nicht mehr verfügbar - sie wurden automatisch entfernt"
 
-#empty strings from id 30530 to 30600
+msgctxt "#30530"
+msgid "Some essential configuration values could not be loaded: {:s}"
+msgstr "Essentielle Konfigurationswerte konnten nicht ermittelt werden {:s}"
+
+msgctxt "#30531"
+msgid "Could not access URL {:s}, check your Internet connection"
+msgstr "Konnte nicht auf URL zugreifen: {:s}. Bitte Internetzugang prüfen"
+
+#empty strings from id 30532 to 30600
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"

@@ -699,8 +699,9 @@ def add_link(mode, video_id='', metadata={}, stream_type='VOD', parent_fanart=''
 
 	if (mode == 'play_video' and video_id is not ''):
 		list_item.setInfo(type='Video', infoLabels=metadata['infoLabels'])
-		list_item.setArt(metadata['art'])
 		list_item.setProperty('IsPlayable', 'True')
+
+	list_item.setArt(metadata['art'])
 
 	return addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item, isFolder=False)
 

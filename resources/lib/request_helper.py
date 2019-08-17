@@ -20,7 +20,7 @@ import resources.lib.xbmc_helper as xbmc_helper
 def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None):
 
 	response_content = ''
-	xbmc_helper.log_debug('get_url - url: ' + url + ' headers: ' + dumps(additional_headers) + ' qs: ' + dumps(additional_query_string) + ' post_data: ' +  dumps(post_data))
+	xbmc_helper.log_debug('get_url - url: ' + str(url) + ' headers: ' + dumps(additional_headers) + ' qs: ' + dumps(additional_query_string) + ' post_data: ' +  dumps(post_data))
 
 	try:
 		headers = {

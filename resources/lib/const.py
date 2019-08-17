@@ -36,7 +36,10 @@ CONST = {
 								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,agofCode,path(context:"web", region:"de", type:"cmsPath"){path},tvShow,season,episode,duration,metadata{de},visibilities{endsAt}}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
-											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'ART_LOGO'       : {
+														'icon'   	: 'profile:nextgen-web-artlogo-183x75',
+														'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
+													    },
 											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
 											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
 											},
@@ -65,7 +68,10 @@ CONST = {
 								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,metadata{de{ageRatings,copyrights ,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},seo,channelObject{classIdentifier,bundleId},type,bundleId,classIdentifier,titles,descriptions}},baseUrl,path(context:"web", region:"de", type:"cmsPath"),brand,channelId,tvShow,season,episode,status}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
-											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'ART_LOGO'       : {
+														'icon'   	: 'profile:nextgen-web-artlogo-183x75',
+														'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
+													    },
 											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
 											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
 											},
@@ -89,7 +95,10 @@ CONST = {
 								'SELECTION'	: '{data{id,visibilities, channelId ,agofCodes,duration,metadata{de}}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
-											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'ART_LOGO'       : {
+														'icon'   	: 'profile:nextgen-web-artlogo-183x75',
+														'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
+													    },
 											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
 											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
 											},
@@ -102,7 +111,10 @@ CONST = {
 								'SELECTION'	: '{totalCount,data{id,type,startTime,endTime,metadata{de{ageRatings,copyrights ,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},seo,channelObject{classIdentifier,bundleId},type,bundleId,classIdentifier,titles,descriptions}},baseUrl,path(context:"web", region:"de", type:"cmsPath"),brand,channelId,tvShow,season,episode,status}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
-											 'ART_LOGO'       : {'icon'   : 'profile:nextgen-web-artlogo-183x75'},
+											 'ART_LOGO'       : {
+														'icon'   	: 'profile:nextgen-web-artlogo-183x75',
+														'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
+													    },
 											 'HERO_LANDSCAPE' : {'fanart' : 'profile:nextgen-web-herolandscape-1920x'},
 											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
 											},
@@ -175,6 +187,8 @@ CONST = {
 					'MIN_AGE'			: 30658,
 					'VIDEO_AVAILABLE'		: 30650,
 					'SEASON_NO'			: 30621,
+					'MSG_CONFIG_VALUES_INCOMPLETE'	: 30530,
+					'MSG_NO_ACCESS_TO_URL'		: 30531,
 				},
 
 }

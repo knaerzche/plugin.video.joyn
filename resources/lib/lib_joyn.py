@@ -454,36 +454,70 @@ class lib_joyn:
 				'PSF_VARS'		: {},
 				'PSF_CLIENT_CONFIG'	: {},
 				'IS_ANDROID'		: False,
+				'IS_ARM'		: False,
 
 			}
 
 			os_uname = compat._uname_list()
 			#android
 			if os_uname[0] == 'Linux' and 'KODI_ANDROID_LIBS' in environ:
-				config['USER_AGENT'] = 'Mozilla/5.0 (Linux Android 8.1.0 Nexus 6P Build/OPM6.171019.030.B1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.91 Mobile Safari/537.36'
+				config['USER_AGENT'] = 'Mozilla/5.0 (Linux Android 8.1.0 Nexus 6P Build/OPM6.171019.030.B1) AppleWebKit/537.36 (KHTML, like Gecko) \
+							Chrome/68.0.3440.91 Mobile Safari/537.36'
 				config['IS_ANDROID'] = True
 			# linux on arm uses widevine from chromeos
 			elif os_uname[0] == 'Linux' and os_uname[4].lower().find('arm') is not -1:
 				config['USER_AGENT'] = 'Mozilla/5.0 (X11 CrOS '+  os_uname[4] + ' 4537.56.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.38 Safari/537.36'
+				config['IS_ARM'] = True
 			elif os_uname[0] == 'Linux':
 				config['USER_AGENT'] = 'Mozilla/5.0 (X11 Linux ' + os_uname[4] + ') AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
 			else:
 				config['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0 Win64 x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
 			html_content = request_helper.get_url(CONST['BASE_URL'], config);
+			if html_content is None or html_content is '':
+				xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('Url access'),
+						xbmc_helper.translation('MSG_NO_ACCESS_TO_URL').format(CONST['BASE_URL'])
+					)
+				exit(0)
+
+			main_js_src = None
 			for match in findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
 				if match.find('/main') is not -1:
-					main_js =  request_helper.get_url(CONST['BASE_URL'] + match, config)
+					main_js_src = CONST['BASE_URL'] + match
+					main_js =  request_helper.get_url(main_js_src, config)
 					for key in config['CONFIG']:
 						find_str = key + ':"'
 						start = main_js.find(find_str)
 						length = main_js[start:].find('",')
 						config['CONFIG'][key] = main_js[(start+len(find_str)):(start+length)]
 
+			for essential_config_item_key, essential_config_item in config['CONFIG'].items():
+				if essential_config_item is None or essential_config_item is '':
+					xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('Config'),
+						xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format(essential_config_item_key)
+					)
+					xbmc_helper.log_error('Could not extract configuration value from js: KEY: ' + essential_config_item_key + ' JS source: ' + str(main_js_src))
+					exit(0)
 
 			config['PLAYER_CONFIG'] = request_helper.get_json_response(url=config['CONFIG']['SevenTV_player_config_url'], config=config)
+			if config['PLAYER_CONFIG'] is None:
+				xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('Player Config'),
+						xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format('Player Config')
+					)
+				xbmc_helper.log_error('Could not load player config from url  ' +  config['CONFIG']['SevenTV_player_config_url'])
+				exit(0)
 
 			config['PSF_CONFIG'] =  request_helper.get_json_response(url=CONST['PSF_CONFIG_URL'], config=config)
+			if config['PSF_CONFIG'] is None:
+				xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('PSF Config'),
+						xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format('PSF Config')
+					)
+				xbmc_helper.log_error('Could not load psf config from url  ' + CONST['PSF_CONFIG_URL'])
+				exit(0)
 
 			psf_vars = request_helper.get_url(CONST['PSF_URL'], config)
 			find_str = 'call(this,['
@@ -493,6 +527,15 @@ class lib_joyn:
 			for i in range(len(psf_vars)):
 				psf_vars[i] = psf_vars[i][1:-1]
 			config['PSF_VARS'] = psf_vars
+
+			for psf_vars_index_name, psf_vars_index in CONST['PSF_VARS_IDX'].items():
+				if len(config['PSF_VARS']) < psf_vars_index or config['PSF_VARS'][psf_vars_index] is '' :
+					xbmc_helper.notification(
+							xbmc_helper.translation('ERROR').format('PSF VAR'),
+							xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format('PSF VAR: ' + psf_vars_index_name)
+						)
+					xbmc_helper.log_error('Could not extract psf var ' + psf_vars_index_name + ' from js url  ' + CONST['PSF_URL'] + ' compete list : ' + dumps(config['PSF_VARS']))
+					exit(0)
 
 			if (cached_config is not None and
 			    cached_config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] == config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] and
@@ -520,7 +563,8 @@ class lib_joyn:
 							xbmc_helper.translation('ERROR').format('Decrypt'),
 							xbmc_helper.translation('MSG_ERROR_CONFIG_DECRYPTION'),
 					)
-					xbmc_helper.log_error('Could not decrypt config: ' + str(e))
+					xbmc_helper.log_error('Could not decrypt config - Exception: ' + str(e) + ' PSF VARS: '  \
+						+ dumps(config['PSF_VARS']) + 'PLAYER CONFIG: ' + dumps(config['PLAYER_CONFIG']))
 					exit(0)
 
 			cache.set_json('CONFIG', config)
