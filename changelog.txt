@@ -18,3 +18,19 @@ automatic country detection; prepare mult-country support
 increase script.module.inputstreamhelper version dependency
 open inputstream.adaptive, uEPG setting from addon settings
 clear cache from addon settings
+v1.1.0
+fixed:  translation errors; changed nameing of some settings
+fixed:  max. 30 episodes per season where shown
+fixed:  string multline-error for Android user agent
+fixed:  use correct translation setting for ip-api country detection
+fixed:  add/remove category with unicode letters to/from watchlist
+new:  added cast information for season/episodes (if available)
+new:  changed Studio infomation from channelname to copyright owner
+new:  add clearlogo for episodes (if available)
+new:  option to exclude watchlist from lastseen
+new:  add correct contentype for each foldertype
+new:  set viewtype for each contenttype in addon settings (can be disabled (if you like your lists))
+new:  set sort order for episodes/seasons in addon settings (default descending as on Joyn Website)
+new:  show title according to container content
+new:  option to disable folder cache
+new:  some performance improvements

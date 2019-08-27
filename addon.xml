@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.joyn" name="Joyn" version="1.0.0" provider-name="knaerzche">
+<addon id="plugin.video.joyn" name="Joyn" version="1.1.0" provider-name="knaerzche">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
@@ -10,10 +10,10 @@
 		<provides>video</provides>
 	</extension>
 	<extension point="xbmc.addon.metadata">
-		<summary lang="en_GB">www.joyn.de VOD and Live TV</summary>
-		<summary lang="de_DE">www.joyn.de VOD und Live TV</summary>
-		<description lang="en_GB">www.joyn.de VOD and Live TV</description>
-		<description lang="de_DE">www.joyn.de VOD und Live TV</description>
+		<summary lang="en_GB">Joyn Video On Demand  and Live TV</summary>
+		<summary lang="de_DE">Joyn Video On Demand and Live TV</summary>
+		<description lang="en_GB">Watch VOD content und Live TV provided by Joyn</description>
+		<description lang="de_DE">Video On Demand und Live TV von Joyn</description>
 		<language></language>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
@@ -22,12 +22,12 @@
 		<email>knaerzche at gmail dot com</email>
 		<source>https://github.com/knaerzche/plugin.video.joyn</source>
 		<assets>
-			<icon>resources/icon.png</icon>
-			<fanart>resources/fanart.jpg</fanart>
-			<clearlogo>resources/logo.gif</clearlogo>
-			<screenshot>resources/screenshot01.jpg</screenshot>
-			<screenshot>resources/screenshot02.jpg</screenshot>
-			<screenshot>resources/screenshot03.jpg</screenshot>
+			<icon>resources/media/icon.png</icon>
+			<fanart>resources/media/fanart.jpg</fanart>
+			<clearlogo>resources/media/logo.gif</clearlogo>
+			<screenshot>resources/media/screenshot01.jpg</screenshot>
+			<screenshot>resources/media/screenshot02.jpg</screenshot>
+			<screenshot>resources/media/screenshot03.jpg</screenshot>
 		</assets>
 		<news>
 v0.0.3.2 (03.08.2019)
@@ -35,12 +35,27 @@ v0.0.3.2 (03.08.2019)
 v0.0.4.2 (13.08.2019)
 [new] Add Favorites, Last seen, EPG via uEPG, more sort methods for videos, full PY3.7 compat
 [fixed] Season names
-v1.0.0
+v1.0.0 (17.08.2019)
 [bump] inputstreamhelper version requirement
 [new] automatic country detection; prepare mult-country support
-[new] increase script.module.inputstreamhelper version dependency
 [new] open inputstream.adaptive, uEPG setting from addon settings
 [new] clear cache from addon settings
+v1.1.0 (27.08.2019)
+[fixed] translation errors; changed nameing of some settings
+[fixed] max. 30 episodes per season where shown
+[fixed] string multline-error for Android user agent
+[fixed] use correct translation setting for ip-api country detection
+[fixed] add/remove category with unicode letters to/from watchlist
+[new] added cast information for season/episodes (if available)
+[new] changed Studio infomation from channelname to copyright owner
+[new] add clearlogo for episodes (if available)
+[new] option to exclude watchlist from lastseen
+[new] add correct contentype for each foldertype
+[new] set viewtype for each contenttype in addon settings (can be disabled (if you like your lists))
+[new] set sort order for episodes/seasons in addon settings (default descending as on Joyn Website)
+[new] show title according to container content
+[new] option to disable folder cache
+[new] some performance improvements
 		</news>
 	</extension>
 </addon>

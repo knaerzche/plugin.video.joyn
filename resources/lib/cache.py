@@ -5,8 +5,8 @@ from os import path
 from json import dumps, loads
 from datetime import datetime, timedelta
 from platform import system
-from resources.lib.const import CONST
-import resources.lib.xbmc_helper as xbmc_helper
+from .const import CONST
+from . import xbmc_helper as xbmc_helper
 
 
 def _get(cache_key, file_name, override_expire_secs=None):

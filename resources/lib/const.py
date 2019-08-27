@@ -7,7 +7,7 @@ CONST = {
 	'PSF_URL'		: 'https://psf.player.v0.maxdome.cloud/dist/playback-source-fetcher.min.js',
 	'MIDDLEWARE_URL'	: 'https://middleware.p7s1.io/joyn/v1/',
 	'ENTITLEMENT_URL'	: 'entitlement-token/anonymous',
-	'IP_API_URL'		: 'http://ip-api.com/json',
+	'IP_API_URL'		: 'http://ip-api.com/json?lang={:s}&fields=status,country,countryCode',
 
 	'PSF_VARS_IDX'		: {
 					'SECRET' : 1184
@@ -27,11 +27,36 @@ CONST = {
 								'QUERY_PARAMS' 	: 	{	'tvShowId' 		: '##tvShowId##',
 												'sortBy'   		: 'seasonsOrder',
 												'sortAscending'		: 'true',
+												'limit'			: '5000',
 
 											},
-								'SELECTION'	:	'{data{id,channelId,visibilities,duration,metadata{de}}}',
+								'SELECTION'	:	'{data{id,channelId,visibilities,duration,tvShow,metadata{%s}}}',
+
+								'INFOLABELS'	:	{
+												'mediatype': 'season',
+											},
+
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{},
+								'SUBTYPE_ART'	:	{
+												'tvShow' : {
+														'cover'		: {
+																	'fanart'   	: 'profile:nextgen-web-herolandscape-1920x',
+																},
+														'teaser'	: {
+																	'thumb'		: 'profile:nextgen-webphone-heroportrait-563x',
+																},
+														'heroLandscape' : {
+																	'fanart'   	: 'profile:nextgen-web-herolandscape-1920x',
+																},
+														'primary'	: {
+																	'thumb'		: 'profile:nextgen-webphone-heroportrait-563x',
+																},
+														'heroPortrait' : {
+																	'poster' 	: 'profile:nextgen-webphone-heroportrait-563x',
+																},
+													},
+											},
 							  },
 
 					'VIDEO'		: {
@@ -41,8 +66,14 @@ CONST = {
 												'sortBy'		: 'seasonsOrder',
 												'sortAscending'		: 'true',
 												'skip'			: '0',
+												'limit'			: '5000',
 											},
-								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,agofCode,path(context:"web", region:"de", type:"cmsPath"){path},tvShow,season,episode,duration,metadata{de},visibilities{endsAt}}}',
+								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,tvShow,season,episode,duration,metadata{%s}}}',
+
+								'INFOLABELS'	:	{
+												'mediatype': 'episode',
+											},
+
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
 											 'ART_LOGO'       : {
@@ -53,12 +84,28 @@ CONST = {
 											 'HERO_PORTRAIT'  : {'poster' : 'profile:nextgen-webphone-heroportrait-563x'},
 											},
 
+								'SUBTYPE_ART'	:	{
+												'tvShow' : {
+														'artLogo'	: {
+																	'icon'   	: 'profile:nextgen-web-artlogo-183x75',
+																	'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
+																},
+														'cover'		: {
+																	'fanart'   	: 'profile:nextgen-web-herolandscape-1920x',
+																},
+														'heroLandscape' : {
+																	'fanart'   	: 'profile:nextgen-web-herolandscape-1920x',
+																},
+
+													},
+											},
+
 							  },
 
 					'BRAND'		: {
 								'PATH'		:	'brands',
 								'QUERY_PARAMS' 	: 	{},
-								'SELECTION'	:	'{data{id,channelId,agofCodes,metadata{de}}}',
+								'SELECTION'	:	'{data{id,channelId,agofCodes,metadata{%s}}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'seo'},
 								'ART'		:	{'BRAND_LOGO'  : {
 													'icon'   	: 'profile:nextgen-web-artlogo-183x75',
@@ -72,10 +119,17 @@ CONST = {
 								'PATH'		:	'tvshows',
 								'QUERY_PARAMS' 	: 	{
 												'channelId'		: '##channelId##',
-												'limit'			: '250',
+												'limit'			: '5000',
 												'skip'			: '0',
 											},
-								'SELECTION'	:	'{totalCount,data{id,type,startTime,endTime,metadata{de{ageRatings,copyrights ,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},seo,channelObject{classIdentifier,bundleId},type,bundleId,classIdentifier,titles,descriptions}},baseUrl,path(context:"web", region:"de", type:"cmsPath"),brand,channelId,tvShow,season,episode,status}}',
+
+								'SELECTION'	: '{totalCount,data{id,type,startTime,endTime,metadata{%s{ageRatings,copyrights,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},type,titles,descriptions}},brand,channelId,tvShow,season,episode,status}}',
+
+								'INFOLABELS'	:	{
+												'mediatype': 'tvshow',
+											},
+
+
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
 											 'ART_LOGO'       : {
@@ -97,12 +151,18 @@ CONST = {
 											'sortAscending'	: 'true',
 											'limit'		: '5000',
 										  },
-								'SELECTION'	: '{totalCount,data{id,title,description,tvShow,type,tvChannelName,channelId,startTime,endTime,video,images(subType:"cover"){url,subType}}}',
+								'SELECTION'	: '{totalCount,data{id,title,description,tvShow,type,tvChannelName,channelId,startTime,endTime,video,images}}',
 								'IMG_PROFILE'	: 'profile:original',
 							  },
 					'FETCH'		: {	'PATH'		: 'fetch/',
 								'QUERY_PARAMS'	: {},
-								'SELECTION'	: '{data{id,visibilities, channelId ,agofCodes,duration,metadata{de}}}',
+								'SELECTION'	: '{data{id,visibilities, channelId ,agofCodes,duration,metadata{%s}}}',
+
+								'INFOLABELS'	:	{
+												'mediatype': 'tvshow',
+											},
+
+
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
 											 'ART_LOGO'       : {
@@ -116,9 +176,15 @@ CONST = {
 					'TVSHOWS'	: {	'PATH'		: 'tvshows',
 								'QUERY_PARAMS'	: {
 											'ids' 	: '##ids##',
-											'limit'	: '1000',
+											'limit'	: '5000',
 										},
-								'SELECTION'	: '{totalCount,data{id,type,startTime,endTime,metadata{de{ageRatings,copyrights ,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},seo,channelObject{classIdentifier,bundleId},type,bundleId,classIdentifier,titles,descriptions}},baseUrl,path(context:"web", region:"de", type:"cmsPath"),brand,channelId,tvShow,season,episode,status}}',
+								'SELECTION'	: '{totalCount,data{id,type,startTime,endTime,metadata{%s{ageRatings,copyrights,numberOfSeasons,seasons,id,genres,images{type,url,accentColors},type,titles,descriptions}},brand,channelId,tvShow,season,episode,status}}',
+
+								'INFOLABELS'	:	{
+												'mediatype': 'tvshow',
+											},
+
+
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
 								'ART'		:	{'PRIMARY'        : {'thumb'  : 'profile:original'},
 											 'ART_LOGO'       : {
@@ -132,12 +198,37 @@ CONST = {
 					'SEASONS'	: {
 								'PATH'	      	: 	'seasons',
 								'QUERY_PARAMS' 	: 	{	'ids'	: '##ids##',
-												'limit'	: '1000',
+												'limit'	: '5000',
 
 											},
-								'SELECTION'	:	'{data{id,channelId,visibilities,duration,metadata{de}}}',
+								'SELECTION'	:	'{data{id,channelId,visibilities,duration,tvShow,metadata{%s}}}',
 								'TEXTS'		:	{'title' : 'main', 'description' : 'main'},
+
+								'INFOLABELS'	:	{
+												'mediatype': 'season',
+											},
+
+
 								'ART'		:	{},
+								'SUBTYPE_ART'	:	{
+												'tvShow' : {
+														'cover'		: {
+																	'fanart'   	: 'profile:nextgen-web-herolandscape-1920x',
+																},
+														'teaser'	: {
+																	'thumb'		: 'profile:nextgen-webphone-heroportrait-563x',
+																},
+														'heroLandscape' : {
+																	'fanart'   	: 'profile:nextgen-web-herolandscape-1920x',
+																},
+														'primary'	: {
+																	'thumb'		: 'profile:nextgen-webphone-heroportrait-563x',
+																},
+														'heroPortrait' : {
+																	'poster' 	: 'profile:nextgen-webphone-heroportrait-563x',
+																},
+													},
+											},
 							  },
 
 				  },
@@ -205,6 +296,118 @@ CONST = {
 					'OPEN_ADDON_SETTINGS'		: 30504,
 					'CACHE_WAS_CLEARED'		: 30659,
 					'CACHE_COULD_NOT_BE_CLEARED'	: 30660,
+					'LANG_CODE'			: 30661,
 				},
+
+	'VIEW_MODES'		: {
+					'Standard'	:  {
+								'skin.estuary' : '0',
+							  },
+					'List'		: {
+								'skin.estuary' : '50',
+							  },
+					'Poster'	: {
+								'skin.estuary' : '51',
+							  },
+					'IconWall'	: {
+								'skin.estuary' : '52',
+							  },
+
+					'Shift'		: {
+								'skin.estuary' : '53',
+							  },
+					'InfoWall'	: {
+								'skin.estuary' : '54',
+							  },
+					'WideList'	: {
+								'skin.estuary' : '55',
+							  },
+					'Wall'		: {
+								'skin.estuary' : '500',
+							  },
+					'Banner'	: {
+								'skin.estuary' : '501',
+							  },
+					'Fanart'	: {
+								'skin.estuary' : '502',
+							  },
+
+				},
+
+
+	'FOLDERS'		: {
+
+					'INDEX'		: {
+								'content_type'	: 'tags',
+								'view_mode'	: 'categories_view',
+							},
+
+					'CATEORIES'	: {
+								'content_type'	: 'tags',
+								'view_mode'	: 'categories_view',
+								'cacheable'	: True,
+							},
+
+					'MEDIA_LIBS'	: {
+								'content_type'	: 'tags',
+								'view_mode'	: 'categories_view',
+								'cacheable'	: True,
+							},
+
+					'WATCHLIST'	: {
+								'content_type'	: 'videos',
+								'view_mode'	: 'watchlist_view',
+							},
+
+
+					'CATEGORY'	: {
+								'content_type'	: 'tvshows',
+								'view_mode'	: 'category_view',
+								'cacheable'	: True,
+							},
+
+					'LIVE_TV'	: {
+								'content_type'	: 'videos',
+								'view_mode'	: 'livetv_view',
+							},
+
+					'TV_SHOWS'	: {
+
+								'content_type'	: 'tvshows',
+								'view_mode'	: 'tvshow_view',
+								'cacheable'	: True,
+							},
+
+
+					'SEASONS'	: {
+								'content_type'	: 'seasons',
+								'view_mode'	: 'season_view',
+								'sort'		: {
+											'order_type'	: '7', #SortByTitle
+											'setting_id'	: 'season_order',
+										},
+								'cacheable'	: True,
+							},
+
+					'EPISODES'	: {
+								'content_type'	: 'episodes',
+								'view_mode'	: 'episode_view',
+								'sort'		: {
+											'order_type' 	: '23', #SortByEpisodeNumber
+											'setting_id'	: 'episode_order',
+										},
+								'cacheable'	: True,
+
+							},
+
+
+			},
+
+	'SETTING_VALS'	: {
+
+			'SORT_ORDER_DEFAULT'	: '0',
+			'SORT_ORDER_ASC'	: '1',
+			'SORT_ORDER_DESC'	: '2',
+	}
 
 }

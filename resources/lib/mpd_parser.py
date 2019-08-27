@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import resources.lib.request_helper as request_helper
-import resources.lib.xbmc_helper as xbmc_helper
+from . import request_helper as request_helper
+from . import xbmc_helper as xbmc_helper
 import xml.etree.ElementTree as ET
 
 class mpd_parser:

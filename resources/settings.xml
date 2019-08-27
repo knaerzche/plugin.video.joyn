@@ -1,14 +1,14 @@
 <settings>
-	<category label="Settings">
-		<setting label="30105" type="select" id="country" lvalues="30106|30107" />
+	<category label="30000">
+		<setting label="30105" type="select" id="country" lvalues="30106|30107" default="0"/>
 		<setting type="sep" />
 		<setting label="30101" type="bool" id="checkdrmcert" default="false" />
 		<setting type="sep" />
-		<setting label="30102" type="slider" id="configcachemins" default="120" range="0,1,1440" option="int" />
+		<setting label="30127" type="bool" id="disable_foldercache" default="false" />
 		<setting type="sep" />
-		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int" />
+		<setting label="30102" type="slider" id="configcachemins" default="120" range="0,30,1440" option="int" />
 		<setting type="sep" />
-		<setting label="30104" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)" />
+		<setting label="30104" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)" option="close" />
 		<setting type="sep" />
 		<setting label="30108" type="action" id="inputstream_adaptive_settings"
 			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;forein_addon_id=inputstream.adaptive)"
@@ -16,5 +16,30 @@
 		<setting label="30109" type="action" id="uepg_settings"
 			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;forein_addon_id=script.module.uepg)"
 			enable="System.HasAddon(script.module.uepg)" option="close" />
+
+	</category>
+	<category label="30001">
+		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int" />
+		<setting type="sep" />
+		<setting label="30110" type="bool" id="dont_show_watchlist_in_lastseen" default="false" />
+		<setting type="sep" />
+		<setting label="30111" type="select" id="season_order" lvalues="30123|30125|30126" default="2" />
+		<setting label="30112" type="select" id="episode_order" lvalues="30123|30114|30113" default="2" />
+		<setting label="30351" type="lsep" />
+		<setting label="30122" type="bool" id="enable_viewmodes" default="true" />
+		<setting label="30115" type="select" id="categories_view" values="Standard|IconWall|WideList|Custom" default="IconWall" enable="eq(-1,true)" />
+		<setting label="30124" type="number" id="categories_view_custom" visible="eq(-2,true) + eq(-1,3)" enable="eq(-1,3)" subsetting="true" />
+		<setting label="30121" type="select" id="category_view" values="Standard|List|Poster|Shift|InfoWall|WideList|Wall|Banner|Fanart|Custom" default="Shift"  enable="eq(-3,true)" />
+		<setting label="30124" type="number" id="category_view_custom" visible="eq(-4,true) + eq(-1,9)" enable="eq(-1,9)" subsetting="true" />
+		<setting label="30116" type="select" id="tvshow_view" values="Standard|List|Poster|Shift|InfoWall|WideList|Wall|Banner|Fanart|Custom" default="Shift" enable="eq(-5,true)" />
+		<setting label="30124" type="number" id="tvshow_view_custom" visible="eq(-6,true) + eq(-1,9)" enable="eq(-1,9)" subsetting="true" />
+		<setting label="30117" type="select" id="season_view" values="Standard|List|Poster|Shift|InfoWall|WideList|Wall|Banner|Fanart|Custom" default="Shift" enable="eq(-7,true)" />
+		<setting label="30124" type="number" id="season_view_custom" visible="eq(-8,true) + eq(-1,9)" enable="eq(-1,9)" subsetting="true" />
+		<setting label="30118" type="select" id="episode_view" values="Standard|WideList|Wall|InfoWall|Custom" default="InfoWall" enable="eq(-9,true)" />
+		<setting label="30124" type="number" id="episode_view_custom" visible="eq(-10,true) + eq(-1,4)" enable="eq(-1,4)" subsetting="true" />
+		<setting label="30119" type="select" id="livetv_view" values="Standard|WideList|Wall|Shift|InfoWall|Custom" default="WideList" enable="eq(-11,true)" />
+		<setting label="30124" type="number" id="livetv_view_custom" visible="eq(-12,true) + eq(-1,5)" enable="eq(-1,5)" subsetting="true" />
+		<setting label="30120" type="select" id="watchlist_view" values="Standard|WideList|Wall|Shift|InfoWall|Custom" default="Shift" enable="eq(-13,true)" />
+		<setting label="30124" type="number" id="watchlist_view_custom" visible="eq(-14,true) + eq(-1,5)" enable="eq(-1,5)" subsetting="true" />
 	</category>
 </settings>

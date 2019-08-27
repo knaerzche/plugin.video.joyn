@@ -9,13 +9,14 @@ from hashlib import sha1
 from math import floor
 from sys import exit
 from datetime import datetime, timedelta
+from time import time, strptime
 from copy import deepcopy
-from resources.lib.const import CONST
-import resources.lib.compat as compat
-import resources.lib.request_helper as request_helper
-import resources.lib.cache as cache
-import resources.lib.xbmc_helper as xbmc_helper
-from resources.lib.mpd_parser import mpd_parser as mpd_parser
+from .const import CONST
+from . import compat as compat
+from . import request_helper as request_helper
+from . import cache as cache
+from . import xbmc_helper as xbmc_helper
+from .mpd_parser import mpd_parser as mpd_parser
 
 if compat.PY2:
 	from urllib import urlencode
@@ -75,7 +76,11 @@ class lib_joyn:
 						value = replacements[key]
 				valued_query_params.update({key : value})
 
-		valued_query_params.update({'selection' : CONST['PATH'][path_type]['SELECTION']})
+		if  CONST['PATH'][path_type]['SELECTION'].find('%s') is not -1:
+			valued_query_params.update({'selection' : (CONST['PATH'][path_type]['SELECTION'] % CONST['COUNTRIES'][self.config['country']]['language'])})
+		else:
+			valued_query_params.update({'selection' : CONST['PATH'][path_type]['SELECTION']})
+
 		valued_query_params.update(additional_params)
 
 		return self.get_joyn_json_response(url=CONST['MIDDLEWARE_URL'] + CONST['PATH'][path_type]['PATH'] + url_annex , params=valued_query_params)
@@ -347,7 +352,6 @@ class lib_joyn:
 											image['url'] + '/' +  CONST['PATH']['EPG']['IMG_PROFILE'], self.config['USER_AGENT'])})
 
 							guidedata.append({
-								'mediatype' : 'episode',
 								'label'	: channel_epg_data['tvShow']['title'],
 								'plot' : channel_epg_data['description'],
 								'title' : channel_epg_data['tvShow']['title'],
@@ -364,14 +368,30 @@ class lib_joyn:
 
 	@staticmethod
 	def combine_tvshow_season_data(tvshow_data, season_data):
-		combined_title =  tvshow_data['infoLabels']['Title'] + ' - ' + season_data['infoLabels']['Title']
-		season_data['infoLabels'].update({'Title' : combined_title})
+
+		combined_title =  tvshow_data['infoLabels']['title'] + ' - ' + season_data['infoLabels']['title']
+		season_data['infoLabels'].update({'title' : combined_title})
 		season_data.update({'art' : tvshow_data['art']})
 		return season_data
 
 
 	@staticmethod
-	def extract_metadata(metadata, selection_type):
+	def merge_subtype_art(selection_type, metadata_art, data):
+
+		if 'SUBTYPE_ART' in CONST['PATH'][selection_type].keys():
+			for subtype_art_key, subtype_art in CONST['PATH'][selection_type]['SUBTYPE_ART'].items():
+				if subtype_art_key in data.keys() and 'images' in data[subtype_art_key].keys():
+
+					for subtype_art_item in data[subtype_art_key]['images']:
+						if 'subType' in subtype_art_item.keys() and subtype_art_item['subType'] in subtype_art.keys():
+							for art_type, art_profile in subtype_art[subtype_art_item['subType']].items():
+								xbmc_helper.log_debug('merge_subtype_art : ' + art_type + '--->' + subtype_art_item['url'] + '/' + art_profile)
+								metadata_art.update({art_type : subtype_art_item['url'] + '/' + art_profile})
+
+		return metadata_art
+
+	@staticmethod
+	def extract_metadata(metadata, selection_type, visibilities=None):
 		extracted_metadata = {
 			'art': {},
 			'infoLabels' : {},
@@ -382,21 +402,57 @@ class lib_joyn:
 		if 'descriptions' in metadata.keys() and 'description' in path['TEXTS'].keys():
 			for description in metadata['descriptions']:
 				if description['type'] == path['TEXTS']['description']:
-					extracted_metadata['infoLabels'].update({'Plot' : description['text']})
+					extracted_metadata['infoLabels'].update({'plot' : description['text']})
 					break
 
-		if selection_type == 'SEASON' and 'seasonNumber' in metadata.keys() and metadata['seasonNumber'] is not None:
-			extracted_metadata['infoLabels'].update({'Title' : xbmc_helper.translation('SEASON_NO').format(str(metadata['seasonNumber']))})
+		if selection_type == 'SEASON':
+			cast = []
+			if 'seasonNumber' in metadata.keys() and metadata['seasonNumber'] is not None:
+				extracted_metadata['infoLabels'].update({'title' : xbmc_helper.translation('SEASON_NO').format(str(metadata['seasonNumber']))})
+				extracted_metadata['infoLabels'].update({'season' : metadata['seasonNumber']})
+				extracted_metadata['infoLabels'].update({'sortseason' : metadata['seasonNumber']})
+
+
+			if 'cast' in metadata.keys():
+				for actor in metadata['cast']:
+					if 'name' in actor.keys():
+						cast.append(actor['name'])
+
+			extracted_metadata['infoLabels'].update({'cast' : cast})
+
 		elif 'titles' in metadata.keys() and 'title' in path['TEXTS'].keys():
 			for title in metadata['titles']:
 				if title['type'] ==  path['TEXTS']['title']:
-					extracted_metadata['infoLabels'].update({'Title' : title['text']})
+					extracted_metadata['infoLabels'].update({'title' : title['text']})
 					break
 		if 'images' in metadata.keys() and 'ART' in path.keys():
 			for image in metadata['images']:
 				if image['type'] in path['ART'].keys():
 					for art_type, img_profile in path['ART'][image['type']].items():
 						extracted_metadata['art'].update({art_type : image['url'] + '/' + img_profile})
+
+		avaibility_end = None
+		avaibility_start = None
+
+		if visibilities is not None:
+			for visibility in visibilities:
+				if 'endsAt' in visibility.keys() and visibility['endsAt'] != 9999999999:
+					avaibility_end = datetime.fromtimestamp(visibility['endsAt'])
+				if 'startsAt' in visibility.keys():
+					avaibility_start = datetime.fromtimestamp(visibility['startsAt'])
+				if avaibility_start is not None and avaibility_end is not None:
+					break
+
+		if avaibility_end is not None:
+			extracted_metadata['infoLabels'].update({
+				'plot' : compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE')).format(avaibility_end) + extracted_metadata['infoLabels'].get('plot', '')
+			})
+
+		if avaibility_start is not None:
+			extracted_metadata['infoLabels'].update({'dateadded' : avaibility_start.strftime('%Y-%m-%d %H:%M:%S')})
+
+		if 'INFOLABELS' in path.keys():
+			extracted_metadata['infoLabels'].update(path['INFOLABELS'])
 
 		return extracted_metadata
 
@@ -412,17 +468,17 @@ class lib_joyn:
 		for idx, program_data in enumerate(epg_channel_data):
 			endTime = datetime.fromtimestamp(program_data['endTime'])
 			if  endTime > datetime.now():
-				extracted_metadata['infoLabels']['Title'] = compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(
+				extracted_metadata['infoLabels']['title'] = compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(
 											program_data['tvChannelName'], program_data['tvShow']['title'])
 
 				if len(epg_channel_data) > (idx+1):
-					extracted_metadata['infoLabels']['Plot'] = compat._unicode(xbmc_helper.translation('LIVETV_UNTIL_AND_NEXT')).format(
+					extracted_metadata['infoLabels']['plot'] = compat._unicode(xbmc_helper.translation('LIVETV_UNTIL_AND_NEXT')).format(
 											endTime,epg_channel_data[idx+1]['tvShow']['title'])
 				else:
-					extracted_metadata['infoLabels']['Plot'] =  compat._unicode(xbmc_helper.translation('LIVETV_UNTIL')).format(endTime)
+					extracted_metadata['infoLabels']['plot'] =  compat._unicode(xbmc_helper.translation('LIVETV_UNTIL')).format(endTime)
 
 				if program_data['description'] is not None:
-					extracted_metadata['infoLabels']['Plot'] += program_data['description']
+					extracted_metadata['infoLabels']['plot'] += program_data['description']
 
 				for image in program_data['images']:
 					if image['subType'] == 'cover':
@@ -454,6 +510,7 @@ class lib_joyn:
 			config = cached_config;
 
 		if recreate_config == True:
+
 			xbmc_helper.log_debug('get_config(): create config')
 			config = {
 				'CONFIG'		: {
@@ -475,8 +532,8 @@ class lib_joyn:
 			os_uname = compat._uname_list()
 			#android
 			if os_uname[0] == 'Linux' and 'KODI_ANDROID_LIBS' in environ:
-				config['USER_AGENT'] = 'Mozilla/5.0 (Linux Android 8.1.0 Nexus 6P Build/OPM6.171019.030.B1) AppleWebKit/537.36 (KHTML, like Gecko) \
-							Chrome/68.0.3440.91 Mobile Safari/537.36'
+				config['USER_AGENT'] = 'Mozilla/5.0 (Linux Android 8.1.0 Nexus 6P Build/OPM6.171019.030.B1) AppleWebKit/537.36 (KHTML, like Gecko) '\
+								'Chrome/68.0.3440.91 Mobile Safari/537.36'
 				config['IS_ANDROID'] = True
 			# linux on arm uses widevine from chromeos
 			elif os_uname[0] == 'Linux' and os_uname[4].lower().find('arm') is not -1:
@@ -498,14 +555,14 @@ class lib_joyn:
 			county_setting = xbmc_helper.get_setting('country')
 			xbmc_helper.log_debug("COUNTRY SETTING : " + county_setting)
 			if county_setting is '' or county_setting is '0':
-				ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'], config=config, silent=True)
+				ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'].format(xbmc_helper.translation('LANG_CODE')), config=config, silent=True)
 				xbmc_helper.log_debug('IP API Response is : ' + dumps(ip_api_response))
 				if ip_api_response is not None and ip_api_response != '' and 'countryCode' in ip_api_response.keys():
 					if ip_api_response['countryCode'] in CONST['COUNTRIES'].keys():
 						config.update({'country' : ip_api_response['countryCode']})
 					else:
 						xbmc_helper.dialog_settings(
-								xbmc_helper.translation('MSG_COUNTRY_INVALID').format(ip_api_response.get('country', 'Unknown'))
+								xbmc_helper.translation('MSG_COUNTRY_INVALID').format(compat._encode(ip_api_response.get('country', 'Unknown')))
 						)
 						exit(0)
 

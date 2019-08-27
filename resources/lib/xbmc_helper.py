@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-from xbmc import translatePath, executeJSONRPC, executebuiltin, log, LOGERROR, LOGDEBUG, LOGNOTICE
+from sys import argv
+from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
+from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginCategory
 from xbmcvfs import mkdirs, exists, rmdir, listdir, delete
 from xbmcaddon import Addon
 from xbmcgui import Dialog, NOTIFICATION_ERROR
 from json import loads, dumps
-import resources.lib.compat as compat
-from resources.lib.const import CONST
+from . import compat as compat
+from .const import CONST
 
 if compat.PY2:
 	from urlparse import parse_qs
@@ -27,6 +29,8 @@ def get_file_path(directory, filename):
 
 	return translatePath(os.path.join(xbmc_directory, filename)).encode('utf-8').decode('utf-8')
 
+def get_media_filepath(filename):
+	return translatePath(os.path.join(addon.getAddonInfo('path'), 'resources', 'media', filename)).encode('utf-8').decode('utf-8')
 
 def remove_dir(directory):
 
@@ -108,6 +112,81 @@ def dialog_settings(msg,msg_line2=None, msg_line3=None, header=addon.getAddonInf
 
 def dialog_id(id):
 	return dialog(translation(id))
+
+
+def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, title=None):
+
+	folder_defs = CONST['FOLDERS'].get(folder_type)
+	addDirectoryItems(pluginhandle, list_items, len(list_items))
+
+	if title is not None:
+		setPluginCategory(pluginhandle, title)
+
+	if 'content_type' in folder_defs.keys():
+		log_debug('set_folder: set content_type: ' + folder_defs['content_type'])
+		setContent(pluginhandle, folder_defs['content_type'])
+	endOfDirectory(handle=pluginhandle,cacheToDisc=(folder_defs.get('cacheable', False) and (get_bool_setting('disable_foldercache') is False)))
+
+	wait_for_container(pluginurl, pluginquery)
+
+	if 'view_mode' in folder_defs.keys():
+		set_view_mode(folder_defs['view_mode'])
+
+	if 'sort' in folder_defs.keys():
+		set_folder_sort(folder_defs['sort'])
+def set_folder_sort(folder_sort_def):
+
+	order = get_setting(folder_sort_def['setting_id'])
+	log_debug('set_folder_sort ' + dumps(folder_sort_def) + ' : ' + order)
+
+	if order != CONST['SETTING_VALS']['SORT_ORDER_DEFAULT']:
+		executebuiltin('Container.SetSortMethod({:s})'.format(str(folder_sort_def['order_type'])))
+
+		if ((order == CONST['SETTING_VALS']['SORT_ORDER_DESC'] and str(getCondVisibility('Container.SortDirection(ascending)')) == '1') or
+			(order == CONST['SETTING_VALS']['SORT_ORDER_ASC'] and str(getCondVisibility('Container.SortDirection(descending)')) == '1')):
+			executebuiltin('Container.SetSortDirection()')
+
+
+def set_view_mode(setting_id):
+
+	skin_name = str(getSkinDir())
+
+	if get_bool_setting('enable_viewmodes') is True:
+
+
+		setting_val = get_setting(setting_id)
+
+		if setting_val == 'Custom':
+			viewmode = get_setting(setting_id + '_custom')
+			log_debug('Viewmode custom')
+		else:
+			log_debug('Viewmode ' + dumps(CONST['VIEW_MODES'].get(setting_val, {})))
+			viewmode = CONST['VIEW_MODES'].get(setting_val, {}).get(skin_name, '0')
+
+		log_debug('--> Viewmode ' + str(setting_id) + ' : ' + setting_val + ' : ' + viewmode + ' : ' + skin_name )
+
+		if viewmode is not '0':
+			executebuiltin('Container.SetViewMode({:s})'.format(viewmode))
+
+
+def wait_for_container(pluginurl, pluginquery):
+
+	#sadly it's necesary to wait until kodi has the new Container ...
+	#this is necessary to make sure that all upcoming transactions are done with the correct container
+	#provided the previous container had a differnd pluginurl/pluginquery
+	pluginpath = pluginurl + pluginquery
+
+	log_debug('wait_for_container pluginurl ' + str(pluginpath))
+
+	counter = 0
+	while counter <= 100:
+		counter += 1
+		xbmc_sleep(5)
+		folder_path = str(getInfoLabel('Container.FolderPath'))
+		if folder_path == pluginpath:
+			break
+
+	log_debug('wait_for_container no of loops: ' + str(counter));
 
 
 def log_error(content):

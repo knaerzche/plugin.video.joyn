@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-08-17 12:08+0000\n"
+"POT-Creation-Date: 2019-08-25 12:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -23,7 +23,11 @@ msgctxt "#30000"
 msgid "General"
 msgstr ""
 
-#empty strings from id 30001 to 30100
+msgctxt "#30001"
+msgid "View"
+msgstr ""
+
+#empty strings from id 30002 to 30100
 # SETTINGS-BUTTONS
 
 msgctxt "#30101"
@@ -35,8 +39,8 @@ msgid "How often to renew config (in minutes)"
 msgstr ""
 
 msgctxt "#30103"
-msgid "Count of lastseen items"
-msgid ""
+msgid "Count of lastseen seasons in main menu"
+msgstr ""
 
 msgctxt "#30104"
 msgid "Clear cache"
@@ -55,20 +59,95 @@ msgid "Germany"
 msgstr ""
 
 msgctxt "#30108"
-msgid "inputstream settings"
+msgid "inputstream Addon settings"
 msgstr ""
 
 msgctxt "#30109"
 msgid "uEPG settings"
 msgstr ""
 
-#empty strings from id 30110 to 30229
+msgctxt "#30110"
+msgid "Exclude items from watchlist from lastseen seasons"
+msgstr ""
+
+msgctxt "#30111"
+msgid "Season order"
+msgstr ""
+
+msgctxt "#30112"
+msgid "Episode order"
+msgstr ""
+
+msgctxt "#30113"
+msgid "Episode descending"
+msgstr ""
+
+msgctxt "#30114"
+msgid "Episode ascending"
+msgstr ""
+
+msgctxt "#30115"
+msgid "Viewmode main menu/media libraries/categories"
+msgstr ""
+
+msgctxt "#30116"
+msgid "Viewmode tvshows"
+msgstr ""
+
+msgctxt "#30117"
+msgid "Viewmode seasons"
+msgstr ""
+
+msgctxt "#30118"
+msgid "Viewmode episodes"
+msgstr ""
+
+msgctxt "#30119"
+msgid "Viewmode Live TV"
+msgstr ""
+
+msgctxt "#30120"
+msgid "Viewmode watchlist"
+msgstr ""
+
+msgctxt "#30121"
+msgid "Viewmode category"
+msgstr ""
+
+msgctxt "#30122"
+msgid "Enable custom viewmodes"
+msgstr ""
+
+msgctxt "#30123"
+msgid "Default"
+msgstr ""
+
+msgctxt "#30124"
+msgid "Custom View ID"
+msgstr ""
+
+msgctxt "#30125"
+msgid "Season ascending"
+msgstr ""
+
+msgctxt "#30126"
+msgid "Season descending"
+msgstr ""
+
+msgctxt "#30127"
+msgid "Disable folder cache"
+msgstr ""
+
+#empty strings from id 30128 to 30229
 # SETTINGS-TITLES
 
-#empty strings from id 30230 to 30349
+#empty strings from id 30230 to 30350
 # SETTINGS-DESCRIPTIONS
+msgctxt "#30351"
+msgid "Use 'Custom'+View ID for all non-Estuary skins"
+msgstr ""
 
-# empty strings from id 30351 to 30500
+# empty strings from id 30352 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -139,7 +218,7 @@ msgid "Your coutry could not be automatically detected - please set it in the ad
 msgstr ""
 
 msgctxt "#30533"
-msgid "It looks like you are located in {:s} - this country is currently not supported by Joyn.[CR]If you are sure, that your are located in an other country, please set it in the addon settings (at your own risk)"
+msgid "It looks like you are located in {:s} - this country is currently not supported by this Joyn addon.[CR]If you are sure, that your are located in another country, please set it in the addon settings (at your own risk)"
 msgstr ""
 
 #empty strings from id 30534 to 30600
@@ -261,3 +340,6 @@ msgctxt "#30660"
 msgid "Cache could not be cleared"
 msgstr ""
 
+msgctxt "#30661"
+msgid "en"
+msgstr ""

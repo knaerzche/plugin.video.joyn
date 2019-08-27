@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-08-17 12:08+0000\n"
+"POT-Creation-Date: 2019-08-25 12:22+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -23,7 +23,11 @@ msgctxt "#30000"
 msgid "General"
 msgstr "Allgemein"
 
-#empty strings from id 30001 to 30100
+msgctxt "#30001"
+msgid "View"
+msgstr "Ansicht"
+
+#empty strings from id 30002 to 30100
 # SETTINGS-BUTTONS
 
 msgctxt "#30101"
@@ -35,11 +39,11 @@ msgid "How often to renew config (in minutes)"
 msgstr "Wie oft Konfiguration neu herunterladen (in Minuten)"
 
 msgctxt "#30103"
-msgid "Count of lastseen items"
-msgstr "Anzahl zuletzt gesehen"
+msgid "Count of lastseen seasons in main menu"
+msgstr "Anzahl zuletzt gesehener Staffeln im Hauptmenu"
 
 msgctxt "#30104"
-msgid "Clear Cache"
+msgid "Clear cache"
 msgstr "Cache leeren"
 
 msgctxt "#30105"
@@ -55,20 +59,95 @@ msgid "Germany"
 msgstr "Deutschland"
 
 msgctxt "#30108"
-msgid "inputstream settings"
-msgstr "inputstream Einstellungen"
+msgid "inputstream Addon settings"
+msgstr "inputstream Addon Einstellungen"
 
 msgctxt "#30109"
 msgid "uEPG settings"
 msgstr "uEPG Einstellungen"
 
-#empty strings from id 30110 to 30229
+msgctxt "#30110"
+msgid "Exclude items from watchlist from lastseen seasons"
+msgstr "Inhalte aus der Watchlist nicht bei zuletzt gesehenen Staffeln anzeigen"
+
+msgctxt "#30111"
+msgid "Season order"
+msgstr "Reihenfolde der Staffeln"
+
+msgctxt "#30112"
+msgid "Episode order"
+msgstr "Reihenfolde der Episoden"
+
+msgctxt "#30113"
+msgid "Episode descending"
+msgstr "Episode absteigend"
+
+msgctxt "#30114"
+msgid "Episode ascending"
+msgstr "Episode aufsteigend"
+
+msgctxt "#30115"
+msgid "Viewmode main menu/media libraries/categories"
+msgstr "Ansicht Hauptmenu/Mediatheken/Rubriken"
+
+msgctxt "#30116"
+msgid "Viewmode tvshows"
+msgstr "Ansicht Serien"
+
+msgctxt "#30117"
+msgid "Viewmode seasons"
+msgstr "Ansicht Staffeln"
+
+msgctxt "#30118"
+msgid "Viewmode episodes"
+msgstr "Ansicht Episoden"
+
+msgctxt "#30119"
+msgid "Viewmode Live TV"
+msgstr "Ansicht Live TV"
+
+msgctxt "#30120"
+msgid "Viewmode watchlist"
+msgstr "Ansicht Watchlist"
+
+msgctxt "#30121"
+msgid "Viewmode category"
+msgstr "Ansicht Rubrik"
+
+msgctxt "#30122"
+msgid "Enable custom viewmodes"
+msgstr "Ansichtseinstellungen aktivieren"
+
+msgctxt "#30123"
+msgid "Default"
+msgstr "Standard"
+
+msgctxt "#30124"
+msgid "Custom View ID"
+msgstr "Benutzerdefinierte View ID"
+
+msgctxt "#30125"
+msgid "Season ascending"
+msgstr "Staffel aufsteigend"
+
+msgctxt "#30126"
+msgid "Season descending"
+msgstr "Staffel absteigend"
+
+msgctxt "#30127"
+msgid "Disable folder cache"
+msgstr "Ordner-Cache deaktivieren"
+
+#empty strings from id 30128 to 30229
 # SETTINGS-TITLES
 
-#empty strings from id 30230 to 30349
+#empty strings from id 30230 to 30350
 # SETTINGS-DESCRIPTIONS
+msgctxt "#30351"
+msgid "Use 'Custom'+View ID for all non-Estuary skins"
+msgstr "'Custom'+View ID für alle nicht-Estuary skins verwenden."
 
-# empty strings from id 30351 to 30500
+# empty strings from id 30352 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -139,7 +218,7 @@ msgid "Your coutry could not be automatically detected - please set it in the ad
 msgstr "Land konnte nicht automatisch ermittelt werden - bitte in den Addon Einstellungen setzen"
 
 msgctxt "#30533"
-msgid "It looks like you are located in {:s} - this country is currently not supported by this Joyn addon.[CR]If you are sure, that your are located in an other country, please set it in the addon settings (at your own risk)"
+msgid "It looks like you are located in {:s} - this country is currently not supported by this Joyn addon.[CR]If you are sure, that your are located in another country, please set it in the addon settings (at your own risk)"
 msgstr "Es scheint, dass Sie in aus {:s} kommen. Dieses Land wird derzeit von Joyn-Addon nicht unterstützt.[CR]Wenn Sie sicher sind, dass Sie aus einem andern Land kommen, bitte in den Addon Einstellungen setzen (auf eigene Gefahr)"
 
 #empty strings from id 30534 to 30600
@@ -167,7 +246,7 @@ msgstr "Live TV"
 
 msgctxt "#30606"
 msgid "TV Guide"
-msgstr "EPG"
+msgstr "TV Programm"
 
 msgctxt "#30607"
 msgid "Personal Joyn watchlist"
@@ -191,7 +270,7 @@ msgstr "Live Streams von mehr als 50 Sendern"
 
 msgctxt "#30612"
 msgid "TV Guide provided by uEPG"
-msgstr "EPG erstellt mit uEPG"
+msgstr "TV Programm erstellt mit uEPG"
 
 msgctxt "#30621"
 msgid "Season {0:s}"
@@ -261,3 +340,6 @@ msgctxt "#30660"
 msgid "Cache could not be cleared"
 msgstr "Cache konnte nicht geleert werden"
 
+msgctxt "#30661"
+msgid "en"
+msgstr "de"

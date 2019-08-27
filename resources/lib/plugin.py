@@ -5,19 +5,19 @@ from sys import argv, exit
 import os.path
 from xbmc import translatePath, executebuiltin, sleep as xbmc_sleep
 from  xbmcgui import Dialog, ListItem, INPUT_ALPHANUM
-from xbmcplugin import endOfDirectory, setResolvedUrl, setContent, addDirectoryItem, addSortMethod
-from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE, SORT_METHOD_EPISODE, SORT_METHOD_DURATION
+from xbmcplugin import setResolvedUrl, addSortMethod
+from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE, SORT_METHOD_DATEADDED, SORT_METHOD_EPISODE, SORT_METHOD_DURATION, SORT_METHOD_TITLE
 from xbmcaddon import Addon
 from datetime import datetime
 from time import time, strptime
 from json import dumps, loads
 from inputstreamhelper import Helper
-from resources.lib.const import CONST
-import resources.lib.compat as compat
-import resources.lib.cache as cache
-import resources.lib.xbmc_helper as xbmc_helper
-import resources.lib.request_helper as request_helper
-from resources.lib.lib_joyn import lib_joyn as lib_joyn
+from .const import CONST
+from . import compat as compat
+from . import cache as cache
+from . import xbmc_helper as xbmc_helper
+from . import request_helper as request_helper
+from .lib_joyn import lib_joyn as lib_joyn
 
 
 if compat.PY2:
@@ -112,6 +112,7 @@ def add_favorites(favorite_item, fav_type=''):
 
 def drop_favorites(favorite_item, siltent=False, fav_type=''):
 
+	xbmc_helper.log_debug('drop_favorites  - item: ' + dumps(favorite_item))
 	favorites = get_favorites()
 	found = False
 
@@ -125,7 +126,7 @@ def drop_favorites(favorite_item, siltent=False, fav_type=''):
 				favorites.remove(favorite)
 				found = True
 		elif 'category_name' in favorite_item.keys() and 'category_name' in favorite.keys():
-			if favorite_item['category_name'] == favorite['category_name']:
+			if compat._encode(favorite_item['category_name']) == compat._encode(favorite['category_name']):
 				favorites.remove(favorite)
 				found = True
 
@@ -139,7 +140,7 @@ def drop_favorites(favorite_item, siltent=False, fav_type=''):
 		xbmc_sleep(100)
 
 
-def check_favorites(favorite_item, season_id=None):
+def check_favorites(favorite_item):
 
 	favorites = get_favorites()
 	for favorite in favorites:
@@ -150,7 +151,7 @@ def check_favorites(favorite_item, season_id=None):
 			if favorite_item['channel_id'] == favorite['channel_id']:
 				return True
 		elif 'category_name' in favorite_item.keys() and 'category_name' in favorite.keys():
-			if favorite_item['category_name'] == favorite['category_name']:
+			if compat._encode(favorite_item['category_name']) == compat._encode(favorite['category_name']):
 				return True
 
 	return False
@@ -159,7 +160,7 @@ def check_favorites(favorite_item, season_id=None):
 def show_lastseen(max_lastseen_count):
 
 	lastseen = get_lastseen()
-
+	list_items = []
 	if len(lastseen) > max_lastseen_count:
 		if max_lastseen_count == 0:
 			lastseen = []
@@ -173,33 +174,40 @@ def show_lastseen(max_lastseen_count):
 			tvshow_ids.append(lastseen_item['tv_show_id'])
 			season_ids.append(lastseen_item['season_id'])
 
-		tvshow_data = libjoyn.get_json_by_type('TVSHOWS', {'ids' : ','.join(tvshow_ids)})
 		season_data = libjoyn.get_json_by_type('SEASONS', {'ids' : ','.join(season_ids)})
 
 		for lastseen_item in lastseen:
-			found = False
-			for tvshow_item in tvshow_data['data']:
-				if tvshow_item['id'] == lastseen_item['tv_show_id'] and 'metadata' in tvshow_item.keys() \
-					and CONST['COUNTRIES'][libjoyn.config['country']]['language'] in tvshow_item['metadata']:
-					extracted_tvshow_metadata = libjoyn.extract_metadata(
-							metadata=tvshow_item['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='TVSHOWS')
-					for season_item in season_data['data']:
-						if season_item['id'] == lastseen_item['season_id'] and 'metadata' in season_item.keys() \
-								and CONST['COUNTRIES'][libjoyn.config['country']]['language'] in season_item['metadata']:
+			if (xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and
+				(check_favorites({'tv_show_id' : lastseen_item['tv_show_id'], 'season_id': None}) is True or
+				 check_favorites({'tv_show_id' : lastseen_item['tv_show_id'], 'season_id': lastseen_item['season_id']}) is True)):
+				continue
 
-							extracted_season_metadata = libjoyn.extract_metadata(
-									metadata=season_item['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='SEASON')
-							found = True
-							add_dir(mode='video', season_id=lastseen_item['season_id'], tv_show_id=lastseen_item['tv_show_id'],
-								metadata=libjoyn.combine_tvshow_season_data(extracted_tvshow_metadata, extracted_season_metadata), parent_fanart=default_fanart)
+			found = False
+			for season_item in season_data['data']:
+				if season_item['id'] == lastseen_item['season_id'] and 'metadata' in season_item.keys() \
+						and CONST['COUNTRIES'][libjoyn.config['country']]['language'] in season_item['metadata']:
+
+					extracted_season_metadata = libjoyn.extract_metadata(
+							metadata=season_item['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='SEASON')
+					found = True
+					if 'tvShow' in season_item.keys() and 'titles' in season_item['tvShow'].keys():
+						for title_type, title in season_item['tvShow']['titles'].items():
+							extracted_season_metadata['infoLabels'].update({'title' : title + ' - ' + extracted_season_metadata['infoLabels'].get('title','')})
+							break
+
+					extracted_season_metadata.update({'art' : libjoyn.merge_subtype_art('SEASONS', extracted_season_metadata['art'], season_item)})
+					list_items.append(get_dir_entry(mode='video', season_id=lastseen_item['season_id'], tv_show_id=lastseen_item['tv_show_id'],
+						metadata=extracted_season_metadata, override_fanart=default_fanart))
 
 			if found is False:
 				drop_lastseen(lastseen_item['tv_show_id'], lastseen_item['season_id'])
 
-def show_favorites():
+	return list_items
+
+def show_favorites(title):
 
 	favorites = get_favorites()
-	xbmc_helper.log_debug('show_favorites ' + dumps(favorites))
+	list_items = []
 
 	if len(favorites) == 0:
 		return xbmc_helper.notification(
@@ -231,8 +239,9 @@ def show_favorites():
 	if len(category_names) > 0:
 		categories = libjoyn.get_categories()
 
+	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
 	addSortMethod(pluginhandle, SORT_METHOD_LABEL)
-	addSortMethod(pluginhandle, SORT_METHOD_DATE)
+	addSortMethod(pluginhandle, SORT_METHOD_DATEADDED)
 
 	for favorite_item in favorites:
 		found = False
@@ -252,21 +261,23 @@ def show_favorites():
 										metadata=season_item['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='SEASON')
 								merged_metadata = libjoyn.combine_tvshow_season_data(extracted_tvshow_metadata,
 											extracted_season_metadata)
-								merged_metadata['infoLabels'].update({'Title' :
-												xbmc_helper.translation('SEASON') + ': ' + merged_metadata['infoLabels']['Title']})
+								merged_metadata['infoLabels'].update({'title' :
+												xbmc_helper.translation('SEASON') + ': ' + merged_metadata['infoLabels']['title']})
 								if 'added' in favorite_item.keys():
-									merged_metadata['infoLabels'].update({'Date' : datetime.fromtimestamp(favorite_item['added']).strftime('%d.%m.%Y')})
+									merged_metadata['infoLabels'].update(
+										{'dateadded' : datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
 								found = True
-								add_dir(mode='video', season_id=favorite_item['season_id'], tv_show_id=favorite_item['tv_show_id'],
-									metadata=merged_metadata, parent_fanart=default_fanart)
+								list_items.append(get_dir_entry(mode='video', season_id=favorite_item['season_id'], tv_show_id=favorite_item['tv_show_id'],
+									metadata=merged_metadata, override_fanart=default_fanart))
 								break
 					else:
 						found = True
-						extracted_tvshow_metadata['infoLabels'].update({'Title' :
-							xbmc_helper.translation('TV_SHOW') + ': ' + extracted_tvshow_metadata['infoLabels']['Title']})
+						extracted_tvshow_metadata['infoLabels'].update({'title' :
+							xbmc_helper.translation('TV_SHOW') + ': ' + extracted_tvshow_metadata['infoLabels']['title']})
 						if 'added' in favorite_item.keys():
-							extracted_tvshow_metadata['infoLabels'].update({'Date' : datetime.fromtimestamp(int(favorite_item['added'])).strftime('%d.%m.%Y')})
-						add_dir(mode='season', tv_show_id=favorite_item['tv_show_id'], metadata=extracted_tvshow_metadata, parent_fanart=default_fanart)
+							extracted_tvshow_metadata['infoLabels'].update({'date' : datetime.fromtimestamp(int(favorite_item['added'])).strftime('%d.%m.%Y')})
+						list_items.append(get_dir_entry(mode='season', tv_show_id=favorite_item['tv_show_id'],
+							metadata=extracted_tvshow_metadata, override_fanart=default_fanart))
 					break
 
 		elif 'channel_id' in favorite_item.keys():
@@ -275,20 +286,20 @@ def show_favorites():
 					found = True
 					extracted_channel_metadata = libjoyn.extract_metadata(
 									metadata=channel_item['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='BRAND')
-					extracted_channel_metadata['infoLabels'].update({'Title' : xbmc_helper.translation('MEDIA_LIBRARY') + ': ' + extracted_channel_metadata['infoLabels']['Title']})
+					extracted_channel_metadata['infoLabels'].update({'title' : xbmc_helper.translation('MEDIA_LIBRARY') + ': ' + extracted_channel_metadata['infoLabels']['title']})
 					if 'added' in favorite_item.keys():
-						extracted_channel_metadata['infoLabels'].update({'Date' : datetime.fromtimestamp(int(favorite_item['added'])).strftime('%d.%m.%Y')})
-					add_dir(mode='tvshows', channel_id=channel_item['channelId'], metadata=extracted_channel_metadata)
+						extracted_channel_metadata['infoLabels'].update({'date' : datetime.fromtimestamp(int(favorite_item['added'])).strftime('%d.%m.%Y')})
+					list_items.append(get_dir_entry(mode='tvshows', channel_id=channel_item['channelId'], metadata=extracted_channel_metadata))
 					break
 
 		elif 'category_name' in favorite_item.keys():
 			for category_name, category_ids in categories.items():
 				if category_name == favorite_item['category_name']:
-					metadata={'infoLabels': {'Title' : xbmc_helper.translation('CATEGORY') + ': ' + category_name, 'Plot' : ''}, 'art': {}}
+					metadata={'infoLabels': {'title' : xbmc_helper.translation('CATEGORY') + ': ' + category_name, 'plot' : ''}, 'art': {}}
 					if 'added' in favorite_item.keys():
-						metadata['infoLabels'].update({'Date' : datetime.fromtimestamp(int(favorite_item['added'])).strftime('%d.%m.%Y')})
-					add_dir(metadata=metadata, mode='fetch_categories',
-						fetch_ids=','.join(category_ids), category_name=compat._encode(category_name))
+						metadata['infoLabels'].update({'date' : datetime.fromtimestamp(int(favorite_item['added'])).strftime('%d.%m.%Y')})
+					list_items.append(get_dir_entry(metadata=metadata, mode='fetch_categories',
+						fetch_ids=','.join(category_ids), category_name=compat._encode(category_name)))
 					found = True
 					break
 		if found is False:
@@ -301,7 +312,7 @@ def show_favorites():
 				xbmc_helper.translation('MSG_FAVS_UNAVAILABLE'),
 				default_icon)
 
-	endOfDirectory(handle=pluginhandle,cacheToDisc=False)
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'WATCHLIST', title)
 
 
 def get_uepg_params():
@@ -315,39 +326,50 @@ def get_uepg_params():
 
 def index():
 
-	show_lastseen(xbmc_helper.get_int_setting('max_lastseen'))
+	if not  xbmc_helper.addon_enabled(CONST['INPUTSTREAM_ADDON']):
+		xbmc_helper.dialog_id('MSG_INPUSTREAM_NOT_ENABLED')
+		exit(0)
 
-	add_dir(metadata={'infoLabels': {
-					'Title' : xbmc_helper.translation('MEDIA_LIBRARIES'),
-					'Plot' : xbmc_helper.translation('MEDIA_LIBRARIES_PLOT'),
-					},'art': {}}, mode='channels', stream_type='VOD')
-	add_dir(metadata={'infoLabels': {
-					'Title' : xbmc_helper.translation('CATEGORIES'),
-					'Plot' : xbmc_helper.translation('CATEGORIES_PLOT'),
-					}, 'art': {}}, mode='categories', stream_type='VOD')
-	add_dir(metadata={'infoLabels': {
-					'Title' : xbmc_helper.translation('WATCHLIST'),
-					'Plot' : xbmc_helper.translation('WATCHLIST_PLOT'),
-					}, 'art': {}}, mode='show_favs')
-	add_dir(metadata={'infoLabels': {
-					'Title' : xbmc_helper.translation('SEARCH'),
-					'Plot' : xbmc_helper.translation('SEARCH_PLOT'),
-					}, 'art': {}}, mode='search')
-	add_dir(metadata={'infoLabels': {
-					'Title' : xbmc_helper.translation('LIVE_TV'),
-					'Plot' : xbmc_helper.translation('LIVE_TV_PLOT'),
-					}, 'art': {}}, mode='channels',stream_type='LIVE')
-	add_dir(metadata={'infoLabels': {
-					'Title' :  xbmc_helper.translation('TV_GUIDE'),
-					'Plot' : xbmc_helper.translation('TV_GUIDE_PLOT'),
-					}, 'art': {}}, mode='epg',stream_type='LIVE')
+	is_helper = Helper('mpd', drm='widevine')
+	if not is_helper.check_inputstream():
+		xbmc_helper.dialog_id('MSG_WIDEVINE_NOT_FOUND')
+		exit(0)
 
-	endOfDirectory(handle=pluginhandle,cacheToDisc=False)
+	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
 
+	list_items = show_lastseen(xbmc_helper.get_int_setting('max_lastseen'))
 
-def channels(stream_type):
+	list_items.append(get_dir_entry(metadata={'infoLabels': {
+					'title' : xbmc_helper.translation('MEDIA_LIBRARIES'),
+					'plot' : xbmc_helper.translation('MEDIA_LIBRARIES_PLOT'),
+					},'art': {}}, mode='channels', stream_type='VOD'))
+	list_items.append(get_dir_entry(metadata={'infoLabels': {
+					'title' : xbmc_helper.translation('CATEGORIES'),
+					'plot' : xbmc_helper.translation('CATEGORIES_PLOT'),
+					}, 'art': {}}, mode='categories', stream_type='VOD'))
+	list_items.append(get_dir_entry(metadata={'infoLabels': {
+					'title' : xbmc_helper.translation('WATCHLIST'),
+					'plot' : xbmc_helper.translation('WATCHLIST_PLOT'),
+					}, 'art': {}}, mode='show_favs'))
+	list_items.append(get_dir_entry(metadata={'infoLabels': {
+					'title' : xbmc_helper.translation('SEARCH'),
+					'plot' : xbmc_helper.translation('SEARCH_PLOT'),
+					}, 'art': {}}, mode='search'))
+	list_items.append(get_dir_entry(metadata={'infoLabels': {
+					'title' : xbmc_helper.translation('LIVE_TV'),
+					'plot' : xbmc_helper.translation('LIVE_TV_PLOT'),
+					}, 'art': {}}, mode='channels',stream_type='LIVE'))
+	list_items.append(get_dir_entry(metadata={'infoLabels': {
+					'title' :  xbmc_helper.translation('TV_GUIDE'),
+					'plot' : xbmc_helper.translation('TV_GUIDE_PLOT'),
+					}, 'art': {}}, mode='epg',stream_type='LIVE'))
+
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'INDEX')
+
+def channels(stream_type, title):
 
 	brands = libjoyn.get_brands()
+	list_items = []
 
 	if stream_type == 'LIVE':
 		epg = libjoyn.get_epg()
@@ -358,7 +380,7 @@ def channels(stream_type):
 			if metadata_lang == CONST['COUNTRIES'][libjoyn.config['country']]['language']:
 				extracted_metadata = libjoyn.extract_metadata(metadata=metadata, selection_type='BRAND')
 				if stream_type == 'VOD' and metadata['hasVodContent'] == True:
-					add_dir(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata)
+					list_items.append(get_dir_entry(mode='tvshows', stream_type=stream_type, channel_id=channel_id,metadata=extracted_metadata))
 				elif stream_type == 'LIVE' and 'livestreams' in metadata.keys():
 					for livestream in metadata['livestreams']:
 						stream_id = livestream['streamId']
@@ -366,89 +388,93 @@ def channels(stream_type):
 							epg_metadata = libjoyn.extract_metadata_from_epg(epg[channel_id])
 							extracted_metadata['infoLabels'].update(epg_metadata['infoLabels'])
 							extracted_metadata['art'].update(epg_metadata['art'])
-						add_link(metadata=extracted_metadata,mode='play_video', video_id=stream_id, stream_type='LIVE')
+						list_items.append(get_dir_entry(is_folder=False, metadata=extracted_metadata,mode='play_video', video_id=stream_id, stream_type='LIVE'))
 				break
-	endOfDirectory(handle=pluginhandle,cacheToDisc=False)
+
+	if stream_type == 'LIVE':
+		xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'LIVE_TV', title)
+	else:
+		xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEORIES', title)
 
 
-def tvshows(channel_id, fanart_img):
+def tvshows(channel_id, title):
+
+	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
+        addSortMethod(pluginhandle, SORT_METHOD_LABEL)
 
 	tvshows = libjoyn.get_json_by_type('TVSHOW', {'channelId': channel_id})
+	list_items = []
 
 	for tvshow in tvshows['data']:
 		tv_show_id = str(tvshow['id'])
 		for metadata_lang, metadata in tvshow['metadata'].items():
 			if metadata_lang == CONST['COUNTRIES'][libjoyn.config['country']]['language']:
 				extracted_metadata = libjoyn.extract_metadata(metadata, 'TVSHOW')
-				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata, parent_fanart=fanart_img)
-	favorite_item = {'channel_id' : channel_id}
+				list_items.append(get_dir_entry(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata, override_fanart=default_fanart))
 
-	if check_favorites(favorite_item) is False:
-		add_link(metadata={'infoLabels': {
-							'Title' : xbmc_helper.translation('ADD_TO_WATCHLIST'),
-							'Plot' : xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation('MEDIA_LIBRARY'))
-						 }, 'art': {}}, mode='add_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('MEDIA_LIBRARY'))
-	else:
-		add_link(metadata={'infoLabels': {
-							'Title' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
-							'Plot' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation('MEDIA_LIBRARY'))
-						}, 'art': {}}, mode='drop_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('MEDIA_LIBRARY'))
-
-	endOfDirectory(pluginhandle)
+	list_items.append(get_favorite_entry({'channel_id' : channel_id}, 'MEDIA_LIBRARY'))
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'TV_SHOWS', title)
 
 
-def seasons(tv_show_id, parent_fanart_img, parent_img):
+def seasons(tv_show_id, title):
 
+
+	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
+	addSortMethod(pluginhandle, SORT_METHOD_LABEL)
+	addSortMethod(pluginhandle, SORT_METHOD_TITLE)
+	addSortMethod(pluginhandle, SORT_METHOD_DATEADDED)
+
+	has_date_added = False
 	seasons = libjoyn.get_json_by_type('SEASON', {'tvShowId' : tv_show_id})
+	list_items = []
+
 	for season in seasons['data']:
-		xbmc_helper.log_debug('SEASON : ' + dumps(season))
 		season_id = season['id']
 		for metadata_lang, metadata in season['metadata'].items():
 			if metadata_lang == CONST['COUNTRIES'][libjoyn.config['country']]['language']:
-				extracted_metadata = libjoyn.extract_metadata(metadata,'SEASON');
-				extracted_metadata['art'].update({'thumb' : parent_img, 'fanart' : parent_fanart_img});
-				add_dir(mode='video', season_id=season_id, tv_show_id=tv_show_id,metadata=extracted_metadata)
+				extracted_metadata = libjoyn.extract_metadata(metadata,'SEASON', season.get('visibilities', None));
+				if 'dateadded' in extracted_metadata['infoLabels'].keys():
+					has_date_added = True
 				break
+		extracted_metadata.update({'art' : libjoyn.merge_subtype_art('SEASON', extracted_metadata['art'], season)})
+		list_items.append(get_dir_entry(mode='video', season_id=season_id, tv_show_id=tv_show_id,metadata=extracted_metadata, title_prefix=(title + ' - ')))
 
-	favorite_item={'tv_show_id' : tv_show_id, 'season_id': None}
-	if check_favorites(favorite_item) is False:
-		add_link(metadata={'infoLabels': {
-							'Title' : xbmc_helper.translation('ADD_TO_WATCHLIST'),
-							'Plot' : xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation('TV_SHOW'))
-						}, 'art': {}}, mode='add_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('TV_SHOW'))
-	else:
-		add_link(metadata={'infoLabels': {
-							'Title' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
-							'Plot' :  xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation('TV_SHOW'))
-						}, 'art': {}}, mode='drop_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('TV_SHOW'))
-
-	endOfDirectory(pluginhandle)
+	list_items.append(get_favorite_entry({'tv_show_id' : tv_show_id, 'season_id': None}, 'TV_SHOW'))
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'SEASONS', title)
 
 
-def videos(tv_show_id, season_id, fanart_img):
+
+def videos(tv_show_id, season_id, title):
 
 	xbmc_helper.log_debug('video : tv_show_id: ' + tv_show_id + 'season_id: ' + season_id)
+
 	videos = libjoyn.get_json_by_type('VIDEO', {'tvShowId' : tv_show_id, 'seasonId' : season_id})
+	list_items = []
 
 	sort_methods = set([SORT_METHOD_UNSORTED, SORT_METHOD_LABEL])
-	availability_end = None
 
 	for video in videos['data']:
+		availability_end = None
 		video_id = video['id']
+		cast = []
 
 		for metadata_lang, metadata_values in video['metadata'].items():
 			if metadata_lang == CONST['COUNTRIES'][libjoyn.config['country']]['language']:
 				extracted_metadata = libjoyn.extract_metadata(metadata=metadata_values,selection_type='VIDEO');
 				if 'broadcastDate' in metadata_values.keys():
-					broadcastDate = datetime.fromtimestamp(metadata_values['broadcastDate']).strftime('%d.%m.%Y')
-					extracted_metadata['infoLabels'].update({'Premiered' : broadcastDate, 'Date': broadcastDate})
+					broadcastDate = datetime.fromtimestamp(metadata_values['broadcastDate'])
+					extracted_metadata['infoLabels'].update({
+						'premiered' : broadcastDate.strftime('%Y-%m-%d'),
+						'date': broadcastDate.strftime('%Y-%m-%d'),
+						'aired' : broadcastDate.strftime('%Y-%m-%d')
+					})
 					sort_methods.add(SORT_METHOD_DATE)
 				if 'video' in metadata_values.keys() and 'ageRatings' in metadata_values['video'].keys():
 					for age_rating in metadata_values['video']['ageRatings']:
 						if 'minAge' in age_rating:
 							fsk = str(age_rating['minAge'])
 							if fsk is not '0':
-								extracted_metadata['infoLabels'].update({'Mpaa' : xbmc_helper.translation('MIN_AGE').format(fsk)})
+								extracted_metadata['infoLabels'].update({'mpaa' : xbmc_helper.translation('MIN_AGE').format(fsk)})
 								break
 
 				if 'licenses' in metadata_values.keys():
@@ -459,61 +485,61 @@ def videos(tv_show_id, season_id, fanart_img):
 									end_date = datetime(*(strptime(timeslot['end'], '%Y-%m-%d %H:%M:%S')[0:6]))
 									if availability_end is None or end_date > availability_end:
 										availability_end = end_date
+
+				if 'cast' in metadata_values.keys():
+					for actor in metadata_values['cast']:
+						if 'name' in actor.keys():
+							cast.append(actor['name'])
+				if 'copyrights' in metadata_values.keys():
+					extracted_metadata['infoLabels'].update({'studio' : ', '.join(metadata_values['copyrights'])})
+
+				extracted_metadata['infoLabels'].update({'cast' : cast})
+
 				break
 		if availability_end is not None:
 			extracted_metadata['infoLabels'].update({
-							'Plot' : compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE')).format(availability_end) + extracted_metadata['infoLabels'].get('Plot', '')
+							'plot' : compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE')).format(availability_end) + extracted_metadata['infoLabels'].get('plot', '')
 				})
 
-		extracted_metadata['infoLabels'].update({'Genre' : []})
+		extracted_metadata['infoLabels'].update({'genre' : []})
 		if 'tvShow' in video.keys():
 			if 'genres' in video['tvShow'].keys():
 				for genre in video['tvShow']['genres']:
-					extracted_metadata['infoLabels']['Genre'].append(genre['title'])
+					extracted_metadata['infoLabels']['genre'].append(genre['title'])
 			if 'titles' in video['tvShow'].keys():
 				for title_key, title_value in video['tvShow']['titles'].items():
 					if title_key == 'default':
-						extracted_metadata['infoLabels'].update({'TVShowTitle' : HTMLParser().unescape(title_value)})
+						extracted_metadata['infoLabels'].update({'tvshowtitle' : HTMLParser().unescape(title_value)})
 						break
-			if 'brand' in video['tvShow'].keys():
-				extracted_metadata['infoLabels'].update({'Studio' : video['tvShow']['brand']})
 
 		if 'season' in video.keys() and 'number' in video['season'].keys():
-			extracted_metadata['infoLabels'].update({'Season' : video['season']['number']})
+			extracted_metadata['infoLabels'].update({'season' : video['season']['number']})
 
 		if 'episode' in video.keys():
 			if 'number' in video['episode'].keys():
-				extracted_metadata['infoLabels'].update({'Episode' : video['episode']['number']})
+				extracted_metadata['infoLabels'].update({'episode' : video['episode']['number']})
+				extracted_metadata['infoLabels'].update({'sortepisode' : video['episode']['number']})
 				sort_methods.add(SORT_METHOD_EPISODE)
 			if 'productionYear' in video['episode'].keys():
-				extracted_metadata['infoLabels'].update({'Year' : video['episode']['productionYear']})
+				extracted_metadata['infoLabels'].update({'year' : video['episode']['productionYear']})
 
 		if 'duration' in video.keys():
-			extracted_metadata['infoLabels'].update({'Duration' : (video['duration']//1000)})
+			extracted_metadata['infoLabels'].update({'duration' : (video['duration']//1000)})
 			sort_methods.add(SORT_METHOD_DURATION)
 
-		extracted_metadata['infoLabels'].update({'mediatype' : 'episode'});
-		add_link(mode='play_video', metadata=extracted_metadata, video_id=video_id,parent_fanart=fanart_img)
+		#'mediatype' : 'episode',
+		extracted_metadata['art'] = libjoyn.merge_subtype_art('VIDEO', extracted_metadata['art'], video)
+		list_items.append(get_dir_entry(is_folder=False, mode='play_video', metadata=extracted_metadata, video_id=video_id))
 
-	favorite_item = {'tv_show_id' : tv_show_id , 'season_id' : season_id}
-	if check_favorites(favorite_item) is False:
-		add_link(metadata={'infoLabels': {
-							'Title' :  xbmc_helper.translation('ADD_TO_WATCHLIST'),
-							'Plot' : xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation('SEASON'))
-						}, 'art': {}}, mode='add_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('SEASON'))
-	else:
-		add_link(metadata={'infoLabels': {
-							'Title' :  xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
-							'Plot' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation('SEASON'))
-						},'art': {}}, mode='drop_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('SEASON'))
 
 	for sort_method in sort_methods:
 		addSortMethod(pluginhandle, sort_method)
 
-	endOfDirectory(pluginhandle)
+	list_items.append(get_favorite_entry({'tv_show_id' : tv_show_id , 'season_id' : season_id}, 'SEASON'))
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'EPISODES', title)
 
 
-def play_video(video_id, stream_type='VOD'):
+def play_video(video_id, stream_type):
 
 	xbmc_helper.log_debug('play_video: video_id: ' + video_id)
 	list_item = ListItem()
@@ -530,6 +556,7 @@ def play_video(video_id, stream_type='VOD'):
 				if xbmc_helper.get_bool_setting('checkdrmcert') is True and 'certificateUrl' in video_data.keys():
 					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate',
 						request_helper.add_user_agend_header_string(video_data['certificateUrl'], libjoyn.config['USER_AGENT']))
+					xbmc_helper.log_debug('SET DRM CERT: ' + video_data['certificateUrl'])
 		else:
 			xbmc_helper.notification(
 						xbmc_helper.translation('ERROR').format('Video-Stream'),
@@ -547,19 +574,22 @@ def play_video(video_id, stream_type='VOD'):
 	setResolvedUrl(pluginhandle, succeeded, list_item)
 
 
-def search(stream_type='VOD'):
+def search(stream_type, title):
 	search_term = Dialog().input('Suche', type=INPUT_ALPHANUM)
 
 	if len(search_term) > 0:
 		request_params = {'search': search_term.lower(), 'hasVodContent': 'true'}
 		tvshows = libjoyn.get_json_by_type(path_type='TVSHOW',additional_params=request_params)
+		list_items = []
 		if len(tvshows['data']) > 0:
 			for tvshow in tvshows['data']:
 				tv_show_id = str(tvshow['id'])
 				if 'metadata' in tvshow.keys() and CONST['COUNTRIES'][libjoyn.config['country']]['language'] in tvshow['metadata'].keys():
 					extracted_metadata = libjoyn.extract_metadata(metadata=tvshow['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='TVSHOW')
-					add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata,parent_fanart=default_fanart)
-			endOfDirectory(handle=pluginhandle)
+					list_items.append(get_dir_entry(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata))
+
+			xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'TV_SHOWS', title)
+
 		else:
 			return xbmc_helper.notification(
 						xbmc_helper.translation('SEARCH'),
@@ -568,21 +598,25 @@ def search(stream_type='VOD'):
 				)
 
 
-def categories(stream_type='VOD'):
+def categories(stream_type, title):
 
 	categories = libjoyn.get_categories()
+	list_items = []
 
 	for category_name, category_ids in categories.items():
-		add_dir(metadata={'infoLabels': {'Title' : category_name, 'description' : ''}, 'art': {}}, mode='fetch_categories', fetch_ids=','.join(category_ids),
-			category_name=compat._encode(category_name))
+		list_items.append(get_dir_entry(metadata={'infoLabels': {'title' : category_name, 'plot' : ''}, 'art': {}}, mode='fetch_categories', fetch_ids=','.join(category_ids),
+			category_name=compat._encode(category_name)))
 
-	endOfDirectory(handle=pluginhandle)
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEORIES', title)
 
 
-def fetch_categories(categories, category_name, stream_type='VOD'):
+
+
+def fetch_categories(categories, category_name, stream_type, title):
 
 	xbmc_helper.log_debug('fetch_categories - multithreading : ' + str(multi_threading))
 	fetch_results = []
+	list_items = []
 
 	#before threading can be done, the first request needs to be done seperatly to initialize the thread context for urlib and stuff
 	frst_fetch_result = libjoyn.get_json_by_type('FETCH', {}, {}, categories[0])
@@ -607,24 +641,30 @@ def fetch_categories(categories, category_name, stream_type='VOD'):
 			tv_show_id = str(tvshow['id'])
 			if 'metadata' in tvshow.keys() and CONST['COUNTRIES'][libjoyn.config['country']]['language'] in tvshow['metadata'].keys():
 				extracted_metadata = libjoyn.extract_metadata(metadata=tvshow['metadata'][CONST['COUNTRIES'][libjoyn.config['country']]['language']], selection_type='TVSHOW')
-				add_dir(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata,parent_fanart=default_fanart)
+				list_items.append(get_dir_entry(mode='season', tv_show_id=tv_show_id, metadata=extracted_metadata, override_fanart=default_fanart))
 
-	favorite_item = {'category_name' : category_name }
+	list_items.append(get_favorite_entry({'category_name' : category_name }, 'CATEGORY'))
+	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEGORY', title)
+
+def get_favorite_entry(favorite_item, favorite_type):
+
+	fav_del_art = {'thumb' : xbmc_helper.get_media_filepath('fav_del_thumb.png'), 'icon' : xbmc_helper.get_media_filepath('fav_del_icon.png')}
+	fav_add_art = {'thumb' : xbmc_helper.get_media_filepath('fav_add_thumb.png'), 'icon' : xbmc_helper.get_media_filepath('fav_add_icon.png')}
+
 	if check_favorites(favorite_item) is False:
-		add_link(metadata={'infoLabels': {
-						'Title' :  xbmc_helper.translation('ADD_TO_WATCHLIST'),
-						'Plot' : xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation('CATEGORY')),
-						}, 'art': {}}, mode='add_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('CATEGORY'))
+		return get_dir_entry(is_folder=False, metadata={'infoLabels': {
+						'title' :  xbmc_helper.translation('ADD_TO_WATCHLIST'),
+						'plot' : xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation(favorite_type)),
+						}, 'art': fav_add_art }, mode='add_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation(favorite_type))
 	else:
-		add_link(metadata={'infoLabels': {
-						'Title' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
-						'Plot' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation('CATEGORY')),
-						}, 'art': {}}, mode='drop_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation('CATEGORY'))
-
-	endOfDirectory(handle=pluginhandle)
+		return get_dir_entry(is_folder=False,metadata={'infoLabels': {
+						'title' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
+						'plot' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation(favorite_type)),
+						}, 'art': fav_del_art }, mode='drop_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation(favorite_type))
 
 
-def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id='', stream_type='VOD', fetch_ids='', parent_fanart='', category_name=''):
+def get_dir_entry(mode, metadata, is_folder=True, channel_id='', tv_show_id='', season_id='', video_id='', stream_type='VOD', fetch_ids='', override_fanart='',
+			category_name='', fav_type='',  favorite_item=None, title_prefix=''):
 
 	params = {
 		'mode' : mode,
@@ -635,63 +675,14 @@ def add_dir(mode, metadata, channel_id='', tv_show_id='', season_id='', video_id
 		'channel_id': channel_id,
 		'fetch_ids' : fetch_ids,
 		'category_name' : category_name,
-	}
-
-	list_item = ListItem(metadata['infoLabels']['Title'])
-	list_item.setInfo(type='Video', infoLabels=metadata['infoLabels'])
-
-	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
-		metadata['art'].update({'poster' : metadata['art']['thumb']})
-	elif 'thumb' not in metadata['art']:
-		metadata['art'].update({ 'thumb' : default_logo})
-		metadata['art'].update({ 'poster' : default_logo})
-
-	if 'icon' not in metadata['art']:
-		metadata['art'].update({ 'icon' : default_icon})
-
-	if 'clearlogo' not in metadata['art']:
-		 metadata['art'].update({ 'clearlogo' : metadata['art']['icon']})
-
-	if 'fanart' not in metadata['art']:
-		if parent_fanart is not '':
-			metadata['art'].update({'fanart': parent_fanart})
-		else:
-			metadata['art'].update({'fanart': default_fanart})
-
-	params.update({'parent_img': metadata['art']['poster']})
-	params.update({'parent_fanart': metadata['art']['fanart']})
-
-	if 'fanart' in metadata['art'] and parent_fanart is not '':
-		metadata['art'].update({'fanart': parent_fanart})
-
-	for art_key, art_value in metadata['art'].items():
-		metadata['art'].update({art_key : request_helper.add_user_agend_header_string(art_value, libjoyn.config['USER_AGENT'])})
-
-	list_item.setArt(metadata['art'])
-
-	url = pluginurl+'?'
-	url += urlencode(params)
-
-	return addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item, isFolder=True)
-
-
-
-def add_link(mode, video_id='', metadata={}, stream_type='VOD', parent_fanart='', favorite_item=None, fav_type=''):
-
-	params = {
-		'video_id': video_id,
-		'mode' : mode,
-		'stream_type': stream_type,
 		'fav_type' : fav_type,
+		'title' : compat._encode(title_prefix) + compat._encode(metadata['infoLabels']['title'])
 	}
 
 	if favorite_item is not None:
 		params.update({'favorite_item' : dumps(favorite_item)})
 
-	url = pluginurl+'?'
-	url += urlencode(params)
-
-	list_item = ListItem(metadata['infoLabels']['Title'])
+	list_item = ListItem(metadata['infoLabels']['title'])
 	list_item.setInfo(type='video', infoLabels=metadata['infoLabels'])
 
 	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
@@ -703,26 +694,27 @@ def add_link(mode, video_id='', metadata={}, stream_type='VOD', parent_fanart=''
 	if 'icon' not in metadata['art']:
 		metadata['art'].update({ 'icon' : default_icon})
 
+	if override_fanart != '':
+		metadata['art'].update({'fanart': override_fanart})
+
 	if 'fanart' not in metadata['art']:
-		if parent_fanart is not '':
-			metadata['art'].update({'fanart': parent_fanart})
-		else:
-			metadata['art'].update({'fanart': default_fanart})
-
-	if 'fanart' in metadata['art'] and parent_fanart is not '':
-		metadata['art'].update({'fanart': parent_fanart})
-
-	if (mode == 'play_video' and video_id is not ''):
-		list_item.setInfo(type='Video', infoLabels=metadata['infoLabels'])
-		list_item.setProperty('IsPlayable', 'True')
+		metadata['art'].update({'fanart': default_fanart})
 
 	for art_key, art_value in metadata['art'].items():
 		metadata['art'].update({art_key : request_helper.add_user_agend_header_string(art_value, libjoyn.config['USER_AGENT'])})
 
 	list_item.setArt(metadata['art'])
 
-	return addDirectoryItem(handle=pluginhandle, url=url, listitem=list_item, isFolder=False)
+	if (mode == 'play_video' and video_id is not ''):
+		list_item.setProperty('IsPlayable', 'True')
 
+	url = pluginurl+'?'
+	url += urlencode(params)
+
+
+	xbmc_helper.log_debug('get_dir_entry : ' + url + ' : ' + dumps(metadata))
+
+	return (url,list_item,is_folder)
 
 def clear_cache():
 	if xbmc_helper.remove_dir(CONST['CACHE_DIR']) is True:
@@ -737,19 +729,10 @@ pluginquery = argv[2]
 addon = Addon()
 default_icon = addon.getAddonInfo('icon')
 default_fanart = addon.getAddonInfo('fanart')
-default_logo = translatePath(os.path.join(addon.getAddonInfo('path'), 'resources','logo.gif')).encode('utf-8').decode('utf-8')
+default_logo = xbmc_helper.get_media_filepath('logo.gif')
+
 params = xbmc_helper.get_addon_params(pluginquery)
 param_keys = params.keys()
-setContent(pluginhandle, 'tvshows')
-
-if not  xbmc_helper.addon_enabled(CONST['INPUTSTREAM_ADDON']):
-	xbmc_helper.dialog_id('MSG_INPUSTREAM_NOT_ENABLED')
-	exit(0)
-
-is_helper = Helper('mpd', drm='widevine')
-if not is_helper.check_inputstream():
-	xbmc_helper.dialog_id('MSG_WIDEVINE_NOT_FOUND')
-	exit(0)
 
 if 'mode' in param_keys:
 
@@ -764,46 +747,35 @@ if 'mode' in param_keys:
 	else:
 		libjoyn = lib_joyn(default_icon)
 
-		if 'stream_type' in param_keys:
-			stream_type = params['stream_type']
-		else:
-			stream_type = 'VOD'
-		if 'parent_img' in param_keys:
-			parent_img = params['parent_img']
-		else:
-			parent_img = ''
-
-		if 'parent_fanart' in param_keys:
-			parent_fanart = params['parent_fanart']
-		else:
-			parent_fanart = ''
+		stream_type = params.get('stream_type', 'VOD')
+		title =  params.get('title', '')
 
 		if mode == 'season' and 'tv_show_id' in param_keys:
-			seasons(params['tv_show_id'],parent_fanart, parent_img)
+			seasons(params['tv_show_id'], title)
 
 		elif mode == 'video' and 'tv_show_id' in param_keys and 'season_id' in param_keys:
-			videos(params['tv_show_id'],params['season_id'],parent_fanart)
+			videos(params['tv_show_id'],params['season_id'], title)
 
 		elif mode == 'play_video' and 'video_id' in param_keys:
 			play_video(params['video_id'], stream_type)
 
 		elif mode == 'channels':
-			channels(stream_type)
+			channels(stream_type,title)
 
 		elif mode == 'tvshows' and 'channel_id' in param_keys:
-			tvshows(params['channel_id'],parent_fanart)
+			tvshows(params['channel_id'], title)
 
 		elif mode == 'search':
-			search(stream_type)
+			search(stream_type, title)
 
 		elif mode == 'categories':
-			categories(stream_type)
+			categories(stream_type,title)
 
 		elif mode == 'fetch_categories' and 'fetch_ids' in param_keys and 'category_name' in param_keys:
-			fetch_categories(params['fetch_ids'].split(','), compat._decode(params['category_name']), stream_type)
+			fetch_categories(params['fetch_ids'].split(','), compat._decode(params['category_name']), stream_type, title)
 
 		elif mode == 'show_favs':
-			show_favorites()
+			show_favorites(title)
 
 		elif mode == 'add_fav' and 'favorite_item' in param_keys and 'fav_type' in param_keys:
 			add_favorites(loads(params['favorite_item']), params['fav_type'])

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import resources.lib.compat as compat
+from . import compat as compat
 
 if compat.PY2:
 	from urllib import quote, urlencode
@@ -14,7 +14,7 @@ from json import dumps, loads
 from base64 import urlsafe_b64encode
 from io import BytesIO
 from gzip import GzipFile
-import resources.lib.xbmc_helper as xbmc_helper
+from . import xbmc_helper as xbmc_helper
 
 
 def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None):
@@ -26,6 +26,7 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 		headers = {
 			'Accept-Encoding' : 'gzip, deflate',
 			'User-Agent' : config['USER_AGENT'],
+			'Accept' : '*/*',
 		}
 
 		if additional_headers is not None:
@@ -70,6 +71,11 @@ def post_json(url, config, data=None, additional_headers=None, additional_query_
 
 def get_json_response(url, config, headers=None, params=None, post_data=None, silent=False):
 	try:
+		if headers is None:
+			headers = [('Accept', 'application/json')]
+		else:
+			headers.append(('Accept', 'application/json'))
+
 		return loads(get_url(url, config, headers, params, post_data))
 	except ValueError:
 		if silent is False:
