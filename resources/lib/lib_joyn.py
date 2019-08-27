@@ -436,7 +436,7 @@ class lib_joyn:
 
 		if visibilities is not None:
 			for visibility in visibilities:
-				if 'endsAt' in visibility.keys() and visibility['endsAt'] != 9999999999:
+				if 'endsAt' in visibility.keys() and visibility['endsAt'] < 9999999999:
 					avaibility_end = datetime.fromtimestamp(visibility['endsAt'])
 				if 'startsAt' in visibility.keys():
 					avaibility_start = datetime.fromtimestamp(visibility['startsAt'])
