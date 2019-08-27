@@ -192,7 +192,9 @@ def show_lastseen(max_lastseen_count):
 					found = True
 					if 'tvShow' in season_item.keys() and 'titles' in season_item['tvShow'].keys():
 						for title_type, title in season_item['tvShow']['titles'].items():
-							extracted_season_metadata['infoLabels'].update({'title' : title + ' - ' + extracted_season_metadata['infoLabels'].get('title','')})
+							extracted_season_metadata['infoLabels'].update({
+								'title' : HTMLParser().unescape(title) + ' - ' + extracted_season_metadata['infoLabels'].get('title','')
+								})
 							break
 
 					extracted_season_metadata.update({'art' : libjoyn.merge_subtype_art('SEASONS', extracted_season_metadata['art'], season_item)})
