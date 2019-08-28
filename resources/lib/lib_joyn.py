@@ -9,7 +9,7 @@ from hashlib import sha1
 from math import floor
 from sys import exit
 from datetime import datetime, timedelta
-from time import time, strptime
+from time import time
 from copy import deepcopy
 from .const import CONST
 from . import compat as compat

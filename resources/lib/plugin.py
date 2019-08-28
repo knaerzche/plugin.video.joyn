@@ -9,7 +9,8 @@ from xbmcplugin import setResolvedUrl, addSortMethod
 from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE, SORT_METHOD_DATEADDED, SORT_METHOD_EPISODE, SORT_METHOD_DURATION, SORT_METHOD_TITLE
 from xbmcaddon import Addon
 from datetime import datetime
-from time import time, strptime
+from time import time
+import dateutil.parser
 from json import dumps, loads
 from inputstreamhelper import Helper
 from .const import CONST
@@ -484,7 +485,7 @@ def videos(tv_show_id, season_id, title):
 						if 'timeslots' in license.keys():
 							for timeslot in license['timeslots']:
 								if 'end' in timeslot.keys() and timeslot['end'] is not None and str(timeslot['end']).startswith('2286') is False:
-									end_date = datetime(*(strptime(timeslot['end'], '%Y-%m-%d %H:%M:%S')[0:6]))
+									end_date = dateutil.parser.parse(timeslot['end'])
 									if availability_end is None or end_date > availability_end:
 										availability_end = end_date
 

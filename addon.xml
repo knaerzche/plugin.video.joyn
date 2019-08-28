@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.joyn" name="Joyn" version="1.1.1" provider-name="knaerzche">
+<addon id="plugin.video.joyn" name="Joyn" version="1.1.2" provider-name="knaerzche">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
 		<import addon="script.module.inputstreamhelper" version="0.3.5"/>
 		<import addon="script.module.uepg" version="1.0.5"/>
+		<import addon="script.module.dateutil" version="2.4.2"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="default.py">
 		<provides>video</provides>
@@ -56,6 +57,8 @@ v1.1.0 (27.08.2019)
 [new] show title according to container content
 [new] option to disable folder cache
 [new] some performance improvements
+v1.1.2
+[fixed] use dateutil to parse datestrings
 		</news>
 	</extension>
 </addon>
