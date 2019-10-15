@@ -10,7 +10,7 @@ CONST = {
 	'IP_API_URL'		: 'http://ip-api.com/json?lang={:s}&fields=status,country,countryCode',
 
 	'PSF_VARS_IDX'		: {
-					'SECRET' : 1184
+					'SECRET' : 1186
 				  },
 
 	'COUNTRIES'		: {

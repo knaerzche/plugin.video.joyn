@@ -34,3 +34,5 @@ new:  set sort order for episodes/seasons in addon settings (default descending 
 new:  show title according to container content
 new:  option to disable folder cache
 new:  some performance improvements
+v1.1.3
+fix: Secret Idx changed
