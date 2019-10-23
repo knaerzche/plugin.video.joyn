@@ -631,6 +631,10 @@ class lib_joyn:
 					xbmc_helper.log_error('Could not extract psf var ' + psf_vars_index_name + ' from js url  ' + CONST['PSF_URL'] + ' compete list : ' + dumps(config['PSF_VARS']))
 					exit(0)
 
+			if len(config['PSF_VARS']) > CONST['PSF_VARS_IDX']['SECRET'] or len(config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]) != len(CONST['FALLBACK_SECRET']):
+				xbmc_helper.log_debug('Using Fallback Secret, since index seems to have changed again.')
+				config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] = CONST['FALLBACK_SECRET']
+
 			if (cached_config is not None and
 			    cached_config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] == config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] and
 			    cached_config['PLAYER_CONFIG']['toolkit']['psf'] == config['PLAYER_CONFIG']['toolkit']['psf']):

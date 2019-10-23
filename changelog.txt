@@ -36,3 +36,5 @@ new:  option to disable folder cache
 new:  some performance improvements
 v1.1.3
 fix: Secret Idx changed
+v1.1.4
+fix: Secret Idx changed again, add fallback for newly changed index
