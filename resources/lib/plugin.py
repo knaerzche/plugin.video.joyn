@@ -212,7 +212,7 @@ def show_lastseen(max_lastseen_count):
 
 			found = False
 
-			if 'season_id' in lastseen_item.keys():
+			if lastseen_item.get('season_id', None) is not None:
 				if xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and \
 					check_favorites({'seasonId' : lastseen_item['season_id']}) is True:
 
@@ -234,7 +234,7 @@ def show_lastseen(max_lastseen_count):
 
 					found = True
 
-			elif 'compilation_id' in lastseen_item.keys():
+			elif lastseen_item.get('compilation_id', None) is not None:
 
 				if xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and \
 					check_favorites({'compilation_id' : lastseen_item['compilation_id']}) is True:
@@ -283,7 +283,7 @@ def show_favorites(title):
 
 	for favorite_item in favorites:
 		found = False
-		if 'season_id' in favorite_item.keys() and favorite_item['season_id'] is not None:
+		if favorite_item.get('season_id', None) is not None:
 			season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId' : favorite_item['season_id'], 'first' : 1})
 			if 'season' in season_data.keys() and 'episodes' in season_data['season'].keys() and len(season_data['season']['episodes']) > 0:
 
@@ -304,8 +304,7 @@ def show_favorites(title):
 					override_fanart=default_fanart,
 				))
 
-		elif 'tv_show_id' in favorite_item.keys():
-
+		elif favorite_item.get('tv_show_id', None):
 			seasons = libjoyn.get_graphql_response('SEASONS', {'seriesId' : favorite_item['tv_show_id']})
 			if 'series' in seasons.keys():
 
@@ -322,8 +321,7 @@ def show_favorites(title):
 					override_fanart=default_fanart
 				))
 
-		elif 'compilation_id' in favorite_item.keys():
-
+		elif favorite_item.get('compilation_id', None):
 			compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id' : favorite_item['compilation_id'], 'first' : 1})
 			if 'compilation' in compilation_data.keys() and 'compilationItems' in compilation_data['compilation'].keys() \
 				and len(compilation_data['compilation']['compilationItems']) > 0:
@@ -341,8 +339,7 @@ def show_favorites(title):
 					override_fanart=default_fanart
 				))
 
-		elif 'block_id' in favorite_item.keys():
-
+		elif favorite_item.get('block_id', None):
 			landingpage = libjoyn.get_landingpage()
 			break_loop = False
 			for lane_type, categories in landingpage.items():
@@ -357,8 +354,7 @@ def show_favorites(title):
 				if break_loop is True:
 					break
 
-		elif 'channel_id' in favorite_item.keys():
-
+		elif favorite_item.get('channel_id', None):
 			landingpage = libjoyn.get_landingpage()
 			break_loop = False
 			if 'ChannelLane' in landingpage.keys():
