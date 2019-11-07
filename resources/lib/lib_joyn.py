@@ -41,7 +41,7 @@ class lib_joyn:
 		sha_input = video_id + ','
 		sha_input += entitlement_token + ','
 		sha_input += encoded_client_data
-		sha_input += compat._decode(encode(self.config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']].encode('utf-8'), 'hex'))
+		sha_input += compat._decode(encode(self.config['SECRET'].encode('utf-8'), 'hex'))
 		xbmc_helper.log_debug('Build signature: ' + sha_input)
 
 		return  sha1(sha_input.encode('utf-8')).hexdigest()
@@ -533,7 +533,7 @@ class lib_joyn:
 				'PSF_CONFIG' 		: {},
 				'PLAYER_CONFIG'		: {},
 				'PSF_VARS'		: {},
-				'PSF_CLIENT_CONFIG'	: {},
+				'PSF_CLIENT_CONFIG'	: None,
 				'IS_ANDROID'		: False,
 				'IS_ARM'		: False,
 				'ADDON_VERSION'		: addon_version,
@@ -679,45 +679,50 @@ class lib_joyn:
 				psf_vars[i] = psf_vars[i][1:-1]
 			config['PSF_VARS'] = psf_vars
 
-			for psf_vars_index_name, psf_vars_index in CONST['PSF_VARS_IDX'].items():
-				if len(config['PSF_VARS']) < psf_vars_index or config['PSF_VARS'][psf_vars_index] is '' :
+			if len(config['PSF_VARS']) >= CONST['PSF_VAR_DEFS']['SECRET']['INDEX']:
+				decrypted_psf_client_config = lib_joyn.decrypt_psf_client_config(config['PSF_VARS'][CONST['PSF_VAR_DEFS']['SECRET']['INDEX']],
+					config['PLAYER_CONFIG']['toolkit']['psf'])
+				if decrypted_psf_client_config is not None:
+					config['PSF_CLIENT_CONFIG'] = decrypted_psf_client_config
+					config['SECRET'] = config['PSF_VARS'][CONST['PSF_VAR_DEFS']['SECRET']['INDEX']]
+				else:
+					xbmc_helper.log_debug('Could not decrypt psf client config with psf var index from CONST')
+
+			if config.get('PSF_CLIENT_CONFIG', None) is None:
+
+				index_before = index_after = index_secret = None
+
+				for index,value in enumerate(config['PSF_VARS']):
+					if value == CONST['PSF_VAR_DEFS']['SECRET']['VAL_BEFORE']:
+						index_before = index
+					if value == CONST['PSF_VAR_DEFS']['SECRET']['VAL_AFTER']:
+						index_after = index
+					if index_before is not None and index_after is not None and index_after == (index_before + 2):
+						index_secret = index_before + 1
+						decrypted_psf_client_config = lib_joyn.decrypt_psf_client_config(config['PSF_VARS'][index_secret],
+							config['PLAYER_CONFIG']['toolkit']['psf'])
+						if decrypted_psf_client_config is not None:
+							config['PSF_CLIENT_CONFIG'] = decrypted_psf_client_config
+							config['SECRET'] = config['PSF_VARS'][index_secret]
+							xbmc_helper.log_debug('PSF client config decryption succeded with new index: ' + str(index_secret))
+							break
+
+			if config.get('PSF_CLIENT_CONFIG', None) is None:
+
+				xbmc_helper.log_debug('Could not find a new valid secret from psf vars ... using fallback value')
+				decrypted_psf_client_config = lib_joyn.decrypt_psf_client_config(CONST['PSF_VAR_DEFS']['SECRET']['FALLBACK'],
+					config['PLAYER_CONFIG']['toolkit']['psf'])
+				if decrypted_psf_client_config is not None:
+					xbmc_helper.log_debug('PSF client config decryption succeded with fallback value')
+					config['SECRET'] = CONST['PSF_VAR_DEFS']['SECRET']['FALLBACK']
+					config['PSF_CLIENT_CONFIG'] = decrypted_psf_client_config
+				else:
+					xbmc_helper.log_debug('PSF client config decryption failed with fallback value ... giving up.')
 					xbmc_helper.notification(
-							xbmc_helper.translation('ERROR').format('PSF VAR'),
-							xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format('PSF VAR: ' + psf_vars_index_name)
-						)
-					xbmc_helper.log_error('Could not extract psf var ' + psf_vars_index_name + ' from js url  ' + CONST['PSF_URL'] + ' compete list : ' + dumps(config['PSF_VARS']))
-					exit(0)
-
-			if len(config['PSF_VARS']) > CONST['PSF_VARS_IDX']['SECRET'] or len(config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]) != len(CONST['FALLBACK_SECRET']):
-				xbmc_helper.log_debug('Using Fallback Secret, since index seems to have changed again.')
-				config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] = CONST['FALLBACK_SECRET']
-
-			if (cached_config is not None and
-			    cached_config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] == config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']] and
-			    cached_config['PLAYER_CONFIG']['toolkit']['psf'] == config['PLAYER_CONFIG']['toolkit']['psf']):
-				config['PSF_CLIENT_CONFIG'] = cached_config['PSF_CLIENT_CONFIG']
-			else:
-				try:
-					config['PSF_CLIENT_CONFIG'] = loads(
-									compat._decode(
-										b64decode(
-											lib_joyn.decrypt(
-												lib_joyn.uc_string_to_long_array(config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]),
-												lib_joyn.uc_string_to_long_array(
-													lib_joyn.uc_slices_to_string(
-														lib_joyn.uc_slice(config['PLAYER_CONFIG']['toolkit']['psf'])
-													)
-												)
-											)
-										)
-									)
-								)
-
-				except Exception as e:
-					xbmc_helper.notification(
-							xbmc_helper.translation('ERROR').format('Decrypt'),
-							xbmc_helper.translation('MSG_ERROR_CONFIG_DECRYPTION'),
+						xbmc_helper.translation('ERROR').format('Decrypt'),
+						xbmc_helper.translation('MSG_ERROR_CONFIG_DECRYPTION'),
 					)
+
 					xbmc_helper.log_error('Could not decrypt config - Exception: ' + str(e) + ' PSF VARS: '  \
 						+ dumps(config['PSF_VARS']) + 'PLAYER CONFIG: ' + dumps(config['PLAYER_CONFIG']))
 					exit(0)
@@ -728,6 +733,31 @@ class lib_joyn:
 			cache.set_json('CONFIG', config)
 
 		return config
+
+	@staticmethod
+	def decrypt_psf_client_config(secret, encrypted_psf_config):
+
+		try:
+			decrypted_psf_config = loads(
+							compat._decode(
+								b64decode(
+									lib_joyn.decrypt(
+										lib_joyn.uc_string_to_long_array(secret),
+										lib_joyn.uc_string_to_long_array(
+											lib_joyn.uc_slices_to_string(
+												lib_joyn.uc_slice(encrypted_psf_config)
+											)
+										)
+									)
+								)
+							)
+						)
+		except Exception as e:
+			xbmc_helper.log_debug('Could not decrypt psf config - Exception: ' + str(e))
+			pass
+			return None
+
+		return decrypted_psf_config
 
 
 	@staticmethod

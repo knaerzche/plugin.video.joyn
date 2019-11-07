@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 CONST = {
@@ -8,11 +7,15 @@ CONST = {
 	'ENTITLEMENT_URL'	: 'entitlement-token/anonymous',
 	'IP_API_URL'		: 'http://ip-api.com/json?lang={:s}&fields=status,country,countryCode',
 
-	'PSF_VARS_IDX'		: {
-					'SECRET' : 1192,
+	'PSF_VAR_DEFS'		: {
+					'SECRET' : {
+							'INDEX'		: 1192,
+							'VAL_BEFORE'	: 'vas',
+							'VAL_AFTER'	: '@oasis/vas-sdk',
+							'FALLBACK'	: '5C7838365C7864665C786638265C783064595C783935245C7865395C7838323F5C7866333D3B5C78386635',
+						   },
 				  },
 
-	'FALLBACK_SECRET'	: '5C7838365C7864665C786638265C783064595C783935245C7865395C7838323F5C7866333D3B5C78386635',
 
 	'COUNTRIES'		: {
 					 'DE' : {
