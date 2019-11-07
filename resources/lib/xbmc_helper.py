@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 import os.path
@@ -21,6 +20,7 @@ addon = Addon()
 
 
 def get_file_path(directory, filename):
+
 	xbmc_profile_path = translatePath(addon.getAddonInfo('profile')).encode('utf-8').decode('utf-8')
 	xbmc_directory = translatePath(os.path.join(xbmc_profile_path, directory, '')).encode('utf-8').decode('utf-8')
 
@@ -29,8 +29,11 @@ def get_file_path(directory, filename):
 
 	return translatePath(os.path.join(xbmc_directory, filename)).encode('utf-8').decode('utf-8')
 
+
 def get_media_filepath(filename):
+
 	return translatePath(os.path.join(addon.getAddonInfo('path'), 'resources', 'media', filename)).encode('utf-8').decode('utf-8')
+
 
 def remove_dir(directory):
 
@@ -41,7 +44,6 @@ def remove_dir(directory):
 
 	dirs, files = listdir(xbmc_directory)
 	for file in files:
-		file = file.decode("utf-8")
 		remove_ok = delete(os.path.join(xbmc_directory, file))
 
 	for directory in dirs:
@@ -76,6 +78,7 @@ def get_int_setting(setting_id):
 		return int(setting_val,10)
 	else:
 		return None
+
 
 def get_addon_version():
 
@@ -134,6 +137,7 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 
 	if 'sort' in folder_defs.keys():
 		set_folder_sort(folder_defs['sort'])
+
 def set_folder_sort(folder_sort_def):
 
 	order = get_setting(folder_sort_def['setting_id'])
@@ -158,9 +162,7 @@ def set_view_mode(setting_id):
 
 		if setting_val == 'Custom':
 			viewmode = get_setting(setting_id + '_custom')
-			log_debug('Viewmode custom')
 		else:
-			log_debug('Viewmode ' + dumps(CONST['VIEW_MODES'].get(setting_val, {})))
 			viewmode = CONST['VIEW_MODES'].get(setting_val, {}).get(skin_name, '0')
 
 		log_debug('--> Viewmode ' + str(setting_id) + ' : ' + setting_val + ' : ' + viewmode + ' : ' + skin_name )
@@ -186,18 +188,19 @@ def wait_for_container(pluginurl, pluginquery):
 		if folder_path == pluginpath:
 			break
 
-	log_debug('wait_for_container no of loops: ' + str(counter));
-
 
 def log_error(content):
+
 	_log(content, LOGERROR)
 
 
 def log_notice(content):
+
 	_log(content, LOGNOTICE)
 
 
 def log_debug(content):
+
 	_log(content, LOGDEBUG)
 
 
@@ -213,6 +216,7 @@ def translation(id):
 
 
 def get_addon_params(pluginquery):
+
 	return dict( (k, v if len(v)>1 else v[0] )
            for k, v in parse_qs(pluginquery[1:]).items() )
 

@@ -343,3 +343,11 @@ msgstr "Cache konnte nicht geleert werden"
 msgctxt "#30661"
 msgid "en"
 msgstr "de"
+
+msgctxt "#30662"
+msgid "This video is currently unavailable"
+msgstr "Dieses Video ist derzeit nicht verfügbar"
+
+msgctxt "#30663"
+msgid "GraphQL query error"
+msgstr "GraphQL Fehler

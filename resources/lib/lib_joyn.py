@@ -1,16 +1,16 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from base64 import b64decode
 from json import loads, dumps
 from re import search, findall
 from os import environ
-from hashlib import sha1
+from hashlib import sha1, sha256
 from math import floor
 from sys import exit
 from datetime import datetime, timedelta
 from time import time
 from copy import deepcopy
+from codecs import encode
 from .const import CONST
 from . import compat as compat
 from . import request_helper as request_helper
@@ -21,8 +21,11 @@ from .mpd_parser import mpd_parser as mpd_parser
 if compat.PY2:
 	from urllib import urlencode
 	from urlparse import urlparse, urlunparse , parse_qs
+	from HTMLParser import HTMLParser
 elif compat.PY3:
 	from urllib.parse import urlencode, urlparse, urlunparse, parse_qs
+	from html.parser import HTMLParser
+
 
 class lib_joyn:
 
@@ -33,57 +36,15 @@ class lib_joyn:
 		self.default_icon = default_icon
 
 
-	def get_joyn_json_response(self, url, headers=None, params=None):
-
-		if headers is not None:
-				headers.append(('key', self.config['CONFIG']['header_7TV_key']))
-		else:
-			headers = [('key', self.config['CONFIG']['header_7TV_key'])]
-
-		decoded_json = request_helper.get_json_response(url, self.config, headers, params)
-
-		if decoded_json[compat._unicode('status')] == 200:
-			return decoded_json[compat._unicode('response')]
-		else:
-			return None
-
-
 	def build_signature(self, video_id, encoded_client_data, entitlement_token):
 
 		sha_input = video_id + ','
 		sha_input += entitlement_token + ','
 		sha_input += encoded_client_data
+		sha_input += compat._decode(encode(self.config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']].encode('utf-8'), 'hex'))
+		xbmc_helper.log_debug('Build signature: ' + sha_input)
 
-		for char in findall('.',self.config['PSF_VARS'][CONST['PSF_VARS_IDX']['SECRET']]):
-			sha_input += hex(ord(char))[2:]
-
-		sha_1 = sha1()
-		sha_1.update(sha_input.encode('utf-8'))
-		sha_output = sha_1.hexdigest()
-
-		return sha_output
-
-
-	def get_json_by_type(self, path_type, replacements={}, additional_params={}, url_annex=''):
-
-		valued_query_params = {}
-
-		if 'search' not in additional_params.keys():
-			for key, value in CONST['PATH'][path_type]['QUERY_PARAMS'].items():
-				if search('^##(.)+##$', value) is not None:
-					key = value[2:-2]
-					if (key in replacements.keys()):
-						value = replacements[key]
-				valued_query_params.update({key : value})
-
-		if  CONST['PATH'][path_type]['SELECTION'].find('%s') is not -1:
-			valued_query_params.update({'selection' : (CONST['PATH'][path_type]['SELECTION'] % CONST['COUNTRIES'][self.config['country']]['language'])})
-		else:
-			valued_query_params.update({'selection' : CONST['PATH'][path_type]['SELECTION']})
-
-		valued_query_params.update(additional_params)
-
-		return self.get_joyn_json_response(url=CONST['MIDDLEWARE_URL'] + CONST['PATH'][path_type]['PATH'] + url_annex , params=valued_query_params)
+		return  sha1(sha_input.encode('utf-8')).hexdigest()
 
 
 	def set_mpd_props(self, list_item, url, stream_type='VOD'):
@@ -202,32 +163,9 @@ class lib_joyn:
 					self.config, entitlement_request_data, entitlement_request_headers)
 
 
-	def get_video_data(self, video_id, stream_type):
+	def get_video_data(self, video_id, client_data, stream_type, season_id=None, compilation_id=None):
 
 		video_url = self.config['PSF_CONFIG']['default'][stream_type.lower()]['playoutBaseUrl']
-
-		client_data = {}
-		if stream_type == 'VOD':
-			video_metadata = self.get_joyn_json_response(CONST['MIDDLEWARE_URL'] + 'metadata/video/' + video_id)
-
-			client_data.update({
-					'startTime' 	: '0',
-					'videoId' 	: video_metadata['tracking']['id'],
-					'duration'	: video_metadata['tracking']['duration'],
-					'brand'		: video_metadata['tracking']['channel'],
-					'genre'		: video_metadata['tracking']['genres'],
-					'tvshowid'	: video_metadata['tracking']['tvShow']['id'],
-			})
-
-			if 'agofCode' in video_metadata['tracking'].keys():
-				client_data.update({'agofCode' : video_metadata['tracking']['agofCode']})
-
-		elif stream_type == 'LIVE':
-			client_data.update({
-					'videoId' 	: None,
-					'channelId'	: video_id,
-
-			})
 
 		if stream_type == 'VOD':
 			video_url += 'playout/video/' + client_data['videoId']
@@ -250,9 +188,10 @@ class lib_joyn:
 
 		video_data = request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
 
-		if 'video_metadata' in locals() and 'video' in video_metadata.keys():
-			video_data.update({'tv_show_id' : video_metadata['tracking']['tvShow']['id'],
-				'season_id' : video_metadata['video']['metadata'][CONST['COUNTRIES'][self.config['country']]['language']]['seasonObject']['id']})
+		if season_id is not None:
+			video_data.update({'season_id': season_id})
+		if  compilation_id is not None:
+			video_data.update({'compilation_id': compilation_id})
 
 		return video_data
 
@@ -260,232 +199,308 @@ class lib_joyn:
 	def get_epg(self):
 
 		cached_epg =  cache.get_json('EPG')
-		if cached_epg['data'] is not None and cached_epg['is_expired'] is False:
-			epg = cached_epg['data']
+		dt_now = datetime.now()
+		if cached_epg['data'] is not None and cached_epg['is_expired'] is False and 'epg_expires' in cached_epg['data'].keys() \
+			and datetime.fromtimestamp(cached_epg['data']['epg_expires']) > dt_now:
+
+			xbmc_helper.log_debug('EPG FROM CACHE')
+			epg_data = cached_epg['data']['epg_data']
 		else:
-			epg = {}
-			raw_epg = self.get_json_by_type('EPG',{
-					'from' : (datetime.now() - timedelta(hours=CONST['EPG']['REQUEST_OFFSET_HOURS'])).strftime('%Y-%m-%d %H:%M:00'),
-					'to': (datetime.now() + timedelta(hours=CONST['EPG']['REQUEST_HOURS'])).strftime('%Y-%m-%d %H:%M:00')}
-				);
+			xbmc_helper.log_debug('EPG FROM API')
+			epg_data = self.get_graphql_response('EPG')
+			epg = {
+				'epg_data': epg_data,
+				'epg_expires': None,
+			}
+			for brand_epg in epg_data['brands']:
+				if brand_epg.get('livestream', None) is not None and \
+				'epg' in brand_epg['livestream'].keys () and len(brand_epg['livestream']['epg']) > 0:
 
-			for raw_epg_data in raw_epg['data']:
-				raw_epg_data['channelId'] = str(raw_epg_data['channelId'])
-				if raw_epg_data['channelId'] not in epg.keys():
-					epg.update({raw_epg_data['channelId'] : []})
-				epg[raw_epg_data['channelId']].append(raw_epg_data);
-
+					brand_live_stream_epg_count = len(brand_epg['livestream']['epg'])
+					if brand_live_stream_epg_count > 0:
+						penultimate_brand_live_stream_epg_timestamp = brand_epg['livestream']['epg'][(brand_live_stream_epg_count-2)]['startDate']
+						if epg['epg_expires'] is None or epg['epg_expires'] > penultimate_brand_live_stream_epg_timestamp:
+							epg.update({'epg_expires': penultimate_brand_live_stream_epg_timestamp})
 			cache.set_json('EPG',epg)
 
-		return epg
+		return epg_data
 
 
-	def get_brands(self):
+	def get_landingpage(self):
 
-		cached_brands = cache.get_json('BRANDS')
-		if cached_brands['data'] is not None and cached_brands['is_expired'] is False:
-			brands = cached_brands['data']
+		cached_landingpage = cache.get_json('LANDINGPAGE')
+		if cached_landingpage['data'] is not None and cached_landingpage['is_expired'] is False:
+			landingpage = cached_landingpage['data']
 		else:
-			brands = self.get_json_by_type('BRAND')
-			cache.set_json('BRANDS', brands)
+			landingpage = {}
+			raw_landingpage = self.get_graphql_response('LANDINGPAGE', {'path' : '/'})
+			if 'page' in raw_landingpage.keys() and 'blocks' in raw_landingpage['page'].keys():
+				for block in raw_landingpage['page']['blocks']:
+					if block['isPersonalized'] is False:
+						if  block['__typename'] not in landingpage.keys():
+							landingpage.update({block['__typename']: {}})
 
-		return brands
+						landingpage[block['__typename']].update({block['id']: block.get('headline', None)})
 
+				cache.set_json('LANDINGPAGE', landingpage)
 
-	def get_categories(self):
-
-		raw_cats = self.get_joyn_json_response(CONST['MIDDLEWARE_URL']  + 'ui?path=/')
-		categories = {}
-
-		if 'blocks' in raw_cats.keys():
-			for block in raw_cats['blocks']:
-				if 'type' in block.keys() and 'configuration' in block.keys() and block['type'] == 'StandardLane':
-					categories.update({block['configuration']['Headline'] : []})
-					for block_item in block['items']:
-						categories[block['configuration']['Headline']].append(block_item['fetch']['id'])
-
-		return categories;
+		return landingpage
 
 
 	def get_uepg_data(self, pluginurl):
 
-		brands = self.get_brands()
 		epg = self.get_epg()
 		uEPG_data = []
 		channel_num = 0
 
-		for brand in brands['data']:
-			channel_id = str(brand['channelId'])
-			if 'metadata' in brand.keys() and CONST['COUNTRIES'][self.config['country']]['language'] in brand['metadata'].keys() and \
-					'livestreams' in  brand['metadata'][CONST['COUNTRIES'][self.config['country']]['language']].keys():
+		for brand_epg in epg['brands']:
+			if brand_epg['livestream'] is not None and 'epg' in brand_epg['livestream'].keys() \
+				and len(brand_epg['livestream']['epg']) > 0:
 
-				for livestream in brand['metadata'][CONST['COUNTRIES'][self.config['country']]['language']]['livestreams']:
-					stream_id = livestream['streamId']
-					brand_metadata = extracted_metadata = self.extract_metadata(
-						metadata= brand['metadata'][CONST['COUNTRIES'][self.config['country']]['language']],
-							selection_type='BRAND')
+				if 'logo' in brand_epg.keys() and 'url' in brand_epg['logo'].keys():
+					channel_logo=request_helper.add_user_agend_header_string(
+							brand_epg['logo']['url']  + '/profile:nextgen-web-artlogo-183x75',
+							self.config['USER_AGENT'])
+				else:
+					channel_logo=self.default_icon
 
-					for art_key, art_value in brand_metadata['art'].items():
-						brand_metadata['art'].update({art_key : request_helper.add_user_agend_header_string(art_value, self.config['USER_AGENT'])})
+				channel_name = brand_epg['livestream']['title']
 
-					if channel_id in epg.keys():
-						channel_num += 1
-						uEPG_channel = {
-							'channelnumber'  :channel_num,
-							'isfavorite' : False,
-							'channellogo' : brand_metadata['art']['icon']
-						}
+				if brand_epg['livestream']['quality'] == 'HD':
+					channel_name += ' HD'
 
-						guidedata = []
-						first = True
-						for channel_epg_data in epg[channel_id]:
-							if first is True:
-								uEPG_channel.update({
-									'channelname' : channel_epg_data['tvChannelName']
-								})
-							first = False
-							art = deepcopy(brand_metadata['art'])
-							if 'images' in 	channel_epg_data:
-								for image in channel_epg_data['images']:
-									if image['subType'] == 'cover':
-										art.update({'thumb' :  request_helper.add_user_agend_header_string(
-											image['url'] + '/' +  CONST['PATH']['EPG']['IMG_PROFILE'], self.config['USER_AGENT'])})
+				channel_num += 1
 
-							guidedata.append({
-								'label'	: channel_epg_data['tvShow']['title'],
-								'plot' : channel_epg_data['description'],
-								'title' : channel_epg_data['tvShow']['title'],
-								'starttime' : channel_epg_data['startTime'],
-								'duration' : (channel_epg_data['endTime'] - channel_epg_data['startTime']),
-								'art' : art,
-								'url' : pluginurl + '?' + urlencode({'mode' : 'play_video', 'stream_type': 'LIVE', 'video_id' : stream_id})
+				client_data=dumps({'videoId': None,'channelId': brand_epg['livestream']['id']})
+
+				uEPG_channel = {
+					'channelnumber': channel_num,
+					'isfavorite': False,
+					'channellogo': channel_logo,
+					'channelname': channel_name,
+				}
+
+				guidedata = []
+
+				for epg_entry in brand_epg['livestream']['epg']:
+					epg_metadata = lib_joyn.get_metadata(epg_entry, 'EPG')
+
+					for art_item_type, art_item in epg_metadata['art'].items():
+						epg_metadata['art'].update({art_item_type: request_helper.add_user_agend_header_string(art_item,self.config['USER_AGENT'])})
+
+					epg_metadata['art'].update({
+						'clearlogo': channel_logo,
+						'icon': channel_logo
+					})
+
+					guidedata.append({
+						'label': epg_metadata['infoLabels']['title'],
+						'title': epg_metadata['infoLabels']['title'],
+						'plot': epg_metadata['infoLabels'].get('plot', None),
+						'art': epg_metadata['art'],
+						'starttime': epg_entry['startDate'],
+						'duration': (epg_entry['endDate']-epg_entry['startDate']),
+						'url' : pluginurl + '?' + urlencode({
+								'mode': 'play_video',
+								'stream_type': 'LIVE',
+								'video_id' : brand_epg['livestream']['id'],
+								'client_data': client_data
 							})
+					})
+				uEPG_channel.update({'guidedata' : guidedata})
+				uEPG_data.append(uEPG_channel)
 
-						uEPG_channel.update({'guidedata' : guidedata})
-						uEPG_data.append(uEPG_channel)
 		return uEPG_data
 
 
+	def get_graphql_response(self, operation, variables={}):
+
+		xbmc_helper.log_debug('GraphQL Operation: ' + str(operation))
+		for required_var in CONST['GRAPHQL'][operation]['REQUIRED_VARIABLES']:
+			if required_var not in variables.keys():
+				if required_var in CONST['GRAPHQL']['STATIC_VARIABLES'].keys():
+					variables.update({required_var: CONST['GRAPHQL']['STATIC_VARIABLES'][required_var]})
+				else:
+					xbmc_helper.log_error('Not all required variables set for operation: ' + operation)
+					exit(0)
+
+		post_data = {
+			'query'	: 'query ' + CONST['GRAPHQL'][operation]['OPERATION'] + ' ' + CONST['GRAPHQL'][operation]['QUERY'],
+			'extensions' : {
+					'persistedQuery' : {
+						'version' : 1,
+					},
+			},
+			'operationName'	: CONST['GRAPHQL'][operation]['OPERATION'],
+
+		};
+
+		if len(variables.keys()) != 0:
+			post_data.update({'variables': variables})
+
+		post_data['extensions']['persistedQuery'].update({'sha256Hash': sha256(post_data['query'].encode('utf-8')).hexdigest()})
+
+		api_response = {}
+
+		try:
+			api_response = request_helper.post_json(
+				CONST['GRAPHQL']['API_URL'],
+				self.config,
+				post_data,
+				self.config['GRAPHQL_HEADERS'],
+			)
+
+
+		except Exception as e:
+			xbmc_helper.log_error('Could not complte graphql request: ' + str(e) + 'post_data: ' + dumps(post_data))
+
+		if 'errors' in api_response.keys():
+			xbmc_helper.log_error('GraphQL query returned errors: ' + dumps(api_response['errors']) + 'post_data: ' + dumps(post_data))
+
+		if 'data' in api_response.keys() and api_response['data'] is not None:
+			return api_response['data']
+		else:
+			xbmc_helper.log_error('GraphQL query returned no data - response: ' + dumps(api_response) + 'post_data: '  + dumps(post_data))
+
+		xbmc_helper.notification(
+				xbmc_helper.translation('ERROR').format('GraphQL'),
+				xbmc_helper.translation('MSG_GAPHQL_ERROR'),
+		)
+		exit(0)
+
+
 	@staticmethod
-	def combine_tvshow_season_data(tvshow_data, season_data):
+	def get_metadata(data, query_type):
 
-		combined_title =  tvshow_data['infoLabels']['title'] + ' - ' + season_data['infoLabels']['title']
-		season_data['infoLabels'].update({'title' : combined_title})
-		season_data.update({'art' : tvshow_data['art']})
-		return season_data
-
-
-	@staticmethod
-	def merge_subtype_art(selection_type, metadata_art, data):
-
-		if 'SUBTYPE_ART' in CONST['PATH'][selection_type].keys():
-			for subtype_art_key, subtype_art in CONST['PATH'][selection_type]['SUBTYPE_ART'].items():
-				if subtype_art_key in data.keys() and 'images' in data[subtype_art_key].keys():
-
-					for subtype_art_item in data[subtype_art_key]['images']:
-						if 'subType' in subtype_art_item.keys() and subtype_art_item['subType'] in subtype_art.keys():
-							for art_type, art_profile in subtype_art[subtype_art_item['subType']].items():
-								xbmc_helper.log_debug('merge_subtype_art : ' + art_type + '--->' + subtype_art_item['url'] + '/' + art_profile)
-								metadata_art.update({art_type : subtype_art_item['url'] + '/' + art_profile})
-
-		return metadata_art
-
-	@staticmethod
-	def extract_metadata(metadata, selection_type, visibilities=None):
-		extracted_metadata = {
+		metadata = {
 			'art': {},
 			'infoLabels' : {},
 		};
 
-		path = CONST['PATH'][selection_type]
+		if 'TEXTS' in CONST['GRAPHQL']['METADATA'][query_type].keys():
+			for text_key, text_mapping_key in CONST['GRAPHQL']['METADATA'][query_type]['TEXTS'].items():
+				if text_key in data.keys() and data[text_key] is not None:
+					metadata['infoLabels'].update({text_mapping_key: HTMLParser().unescape(data[text_key])})
+				else:
+					metadata['infoLabels'].update({text_mapping_key: ''})
 
-		if 'descriptions' in metadata.keys() and 'description' in path['TEXTS'].keys():
-			for description in metadata['descriptions']:
-				if description['type'] == path['TEXTS']['description']:
-					extracted_metadata['infoLabels'].update({'plot' : description['text']})
-					break
+		if 'ART' in CONST['GRAPHQL']['METADATA'][query_type].keys():
+			for art_key, art_def in CONST['GRAPHQL']['METADATA'][query_type]['ART'].items():
+				if art_key in data.keys():
+					if type(data[art_key]) != type(list()):
+						images = [data[art_key]]
+					else:
+						images = data[art_key]
+					for image in images:
+						for art_def_img_type, art_def_img in art_def.items():
+							if image['__typename'] == 'Image' and art_def_img_type == image['type']:
+								for art_def_img_map_key, art_def_img_map_profile in art_def_img.items():
+									metadata['art'].update({
+										art_def_img_map_key: image['url'] + '/' + art_def_img_map_profile
+									})
+		if 'ageRating' in data.keys() and  data['ageRating'] is not None and 'minAge' in data['ageRating'].keys():
+			metadata['infoLabels'].update({'mpaa' : xbmc_helper.translation('MIN_AGE').format(str(data['ageRating']['minAge']))})
 
-		if selection_type == 'SEASON':
-			cast = []
-			if 'seasonNumber' in metadata.keys() and metadata['seasonNumber'] is not None:
-				extracted_metadata['infoLabels'].update({'title' : xbmc_helper.translation('SEASON_NO').format(str(metadata['seasonNumber']))})
-				extracted_metadata['infoLabels'].update({'season' : metadata['seasonNumber']})
-				extracted_metadata['infoLabels'].update({'sortseason' : metadata['seasonNumber']})
+		if 'genres' in data.keys() and type(data['genres']) == type(list()):
+			metadata['infoLabels'].update({'genre' : []})
+
+			for genre in data['genres']:
+				if 'name' in genre.keys():
+					metadata['infoLabels']['genre'].append(genre['name'])
+
+		if query_type == 'EPISODE':
+
+			if 'endsAt' in data.keys() and data['endsAt'] is not None and data['endsAt'] < 9999999999:
+				metadata['infoLabels'].update({
+					'plot' : compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE'))
+							.format( datetime.utcfromtimestamp(data['endsAt'])) + metadata['infoLabels'].get('plot', '')
+				})
+
+			if 'number' in data.keys() and data['number'] is not None:
+				metadata['infoLabels'].update({
+						'episode' : data['number'],
+						'sortepisode': data['number'],
+					})
+			if 'series' in data.keys():
+				if 'title' in data['series'].keys():
+					metadata['infoLabels'].update({'tvshowtitle': HTMLParser().unescape(data['series']['title'])})
+				series_meta = lib_joyn.get_metadata(data['series'],'TVSHOW')
+				if 'clearlogo' in series_meta['art'].keys():
+					metadata['art'].update({'clearlogo': series_meta['art']['clearlogo']})
+
+			elif 'compilation' in data.keys():
+				compilation_meta = lib_joyn.get_metadata(data['compilation'],'TVSHOW')
+				if 'title' in data['compilation'].keys():
+					metadata['infoLabels'].update({'tvshowtitle': HTMLParser().unescape(data['compilation']['title'])})
+				if 'clearlogo' in compilation_meta['art'].keys():
+					metadata['art'].update({'clearlogo': compilation_meta['art']['clearlogo']})
 
 
-			if 'cast' in metadata.keys():
-				for actor in metadata['cast']:
-					if 'name' in actor.keys():
-						cast.append(actor['name'])
+		if 'airdate' in data.keys() and data['airdate'] is not None:
 
-			extracted_metadata['infoLabels'].update({'cast' : cast})
-
-		elif 'titles' in metadata.keys() and 'title' in path['TEXTS'].keys():
-			for title in metadata['titles']:
-				if title['type'] ==  path['TEXTS']['title']:
-					extracted_metadata['infoLabels'].update({'title' : title['text']})
-					break
-		if 'images' in metadata.keys() and 'ART' in path.keys():
-			for image in metadata['images']:
-				if image['type'] in path['ART'].keys():
-					for art_type, img_profile in path['ART'][image['type']].items():
-						extracted_metadata['art'].update({art_type : image['url'] + '/' + img_profile})
-
-		avaibility_end = None
-		avaibility_start = None
-
-		if visibilities is not None:
-			for visibility in visibilities:
-				if 'endsAt' in visibility.keys() and visibility['endsAt'] < 9999999999:
-					avaibility_end = datetime.fromtimestamp(visibility['endsAt'])
-				if 'startsAt' in visibility.keys():
-					avaibility_start = datetime.fromtimestamp(visibility['startsAt'])
-				if avaibility_start is not None and avaibility_end is not None:
-					break
-
-		if avaibility_end is not None:
-			extracted_metadata['infoLabels'].update({
-				'plot' : compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE')).format(avaibility_end) + extracted_metadata['infoLabels'].get('plot', '')
+			broadcast_date = datetime.utcfromtimestamp(data['airdate']).strftime('%Y-%m-%d')
+			metadata['infoLabels'].update({
+				'premiered' : broadcast_date,
+				'date': broadcast_date,
+				'aired' : broadcast_date,
 			})
 
-		if avaibility_start is not None:
-			extracted_metadata['infoLabels'].update({'dateadded' : avaibility_start.strftime('%Y-%m-%d %H:%M:%S')})
+		if 'video' in data.keys() and data['video'] is not None \
+			and 'duration' in data['video'].keys() and data['video']['duration'] is not None:
+				metadata['infoLabels'].update({'duration': (data['video']['duration'])})
 
-		if 'INFOLABELS' in path.keys():
-			extracted_metadata['infoLabels'].update(path['INFOLABELS'])
+		if 'season' in data.keys() and data['season'] is not None \
+			and 'number' in data['season'].keys() and data['season']['number'] is not None:
 
-		return extracted_metadata
+			metadata['infoLabels'].update({
+				'season': data['season']['number'],
+				'sortseason': data['season']['number'],
+			})
+
+		return metadata
 
 
 	@staticmethod
-	def extract_metadata_from_epg(epg_channel_data):
-		extracted_metadata = {
+	def get_epg_metadata(brand_livestream_epg):
+
+		epg_metadata = {
 			'art': {},
 			'infoLabels' : {},
 		};
 
+		brand_title = brand_livestream_epg['title']
+		if brand_livestream_epg['quality'] == 'HD':
+			brand_title += ' HD'
+		dt_now = datetime.now()
+		epg_metadata['infoLabels'].update({'title': compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(brand_title, '')})
 
-		for idx, program_data in enumerate(epg_channel_data):
-			endTime = datetime.fromtimestamp(program_data['endTime'])
-			if  endTime > datetime.now():
-				extracted_metadata['infoLabels']['title'] = compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(
-											program_data['tvChannelName'], program_data['tvShow']['title'])
+		for idx, epg_entry in enumerate(brand_livestream_epg['epg']):
+			end_time = datetime.fromtimestamp(epg_entry['endDate'])
+			start_time = datetime.fromtimestamp(epg_entry['startDate'])
 
-				if len(epg_channel_data) > (idx+1):
-					extracted_metadata['infoLabels']['plot'] = compat._unicode(xbmc_helper.translation('LIVETV_UNTIL_AND_NEXT')).format(
-											endTime,epg_channel_data[idx+1]['tvShow']['title'])
+			if end_time > dt_now:
+				epg_metadata = lib_joyn.get_metadata(epg_entry, 'EPG')
+				epg_metadata['infoLabels'].update({
+						'title': compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(brand_title, epg_entry['title'])
+					})
+				if len(brand_livestream_epg['epg']) > (idx+1):
+					epg_metadata['infoLabels'].update({
+						'plot': compat._unicode(xbmc_helper.translation('LIVETV_UNTIL_AND_NEXT')).format(
+								end_time,
+								brand_livestream_epg['epg'][idx+1]['title']
+							)
+					})
 				else:
-					extracted_metadata['infoLabels']['plot'] =  compat._unicode(xbmc_helper.translation('LIVETV_UNTIL')).format(endTime)
+					epg_metadata['infoLabels'].update({
+						'plot': compat._unicode(xbmc_helper.translation('LIVETV_UNTIL')).format(end_time)
+					})
 
-				if program_data['description'] is not None:
-					extracted_metadata['infoLabels']['plot'] += program_data['description']
+				if epg_entry.get('secondaryTitle', None) is not None:
+					epg_metadata['infoLabels']['plot'] += epg_entry['secondaryTitle']
 
-				for image in program_data['images']:
-					if image['subType'] == 'cover':
-						extracted_metadata['art']['poster'] = image['url'] + '/' + CONST['PATH']['EPG']['IMG_PROFILE']
 				break
 
-		return extracted_metadata;
+		return epg_metadata
 
 
 	@staticmethod
@@ -512,21 +527,17 @@ class lib_joyn:
 		if recreate_config == True:
 
 			xbmc_helper.log_debug('get_config(): create config')
+
 			config = {
-				'CONFIG'		: {
-								'header_7TV_key_web': None,
-								'header_7TV_key': None,
-								'SevenTV_player_config_url': None
-							  },
-				'PLAYER_CONFIG'		: {},
+				'CONFIG'		: {'SevenTV_player_config_url': None},
 				'PSF_CONFIG' 		: {},
+				'PLAYER_CONFIG'		: {},
 				'PSF_VARS'		: {},
 				'PSF_CLIENT_CONFIG'	: {},
 				'IS_ANDROID'		: False,
 				'IS_ARM'		: False,
 				'ADDON_VERSION'		: addon_version,
 				'country'		: None,
-
 			}
 
 			os_uname = compat._uname_list()
@@ -576,15 +587,60 @@ class lib_joyn:
 				xbmc_helper.dialog_settings(xbmc_helper.translation('MSG_COUNTRY_NOT_DETECTED'))
 				exit(0)
 			main_js_src = None
+			graphql_headers = []
 			for match in findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
 				if match.find('/main') is not -1:
 					main_js_src = CONST['BASE_URL'] + match
 					main_js =  request_helper.get_url(main_js_src, config)
+
+					uri_start_match = CONST['GRAPHQL']['API_URL']
+					uri_start = main_js.find(uri_start_match)
+
 					for key in config['CONFIG']:
 						find_str = key + ':"'
 						start = main_js.find(find_str)
 						length = main_js[start:].find('",')
 						config['CONFIG'][key] = main_js[(start+len(find_str)):(start+length)]
+
+					if uri_start is not -1:
+						headers_conf_start = main_js[uri_start:].find('headers:') + uri_start
+						if headers_conf_start is not -1:
+							headers_start_match = '{'
+							headers_end_match = '}'
+							headers_start = main_js[headers_conf_start:].find(headers_start_match) + headers_conf_start
+							xbmc_helper.log_debug("HEADERS START " + str(headers_conf_start) + " --> " + str(headers_start))
+							if headers_start >= headers_conf_start:
+								headers_length = main_js[headers_start:].find(headers_end_match)
+								headers = main_js[(headers_start+len(headers_start_match)):(headers_start+headers_length)]
+								headers = headers.replace('"', '').split(',')
+
+								for header in headers:
+									header_parts = header.split(':')
+									if len(header_parts) == 2:
+										graphql_headers.append((header_parts[0], header_parts[1]))
+
+			for required_header in CONST['GRAPHQL']['REQUIRED_HEADERS']:
+				found = False
+				for graphql_header in graphql_headers:
+					xbmc_helper.log_debug("REQUIRED HEADER: " + required_header.lower() +  " GRAPHQL HEADER: " + graphql_header[0].lower())
+					if graphql_header[0].lower() == required_header.lower():
+						found = True
+						break
+
+				if found == False:
+					xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('GraphQL Headers'),
+						xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format(required_header)
+					)
+					xbmc_helper.log_error('Could not extract all required  GraphQL header from js: '\
+						 + required_header + ' JS source: ' + str(main_js_src) + 'extracted: ' + dumps(graphql_headers))
+					exit(0)
+
+			for index, value in enumerate(graphql_headers):
+				if value[0].lower() in CONST['GRAPHQL']['REPLACE_HEADERS'].keys():
+					graphql_headers[index] = (value[0], CONST['GRAPHQL']['REPLACE_HEADERS'][value[0].lower()])
+
+			config['GRAPHQL_HEADERS'] = graphql_headers
 
 			for essential_config_item_key, essential_config_item in config['CONFIG'].items():
 				if essential_config_item is None or essential_config_item is '':
@@ -603,6 +659,7 @@ class lib_joyn:
 					)
 				xbmc_helper.log_error('Could not load player config from url  ' +  config['CONFIG']['SevenTV_player_config_url'])
 				exit(0)
+
 
 			config['PSF_CONFIG'] =  request_helper.get_json_response(url=CONST['PSF_CONFIG_URL'], config=config)
 			if config['PSF_CONFIG'] is None:
@@ -664,6 +721,9 @@ class lib_joyn:
 					xbmc_helper.log_error('Could not decrypt config - Exception: ' + str(e) + ' PSF VARS: '  \
 						+ dumps(config['PSF_VARS']) + 'PLAYER CONFIG: ' + dumps(config['PLAYER_CONFIG']))
 					exit(0)
+
+			xbmc_helper.remove_dir(CONST['CACHE_DIR'])
+			xbmc_helper.log_debug('cleared cache')
 
 			cache.set_json('CONFIG', config)
 

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 from os import path
@@ -24,15 +23,17 @@ def _get(cache_key, file_name, override_expire_secs=None):
 	};
 
 	if path.exists(file_name):
-		if system() == 'Windows':
-			filetime = datetime.fromtimestamp(path.getctime(file_name))
-		else:
-			filetime = datetime.fromtimestamp(path.getmtime(file_name))
+
+		filectime = datetime.fromtimestamp(path.getctime(file_name))
+		filemtime = datetime.fromtimestamp(path.getmtime(file_name))
+
+		if filemtime is None or filectime > filemtime:
+			filemtime = filectime
 
 		with open(file_name) as cache_infile:
 			cache_data.update({'data' : cache_infile.read()})
 
-		if filetime >= expire_datetime or expire_datetime is None:
+		if filemtime >= expire_datetime or expire_datetime is None:
 			cache_data.update({'is_expired' : False})
 
 	return cache_data;
@@ -60,6 +61,7 @@ def get_json(cache_key, override_expire_secs=None):
 
 
 def set_json(cache_key, data):
+
 	try:
 		_set(cache_key, CONST['CACHE'][cache_key]['key'] + '.json', dumps(data))
 	except ValueError:

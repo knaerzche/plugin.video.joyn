@@ -343,3 +343,11 @@ msgstr ""
 msgctxt "#30661"
 msgid "en"
 msgstr ""
+
+msgctxt "#30662"
+msgid "This video is currently unavailable"
+msgstr ""
+
+msgctxt "#30663"
+msgid "GraphQL query error"
+msgstr ""
