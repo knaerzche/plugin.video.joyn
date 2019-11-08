@@ -88,6 +88,7 @@ CONST = {
 					'LANG_CODE'			: 30661,
 					'MSG_VIDEO_UNAVAILABLE'         : 30662,
 					'MSG_GAPHQL_ERROR'              : 30663,
+					'MSG_NO_CONTENT'		: 30664,
 
 				},
 

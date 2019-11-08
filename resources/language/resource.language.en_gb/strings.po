@@ -351,3 +351,7 @@ msgstr ""
 msgctxt "#30663"
 msgid "GraphQL query error"
 msgstr ""
+
+msgctxt "#30664"
+msgid "No content available"
+msgstr ""
