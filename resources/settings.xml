@@ -23,6 +23,8 @@
 		<setting type="sep" />
 		<setting label="30128" type="slider" id="max_recommendations" default="3" range="0,1,20" option="int" />
 		<setting type="sep" />
+		<setting label="30129" type="bool" id="show_episodes_immediately" default="false" />
+		<setting type="sep" />
 		<setting label="30110" type="bool" id="dont_show_watchlist_in_lastseen" default="false" />
 		<setting type="sep" />
 		<setting label="30111" type="select" id="season_order" lvalues="30123|30125|30126" default="2" />

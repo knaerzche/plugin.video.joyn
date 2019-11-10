@@ -565,6 +565,8 @@ def seasons(tv_show_id, title):
 			else:
 				season_number = counter
 
+			if xbmc_helper.get_bool_setting('show_episodes_immediately') and len(seasons['series']['seasons']) == 1:
+				return season_episodes(season['id'], title + ' - ' + xbmc_helper.translation('SEASON_NO').format(str(season_number)))
 
 			tvshow_metadata['infoLabels'].update({
 					'title': xbmc_helper.translation('SEASON_NO').format(str(season_number)),
