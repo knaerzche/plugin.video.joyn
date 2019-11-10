@@ -118,6 +118,6 @@ def base64_encode_urlsafe(string):
 
 def add_user_agend_header_string(uri, user_agent):
 
-	if uri.startswith('http'):
+	if uri.startswith('http') and uri.find('|User-Agent') == -1:
 		return uri + '|' + get_header_string({'User-Agent' : user_agent})
 	return uri
