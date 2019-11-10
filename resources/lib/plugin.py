@@ -56,9 +56,9 @@ def add_lastseen(max_lastseen, season_id=None, compilation_id=None):
 
 		if found_in_lastseen is False:
 			if season_id is not None:
-				lastseen.append({'season_id' : season_id, 'lastseen' : time()})
+				lastseen.append({'season_id': season_id, 'lastseen': time()})
 			elif compilation_id is not None:
-				lastseen.append({'compilation_id' : compilation_id, 'lastseen' : time()})
+				lastseen.append({'compilation_id': compilation_id, 'lastseen': time()})
 
 		lastseen = sorted(lastseen, key=lambda k: k['lastseen'], reverse=True)
 
@@ -100,7 +100,7 @@ def add_favorites(favorite_item, fav_type=''):
 
 	if check_favorites(favorite_item) is False:
 		favorites = get_favorites()
-		favorite_item.update({'added' :  time()})
+		favorite_item.update({'added':  time()})
 		favorites.append(favorite_item)
 		favorites = xbmc_helper.set_json_data('favorites', favorites)
 
@@ -214,15 +214,15 @@ def show_lastseen(max_lastseen_count):
 
 			if lastseen_item.get('season_id', None) is not None:
 				if xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and \
-					check_favorites({'seasonId' : lastseen_item['season_id']}) is True:
+					check_favorites({'seasonId': lastseen_item['season_id']}) is True:
 
 					continue
 
-				season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId' : lastseen_item['season_id'], 'first' : 1})
+				season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId': lastseen_item['season_id'], 'first': 1})
 				if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(season_data['season']['episodes']) > 0:
 					season_metadata = libjoyn.get_metadata(season_data['season']['episodes'][0]['series'], 'TVSHOW')
 
-					season_metadata['infoLabels'].update({'title' :
+					season_metadata['infoLabels'].update({'title':
 						xbmc_helper.translation('CONTINUE_WATCHING').format(
 							compat._encode(season_metadata['infoLabels'].get('title','')
 								+ ' - ' + xbmc_helper.translation('SEASON_NO').format(str(season_data['season']['number']))))
@@ -239,11 +239,11 @@ def show_lastseen(max_lastseen_count):
 			elif lastseen_item.get('compilation_id', None) is not None:
 
 				if xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and \
-					check_favorites({'compilation_id' : lastseen_item['compilation_id']}) is True:
+					check_favorites({'compilation_id': lastseen_item['compilation_id']}) is True:
 
 					continue
 
-				compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id' : lastseen_item['compilation_id'], 'first' : 1})
+				compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id': lastseen_item['compilation_id'], 'first': 1})
 				if compilation_data.get('compilation', None) is not None and compilation_data.get('compilation').get('compilationItems', None) is not None \
 					and len(compilation_data['compilation']['compilationItems']) > 0:
 
@@ -288,17 +288,17 @@ def show_favorites(title):
 	for favorite_item in favorites:
 		found = False
 		if favorite_item.get('season_id', None) is not None:
-			season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId' : favorite_item['season_id'], 'first' : 1})
+			season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId': favorite_item['season_id'], 'first': 1})
 			if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(season_data['season']['episodes']) > 0:
 				found = True
 				season_metadata = libjoyn.get_metadata(season_data['season']['episodes'][0]['series'], 'TVSHOW')
-				season_metadata['infoLabels'].update({'title' :
+				season_metadata['infoLabels'].update({'title':
 					season_metadata['infoLabels'].get('title','')
 						+ ' - ' + xbmc_helper.translation('SEASON_NO').format(str(season_data['season']['number'])),
 				 })
 
 				if 'added' in favorite_item.keys():
-					season_metadata.update({'dateadded' : datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
+					season_metadata.update({'dateadded': datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
 
 				list_items.append(get_dir_entry(
 					mode='season_episodes',
@@ -308,13 +308,13 @@ def show_favorites(title):
 				))
 
 		elif favorite_item.get('tv_show_id', None) is not None:
-			seasons = libjoyn.get_graphql_response('SEASONS', {'seriesId' : favorite_item['tv_show_id']})
+			seasons = libjoyn.get_graphql_response('SEASONS', {'seriesId': favorite_item['tv_show_id']})
 			if seasons.get('series', None) is not None:
 				found = True
 				tvshow_metadata = libjoyn.get_metadata(seasons['series'],'TVSHOW')
 
 				if 'added' in favorite_item.keys():
-					tvshow_metadata.update({'dateadded' : datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
+					tvshow_metadata.update({'dateadded': datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
 
 				list_items.append(get_dir_entry
 					(mode='season',
@@ -324,7 +324,7 @@ def show_favorites(title):
 				))
 
 		elif favorite_item.get('compilation_id', None) is not None:
-			compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id' : favorite_item['compilation_id'], 'first' : 1})
+			compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id': favorite_item['compilation_id'], 'first': 1})
 			if compilation_data.get('compilation', None) is not None and compilation_data.get('compilation').get('compilationItems', None) is not None \
 				and len(compilation_data['compilation']['compilationItems']) > 0:
 
@@ -332,7 +332,7 @@ def show_favorites(title):
 				compilation_metadata = libjoyn.get_metadata(compilation_data['compilation']['compilationItems'][0]['compilation'], 'TVSHOW')
 
 				if 'added' in favorite_item.keys():
-					compilation_metadata.update({'dateadded' : datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
+					compilation_metadata.update({'dateadded': datetime.fromtimestamp(favorite_item['added']).strftime('%Y-%m-%d %H:%M:%S')})
 
 				list_items.append(get_dir_entry(
 					mode='compilation_items',
@@ -349,7 +349,7 @@ def show_favorites(title):
 					if  category_block_id == favorite_item['block_id'] and lane_type in CONST['CATEGORY_LANES']:
 						found = True
 						list_items.append(get_dir_entry(metadata={
-							'infoLabels': {'title' : xbmc_helper.translation('CATEGORY') + ': ' + category_name, 'plot' : ''},
+							'infoLabels': {'title': xbmc_helper.translation('CATEGORY') + ': ' + category_name, 'plot': ''},
 							'art': {}}, mode='category', block_id=category_block_id))
 						break_loop = True
 						break
@@ -361,13 +361,13 @@ def show_favorites(title):
 			break_loop = False
 			if 'ChannelLane' in landingpage.keys():
 				for block_id, headline in landingpage['ChannelLane'].items():
-					channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId' : block_id})
+					channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
 					for channel in channels['block']['assets']:
 						if str(channel['id']) == str(favorite_item['channel_id']):
 							found = True
 							tv_channel_metadata = libjoyn.get_metadata(channel,'TVCHANNEL')
 							tv_channel_metadata['infoLabels'].update(
-								{'title' : xbmc_helper.translation('MEDIA_LIBRARY') + ': ' +tv_channel_metadata['infoLabels'].get('title','')})
+								{'title': xbmc_helper.translation('MEDIA_LIBRARY') + ': ' +tv_channel_metadata['infoLabels'].get('title','')})
 							list_items.append(get_dir_entry(mode='tvshows',
 								stream_type=stream_type,
 								metadata=tv_channel_metadata,
@@ -418,7 +418,7 @@ def index():
 		landingpage = libjoyn.get_landingpage()
 		if 'HeroLane' in landingpage.keys():
 				for block_id, headline in landingpage['HeroLane'].items():
-					hero_lane = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId' : block_id, 'first': max_recommendations}, True)
+					hero_lane = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id, 'first': max_recommendations}, True)
 					if hero_lane.get('block', None) is not None and hero_lane.get('block').get('assets', None) is not None:
 						for asset in hero_lane['block']['assets']:
 							if asset['__typename'] == 'Series':
@@ -434,30 +434,30 @@ def index():
 
 
 	list_items.append(get_dir_entry(metadata={'infoLabels': {
-					'title' : xbmc_helper.translation('MEDIA_LIBRARIES'),
-					'plot' : xbmc_helper.translation('MEDIA_LIBRARIES_PLOT'),
+					'title': xbmc_helper.translation('MEDIA_LIBRARIES'),
+					'plot': xbmc_helper.translation('MEDIA_LIBRARIES_PLOT'),
 					},'art': {}}, mode='channels', stream_type='VOD'))
 	list_items.append(get_dir_entry(metadata={'infoLabels': {
-					'title' : xbmc_helper.translation('CATEGORIES'),
-					'plot' : xbmc_helper.translation('CATEGORIES_PLOT'),
+					'title': xbmc_helper.translation('CATEGORIES'),
+					'plot': xbmc_helper.translation('CATEGORIES_PLOT'),
 					}, 'art': {}}, mode='categories', stream_type='VOD'))
 	list_items.append(get_dir_entry(metadata={'infoLabels': {
-					'title' : xbmc_helper.translation('WATCHLIST'),
-					'plot' : xbmc_helper.translation('WATCHLIST_PLOT'),
+					'title': xbmc_helper.translation('WATCHLIST'),
+					'plot': xbmc_helper.translation('WATCHLIST_PLOT'),
 					}, 'art': {}}, mode='show_favs'))
 	list_items.append(get_dir_entry(metadata={'infoLabels': {
-					'title' : xbmc_helper.translation('SEARCH'),
-					'plot' : xbmc_helper.translation('SEARCH_PLOT'),
+					'title': xbmc_helper.translation('SEARCH'),
+					'plot': xbmc_helper.translation('SEARCH_PLOT'),
 					}, 'art': {}}, mode='search'))
 	list_items.append(get_dir_entry(metadata={'infoLabels': {
-					'title' : xbmc_helper.translation('LIVE_TV'),
-					'plot' : xbmc_helper.translation('LIVE_TV_PLOT'),
+					'title': xbmc_helper.translation('LIVE_TV'),
+					'plot': xbmc_helper.translation('LIVE_TV_PLOT'),
 					}, 'art': {}}, mode='channels',stream_type='LIVE'))
 
 	if compat.PY2 is True:
 		list_items.append(get_dir_entry(metadata={'infoLabels': {
-						'title' :  xbmc_helper.translation('TV_GUIDE'),
-						'plot' : xbmc_helper.translation('TV_GUIDE_PLOT'),
+						'title':  xbmc_helper.translation('TV_GUIDE'),
+						'plot': xbmc_helper.translation('TV_GUIDE_PLOT'),
 						}, 'art': {}}, mode='epg',stream_type='LIVE'))
 
 	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
@@ -470,7 +470,7 @@ def channels(stream_type, title):
 	if stream_type == 'VOD':
 		if 'ChannelLane' in landingpage.keys():
 			for block_id, headline in landingpage['ChannelLane'].items():
-				channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId' : block_id})
+				channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
 				for channel in channels['block']['assets']:
 					list_items.append(get_dir_entry(mode='tvshows',
 						stream_type=stream_type,
@@ -493,9 +493,9 @@ def channels(stream_type, title):
 
 					if 'logo' in brand_epg.keys():
 						metadata['art'].update({
-							'icon' : brand_epg['logo']['url'] + '/profile:nextgen-web-artlogo-183x75',
-							'clearlogo' : brand_epg['logo']['url'] + '/profile:nextgen-web-artlogo-183x75',
-							'thumb'   : brand_epg['logo']['url'] + '/profile:original',
+							'icon': brand_epg['logo']['url'] + '/profile:nextgen-web-artlogo-183x75',
+							'clearlogo': brand_epg['logo']['url'] + '/profile:nextgen-web-artlogo-183x75',
+							'thumb': brand_epg['logo']['url'] + '/profile:original',
 						})
 
 					list_items.append(get_dir_entry(
@@ -513,7 +513,7 @@ def tvshows(channel_id, channel_path,  title):
 
 	list_items = []
 
-	tvshows = libjoyn.get_graphql_response('CHANNEL', {'path' : channel_path})
+	tvshows = libjoyn.get_graphql_response('CHANNEL', {'path': channel_path})
 	if tvshows is not None and tvshows.get('page', None) is not None and tvshows.get('page').get('assets', None) is not None:
 		for tvshow in tvshows['page']['assets']:
 
@@ -544,14 +544,14 @@ def tvshows(channel_id, channel_path,  title):
 
 	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
 	addSortMethod(pluginhandle, SORT_METHOD_LABEL)
-	list_items.append(get_favorite_entry({'channel_id' : channel_id}, 'MEDIA_LIBRARY'))
+	list_items.append(get_favorite_entry({'channel_id': channel_id}, 'MEDIA_LIBRARY'))
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'TV_SHOWS', title)
 
 
 def seasons(tv_show_id, title):
 
 	list_items = []
-	seasons = libjoyn.get_graphql_response('SEASONS', {'seriesId' : tv_show_id})
+	seasons = libjoyn.get_graphql_response('SEASONS', {'seriesId': tv_show_id})
 
 	if seasons is not None and seasons.get('series', None) is not None:
 		tvshow_metadata = libjoyn.get_metadata(seasons['series'],'TVSHOW')
@@ -595,14 +595,14 @@ def seasons(tv_show_id, title):
 	addSortMethod(pluginhandle, SORT_METHOD_LABEL)
 	addSortMethod(pluginhandle, SORT_METHOD_TITLE)
 
-	list_items.append(get_favorite_entry({'tv_show_id' : tv_show_id}, 'TV_SHOW'))
+	list_items.append(get_favorite_entry({'tv_show_id': tv_show_id}, 'TV_SHOW'))
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'SEASONS', title)
 
 
 def season_episodes(season_id, title):
 
 	list_items = []
-	episodes = libjoyn.get_graphql_response('EPISODES', {'seasonId' : season_id})
+	episodes = libjoyn.get_graphql_response('EPISODES', {'seasonId': season_id})
 	override_fanart = default_fanart
 	if episodes is not None and episodes.get('season', None) is not None and episodes.get('season').get('episodes', None) is not None:
 		for episode in episodes['season']['episodes']:
@@ -612,7 +612,7 @@ def season_episodes(season_id, title):
 					'startTime': 0,
 					'videoId': episode['id'],
 					'genre': [],
-			};
+			}
 
 			if 'video' in episode.keys() and 'duration' in episode['video']:
 				client_data.update({'duration': (episode['video']['duration']*1000)})
@@ -650,14 +650,14 @@ def season_episodes(season_id, title):
 	addSortMethod(pluginhandle, SORT_METHOD_DATE)
 	addSortMethod(pluginhandle, SORT_METHOD_EPISODE)
 
-	list_items.append(get_favorite_entry({'season_id' : season_id}, 'SEASON'))
+	list_items.append(get_favorite_entry({'season_id': season_id}, 'SEASON'))
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'EPISODES', title)
 
 
 def get_compilation_items(compilation_id, title):
 
 	list_items = []
-	compilation_items = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id' : compilation_id})
+	compilation_items = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id': compilation_id})
 	override_fanart = default_fanart
 
 	if compilation_items is not None and compilation_items.get('compilation', None) is not None and compilation_items.get('compilation').get('compilationItems', None) is not None:
@@ -668,7 +668,7 @@ def get_compilation_items(compilation_id, title):
 					'startTime': 0,
 					'videoId': compilation_item['id'],
 					'genre': [],
-			};
+			}
 
 			if 'video' in compilation_item.keys() and 'duration' in compilation_item['video']:
 				client_data.update({'duration': (compilation_item['video']['duration']*1000)})
@@ -706,7 +706,7 @@ def get_compilation_items(compilation_id, title):
 	addSortMethod(pluginhandle, SORT_METHOD_LABEL)
 	addSortMethod(pluginhandle, SORT_METHOD_DURATION)
 
-	list_items.append(get_favorite_entry({'compilation_id' : compilation_id }, 'TV_SHOW'))
+	list_items.append(get_favorite_entry({'compilation_id': compilation_id }, 'TV_SHOW'))
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'EPISODES', title)
 
 
@@ -758,7 +758,7 @@ def categories(stream_type, title):
 	for lane_type in CONST['CATEGORY_LANES']:
 		if lane_type in landingpage.keys():
 			for category_block_id, category_name in landingpage[lane_type].items():
-				list_items.append(get_dir_entry(metadata={'infoLabels': {'title' : category_name, 'plot' : ''}, 'art': {}}, mode='category', block_id=category_block_id))
+				list_items.append(get_dir_entry(metadata={'infoLabels': {'title': category_name, 'plot': ''}, 'art': {}}, mode='category', block_id=category_block_id))
 
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEORIES', title)
 
@@ -766,7 +766,7 @@ def categories(stream_type, title):
 def category(block_id, title):
 
 	list_items = []
-	category = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId' : block_id})
+	category = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
 
 	if category is not None and category.get('block', None) is not None and category.get('block').get('assets', None) is not None:
 		for category_item in category['block']['assets']:
@@ -798,7 +798,7 @@ def category(block_id, title):
 	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
 	addSortMethod(pluginhandle, SORT_METHOD_LABEL)
 
-	list_items.append(get_favorite_entry({'block_id' : block_id }, 'CATEGORY'))
+	list_items.append(get_favorite_entry({'block_id': block_id }, 'CATEGORY'))
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'TV_SHOWS', title)
 
 
@@ -814,8 +814,8 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 			if 'drm' in video_data.keys() and video_data['drm'] == 'widevine' and 'licenseUrl' in video_data.keys():
 				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.widevine.alpha')
 				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'] + '|' +
-					request_helper.get_header_string({'User-Agent' : libjoyn.config['USER_AGENT'], 'Content-Type': 'application/octet-stream'}) + '|R{SSM}|')
-				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.stream_headers',  request_helper.get_header_string({'User-Agent' : libjoyn.config['USER_AGENT']}))
+					request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT'], 'Content-Type': 'application/octet-stream'}) + '|R{SSM}|')
+				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.stream_headers',  request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT']}))
 				if xbmc_helper.get_bool_setting('checkdrmcert') is True and 'certificateUrl' in video_data.keys():
 					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate',
 						request_helper.add_user_agend_header_string(video_data['certificateUrl'], libjoyn.config['USER_AGENT']))
@@ -841,18 +841,18 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 
 def get_favorite_entry(favorite_item, favorite_type):
 
-	fav_del_art = {'thumb' : xbmc_helper.get_media_filepath('fav_del_thumb.png'), 'icon' : xbmc_helper.get_media_filepath('fav_del_icon.png')}
-	fav_add_art = {'thumb' : xbmc_helper.get_media_filepath('fav_add_thumb.png'), 'icon' : xbmc_helper.get_media_filepath('fav_add_icon.png')}
+	fav_del_art = {'thumb': xbmc_helper.get_media_filepath('fav_del_thumb.png'), 'icon': xbmc_helper.get_media_filepath('fav_del_icon.png')}
+	fav_add_art = {'thumb': xbmc_helper.get_media_filepath('fav_add_thumb.png'), 'icon': xbmc_helper.get_media_filepath('fav_add_icon.png')}
 
 	if check_favorites(favorite_item) is False:
 		return get_dir_entry(is_folder=False, metadata={'infoLabels': {
-						'title' :  xbmc_helper.translation('ADD_TO_WATCHLIST'),
-						'plot' : xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation(favorite_type)),
+						'title':  xbmc_helper.translation('ADD_TO_WATCHLIST'),
+						'plot': xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(xbmc_helper.translation(favorite_type)),
 						}, 'art': fav_add_art }, mode='add_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation(favorite_type))
 	else:
 		return get_dir_entry(is_folder=False,metadata={'infoLabels': {
-						'title' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
-						'plot' : xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation(favorite_type)),
+						'title': xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
+						'plot': xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(xbmc_helper.translation(favorite_type)),
 						}, 'art': fav_del_art }, mode='drop_fav', favorite_item=favorite_item, fav_type=xbmc_helper.translation(favorite_type))
 
 
@@ -875,19 +875,19 @@ def get_dir_entry(mode, metadata, is_folder=True, channel_id='', channel_path=''
 	}
 
 	if favorite_item is not None:
-		params.update({'favorite_item' : dumps(favorite_item)})
+		params.update({'favorite_item': dumps(favorite_item)})
 
 	list_item = ListItem(metadata['infoLabels']['title'])
 	list_item.setInfo(type='video', infoLabels=metadata['infoLabels'])
 
 	if 'poster' not in metadata['art'] and 'thumb' in metadata['art']:
-		metadata['art'].update({'poster' : metadata['art']['thumb']})
+		metadata['art'].update({'poster': metadata['art']['thumb']})
 	elif 'thumb' not in metadata['art']:
-		metadata['art'].update({ 'thumb' : default_logo})
-		metadata['art'].update({ 'poster' : default_logo})
+		metadata['art'].update({ 'thumb': default_logo})
+		metadata['art'].update({ 'poster': default_logo})
 
 	if 'icon' not in metadata['art']:
-		metadata['art'].update({ 'icon' : default_icon})
+		metadata['art'].update({ 'icon': default_icon})
 
 	if override_fanart != '':
 		metadata['art'].update({'fanart': override_fanart})
@@ -896,7 +896,7 @@ def get_dir_entry(mode, metadata, is_folder=True, channel_id='', channel_path=''
 		metadata['art'].update({'fanart': default_fanart})
 
 	for art_key, art_value in metadata['art'].items():
-		metadata['art'].update({art_key : request_helper.add_user_agend_header_string(art_value, libjoyn.config['USER_AGENT'])})
+		metadata['art'].update({art_key: request_helper.add_user_agend_header_string(art_value, libjoyn.config['USER_AGENT'])})
 
 	list_item.setArt(metadata['art'])
 

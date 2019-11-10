@@ -4,7 +4,7 @@ from . import request_helper as request_helper
 from . import xbmc_helper as xbmc_helper
 import xml.etree.ElementTree as ET
 
-class mpd_parser:
+class mpd_parser(object):
 
 
 	def __init__(self, url, config):
@@ -14,7 +14,7 @@ class mpd_parser:
 		self.mpd_tree = None
 		self.mpd_tree_ns = None
 
-		_mpd_contents = request_helper.get_url(url, config);
+		_mpd_contents = request_helper.get_url(url, config)
 		if len(_mpd_contents) > 0:
 			_mpd_tree = ET.fromstring(_mpd_contents)
 			if  _mpd_tree.tag is not None:
@@ -36,7 +36,7 @@ class mpd_parser:
 			query += '/' + self.mpd_tree_ns + query_param
 
 		try:
-			mpd_element = self.mpd_tree.find(query);
+			mpd_element = self.mpd_tree.find(query)
 			return mpd_element
 		except Exception as e:
 			xbmc_helper.log_debug('Could not query mpd - Exception: ' + str(e))

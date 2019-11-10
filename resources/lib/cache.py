@@ -19,8 +19,8 @@ def _get(cache_key, file_name, override_expire_secs=None):
 
 	cache_data = {
 		'data': None,
-		'is_expired' : True,
-	};
+		'is_expired': True,
+	}
 
 	if path.exists(file_name):
 
@@ -31,12 +31,12 @@ def _get(cache_key, file_name, override_expire_secs=None):
 			filemtime = filectime
 
 		with open(file_name) as cache_infile:
-			cache_data.update({'data' : cache_infile.read()})
+			cache_data.update({'data': cache_infile.read()})
 
 		if filemtime >= expire_datetime or expire_datetime is None:
-			cache_data.update({'is_expired' : False})
+			cache_data.update({'is_expired': False})
 
-	return cache_data;
+	return cache_data
 
 
 def _set(cache_key, file_name, data):
@@ -52,7 +52,7 @@ def get_json(cache_key, override_expire_secs=None):
 
 	if cache_data['data'] is not None:
 		try:
-			cache_data.update({'data' : loads(cache_data['data'])})
+			cache_data.update({'data': loads(cache_data['data'])})
 		except ValueError:
 			log('Could decode as json from cache: ' + cache_key)
 			pass

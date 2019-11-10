@@ -41,4 +41,9 @@ fix: Secret Idx changed again, add fallback for newly changed index
 v1.9.6
 implement new GraphQL API
 improve Py3 support
-
+v2.0.0
+make old livetv url work again
+show recommendation
+implement (anonymous) auth
+option to show epsiodes immediately
+improve secret detection

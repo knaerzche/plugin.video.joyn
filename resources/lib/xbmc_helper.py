@@ -141,7 +141,7 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 def set_folder_sort(folder_sort_def):
 
 	order = get_setting(folder_sort_def['setting_id'])
-	log_debug('set_folder_sort ' + dumps(folder_sort_def) + ' : ' + order)
+	log_debug('set_folder_sort ' + dumps(folder_sort_def) + ': ' + order)
 
 	if order != CONST['SETTING_VALS']['SORT_ORDER_DEFAULT']:
 		executebuiltin('Container.SetSortMethod({:s})'.format(str(folder_sort_def['order_type'])))
@@ -165,7 +165,7 @@ def set_view_mode(setting_id):
 		else:
 			viewmode = CONST['VIEW_MODES'].get(setting_val, {}).get(skin_name, '0')
 
-		log_debug('--> Viewmode ' + str(setting_id) + ' : ' + setting_val + ' : ' + viewmode + ' : ' + skin_name )
+		log_debug('--> Viewmode ' + str(setting_id) + ': ' + setting_val + ': ' + viewmode + ': ' + skin_name )
 
 		if viewmode is not '0':
 			executebuiltin('Container.SetViewMode({:s})'.format(viewmode))

@@ -28,7 +28,7 @@ elif compat.PY3:
 	from html.parser import HTMLParser
 
 
-class lib_joyn:
+class lib_joyn(object):
 
 
 	def __init__(self, default_icon):
@@ -50,7 +50,7 @@ class lib_joyn:
 
 	def set_mpd_props(self, list_item, url, stream_type='VOD'):
 
-		xbmc_helper.log_debug('get_mpd_path : ' + url + 'stream_type: ' + stream_type)
+		xbmc_helper.log_debug('get_mpd_path: ' + url + 'stream_type: ' + stream_type)
 		mpdparser = None
 
 		##strip out the filter parameter
@@ -58,7 +58,7 @@ class lib_joyn:
 		query_dict = parse_qs(parts.query)
 
 		if 'filter' in query_dict.keys():
-			query_dict.update({'filter' : ''})
+			query_dict.update({'filter': ''})
 			new_parts = list(parts)
 			new_parts[4] = urlencode(query_dict)
 			new_mpd_url = urlunparse(new_parts)
@@ -90,14 +90,14 @@ class lib_joyn:
 			# it's known that this Base URL can be used to retrieve a 'better' mpd
 			toplevel_base_url_res = mpdparser.get_toplevel_base_url()
 			if toplevel_base_url_res is not None and toplevel_base_url_res.startswith('http'):
-				xbmc_helper.log_debug('Found MPD with Base URL at toplevel : ' + toplevel_base_url_res)
+				xbmc_helper.log_debug('Found MPD with Base URL at toplevel: ' + toplevel_base_url_res)
 				toplevel_base_url =  toplevel_base_url_res
 
-			if toplevel_base_url is not None :
+			if toplevel_base_url is not None:
 				if stream_type == 'VOD':
 					new_mpd_url = toplevel_base_url + '.mpd?filter='
-					try :
-						test_mpdparser = mpd_parser(new_mpd_url, self.config);
+					try:
+						test_mpdparser = mpd_parser(new_mpd_url, self.config)
 						if test_mpdparser.mpd_tree is not None:
 							mpdparser = test_mpdparser
 							toplevel_base_url = None
@@ -112,12 +112,12 @@ class lib_joyn:
 						pass
 
 				elif stream_type == 'LIVE':
-					period_base_url_res = mpdparser.query_node_value(['Period','BaseURL']);
+					period_base_url_res = mpdparser.query_node_value(['Period','BaseURL'])
 					if period_base_url_res is not None and period_base_url_res.startswith('/') and period_base_url_res.endswith('/'):
 						new_mpd_url = toplevel_base_url + period_base_url_res + 'cenc-default.mpd'
 
-						try :
-							test_mpdparser = mpd_parser(new_mpd_url, self.config);
+						try:
+							test_mpdparser = mpd_parser(new_mpd_url, self.config)
 							if test_mpdparser.mpd_tree is not None:
 								mpdparser = test_mpdparser
 								toplevel_base_url = None
@@ -131,7 +131,7 @@ class lib_joyn:
 							xbmc_helper.log_debug('Invalid MPD - Exception: ' + str(e))
 							pass
 
-			if toplevel_base_url is not None :
+			if toplevel_base_url is not None:
 				xbmc_helper.log_debug('Writing MPD file to local disc, since it has a remote top Level Base URL ...')
 				sha_1 = sha1()
 				sha_1.update(mpdparser.mpd_url)
@@ -234,7 +234,7 @@ class lib_joyn:
 			landingpage = cached_landingpage['data']
 		else:
 			landingpage = {}
-			raw_landingpage = self.get_graphql_response('LANDINGPAGE', {'path' : '/'})
+			raw_landingpage = self.get_graphql_response('LANDINGPAGE', {'path': '/'})
 			if 'page' in raw_landingpage.keys() and 'blocks' in raw_landingpage['page'].keys():
 				for block in raw_landingpage['page']['blocks']:
 					if block['isPersonalized'] is False:
@@ -301,14 +301,14 @@ class lib_joyn:
 						'art': epg_metadata['art'],
 						'starttime': epg_entry['startDate'],
 						'duration': (epg_entry['endDate']-epg_entry['startDate']),
-						'url' : pluginurl + '?' + urlencode({
+						'url': pluginurl + '?' + urlencode({
 								'mode': 'play_video',
 								'stream_type': 'LIVE',
-								'video_id' : brand_epg['livestream']['id'],
+								'video_id': brand_epg['livestream']['id'],
 								'client_data': client_data
 							})
 					})
-				uEPG_channel.update({'guidedata' : guidedata})
+				uEPG_channel.update({'guidedata': guidedata})
 				uEPG_data.append(uEPG_channel)
 
 		return uEPG_data
@@ -328,14 +328,14 @@ class lib_joyn:
 
 		post_data = {
 			'query'	: 'query ' + CONST['GRAPHQL'][operation]['OPERATION'] + ' ' + CONST['GRAPHQL'][operation]['QUERY'],
-			'extensions' : {
-					'persistedQuery' : {
-						'version' : 1,
+			'extensions': {
+					'persistedQuery': {
+						'version': 1,
 					},
 			},
 			'operationName'	: CONST['GRAPHQL'][operation]['OPERATION'],
 
-		};
+		}
 
 		if len(variables.keys()) != 0:
 			post_data.update({'variables': variables})
@@ -419,7 +419,7 @@ class lib_joyn:
 				client_id_data
 			)
 
-			auth_token_data.update({'created' : int(time())})
+			auth_token_data.update({'created': int(time())})
 			xbmc_helper.set_json_data('auth_tokens', auth_token_data)
 
 		#refresh the token at least 1h before it actual expires
@@ -438,7 +438,7 @@ class lib_joyn:
 				self.config,
 				refresh_auth_token_req_data
 			)
-			refresh_auth_token_data.update({'created' : int(time())})
+			refresh_auth_token_data.update({'created': int(time())})
 			xbmc_helper.set_json_data('auth_tokens', refresh_auth_token_data)
 
 			return refresh_auth_token_data['access_token']
@@ -458,8 +458,8 @@ class lib_joyn:
 
 		metadata = {
 			'art': {},
-			'infoLabels' : {},
-		};
+			'infoLabels': {},
+		}
 
 		if 'TEXTS' in CONST['GRAPHQL']['METADATA'][query_type].keys():
 			for text_key, text_mapping_key in CONST['GRAPHQL']['METADATA'][query_type]['TEXTS'].items():
@@ -483,10 +483,10 @@ class lib_joyn:
 										art_def_img_map_key: image['url'] + '/' + art_def_img_map_profile
 									})
 		if 'ageRating' in data.keys() and  data['ageRating'] is not None and 'minAge' in data['ageRating'].keys():
-			metadata['infoLabels'].update({'mpaa' : xbmc_helper.translation('MIN_AGE').format(str(data['ageRating']['minAge']))})
+			metadata['infoLabels'].update({'mpaa': xbmc_helper.translation('MIN_AGE').format(str(data['ageRating']['minAge']))})
 
 		if 'genres' in data.keys() and type(data['genres']) == type(list()):
-			metadata['infoLabels'].update({'genre' : []})
+			metadata['infoLabels'].update({'genre': []})
 
 			for genre in data['genres']:
 				if 'name' in genre.keys():
@@ -496,13 +496,13 @@ class lib_joyn:
 
 			if 'endsAt' in data.keys() and data['endsAt'] is not None and data['endsAt'] < 9999999999:
 				metadata['infoLabels'].update({
-					'plot' : compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE'))
+					'plot': compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE'))
 							.format( datetime.utcfromtimestamp(data['endsAt'])) + metadata['infoLabels'].get('plot', '')
 				})
 
 			if 'number' in data.keys() and data['number'] is not None:
 				metadata['infoLabels'].update({
-						'episode' : data['number'],
+						'episode': data['number'],
 						'sortepisode': data['number'],
 					})
 			if 'series' in data.keys():
@@ -524,9 +524,9 @@ class lib_joyn:
 
 			broadcast_date = datetime.utcfromtimestamp(data['airdate']).strftime('%Y-%m-%d')
 			metadata['infoLabels'].update({
-				'premiered' : broadcast_date,
+				'premiered': broadcast_date,
 				'date': broadcast_date,
-				'aired' : broadcast_date,
+				'aired': broadcast_date,
 			})
 
 		if 'video' in data.keys() and data['video'] is not None \
@@ -549,8 +549,8 @@ class lib_joyn:
 
 		epg_metadata = {
 			'art': {},
-			'infoLabels' : {},
-		};
+			'infoLabels': {},
+		}
 
 		brand_title = brand_livestream_epg['title']
 		if brand_livestream_epg['quality'] == 'HD':
@@ -605,8 +605,8 @@ class lib_joyn:
 			cached_config =  confg_cache_res['data']
 
 		if confg_cache_res['is_expired'] is False and  'ADDON_VERSION' in cached_config.keys() and cached_config['ADDON_VERSION'] == addon_version:
-			recreate_config = False;
-			config = cached_config;
+			recreate_config = False
+			config = cached_config
 
 		if recreate_config == True:
 
@@ -639,7 +639,7 @@ class lib_joyn:
 			else:
 				config['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0 Win64 x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
-			html_content = request_helper.get_url(CONST['BASE_URL'], config);
+			html_content = request_helper.get_url(CONST['BASE_URL'], config)
 			if html_content is None or html_content is '':
 				xbmc_helper.notification(
 						xbmc_helper.translation('ERROR').format('Url access'),
@@ -648,13 +648,13 @@ class lib_joyn:
 				exit(0)
 
 			county_setting = xbmc_helper.get_setting('country')
-			xbmc_helper.log_debug("COUNTRY SETTING : " + county_setting)
+			xbmc_helper.log_debug("COUNTRY SETTING: " + county_setting)
 			if county_setting is '' or county_setting is '0':
 				ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'].format(xbmc_helper.translation('LANG_CODE')), config=config, silent=True)
-				xbmc_helper.log_debug('IP API Response is : ' + dumps(ip_api_response))
+				xbmc_helper.log_debug('IP API Response is: ' + dumps(ip_api_response))
 				if ip_api_response is not None and ip_api_response != '' and 'countryCode' in ip_api_response.keys():
 					if ip_api_response['countryCode'] in CONST['COUNTRIES'].keys():
-						config.update({'country' : ip_api_response['countryCode']})
+						config.update({'country': ip_api_response['countryCode']})
 					else:
 						xbmc_helper.dialog_settings(
 								xbmc_helper.translation('MSG_COUNTRY_INVALID').format(compat._encode(ip_api_response.get('country', 'Unknown')))
@@ -664,7 +664,7 @@ class lib_joyn:
 			else:
 				for supported_country_key, supported_country in CONST['COUNTRIES'].items():
 					if supported_country['setting_id'] == county_setting:
-						config.update({'country' : supported_country_key})
+						config.update({'country': supported_country_key})
 						break
 
 			if config['country'] is None:
@@ -807,7 +807,7 @@ class lib_joyn:
 						xbmc_helper.translation('MSG_ERROR_CONFIG_DECRYPTION'),
 					)
 
-					xbmc_helper.log_error('Could not decrypt config - Exception: ' + str(e) + ' PSF VARS: '  \
+					xbmc_helper.log_error('Could not decrypt config - PSF VARS: '  \
 						+ dumps(config['PSF_VARS']) + 'PLAYER CONFIG: ' + dumps(config['PLAYER_CONFIG']))
 					exit(0)
 
