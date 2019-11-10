@@ -138,7 +138,11 @@ msgctxt "#30127"
 msgid "Disable folder cache"
 msgstr "Ordner-Cache deaktivieren"
 
-#empty strings from id 30128 to 30229
+msgctxt "#30128"
+msgid "Recommendations count"
+msgstr "Anzahl der Empfehlungen"
+
+#empty strings from id 30129 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350
@@ -355,3 +359,11 @@ msgstr "GraphQL Fehler"
 msgctxt "#30664"
 msgid "No content available"
 msgstr "Keine Inhalte verfügbar"
+
+msgctxt "#30665"
+msgid "Continue watching: {:s}"
+msgstr "Weiterschauen: {:s}"
+
+msgctxt "#30666"
+msgid "Recommendation: {:s}"
+msgstr "Empfehlung: {:s}"

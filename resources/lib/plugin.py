@@ -221,10 +221,12 @@ def show_lastseen(max_lastseen_count):
 				season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId' : lastseen_item['season_id'], 'first' : 1})
 				if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(season_data['season']['episodes']) > 0:
 					season_metadata = libjoyn.get_metadata(season_data['season']['episodes'][0]['series'], 'TVSHOW')
+
 					season_metadata['infoLabels'].update({'title' :
-						season_metadata['infoLabels'].get('title','')
-							+ ' - ' + xbmc_helper.translation('SEASON_NO').format(str(season_data['season']['number'])),
-					 })
+						xbmc_helper.translation('CONTINUE_WATCHING').format(
+							compat._encode(season_metadata['infoLabels'].get('title','')
+								+ ' - ' + xbmc_helper.translation('SEASON_NO').format(str(season_data['season']['number']))))
+							})
 					list_items.append(get_dir_entry(
 						mode='season_episodes',
 						season_id=lastseen_item['season_id'],
@@ -247,7 +249,9 @@ def show_lastseen(max_lastseen_count):
 
 					found = True
 					compilation_metadata = libjoyn.get_metadata(compilation_data['compilation']['compilationItems'][0]['compilation'], 'TVSHOW')
-
+					compilation_metadata['infoLabels'].update({'title': xbmc_helper.translation('CONTINUE_WATCHING').format(
+							compat._encode(compilation_metadata['infoLabels'].get('title',''))
+						)})
 					list_items.append(get_dir_entry(
 						mode='compilation_items',
 						compilation_id=lastseen_item['compilation_id'],
@@ -407,9 +411,27 @@ def index():
 		xbmc_helper.dialog_id('MSG_WIDEVINE_NOT_FOUND')
 		exit(0)
 
-	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
-
 	list_items = show_lastseen(xbmc_helper.get_int_setting('max_lastseen'))
+	max_recommendations = xbmc_helper.get_int_setting('max_recommendations')
+
+	if max_recommendations > 0:
+		landingpage = libjoyn.get_landingpage()
+		if 'HeroLane' in landingpage.keys():
+				for block_id, headline in landingpage['HeroLane'].items():
+					hero_lane = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId' : block_id, 'first': max_recommendations}, True)
+					if hero_lane.get('block', None) is not None and hero_lane.get('block').get('assets', None) is not None:
+						for asset in hero_lane['block']['assets']:
+							if asset['__typename'] == 'Series':
+								metadata=libjoyn.get_metadata(asset,'TVSHOW')
+								metadata['infoLabels'].update({'title': xbmc_helper.translation('RECOMMENDATION').format(
+									compat._encode(metadata['infoLabels'].get('title', '')))})
+								metadata['infoLabels'].update({'mediatype': 'tvshow'})
+								list_items.append(get_dir_entry
+									(mode='season',
+									tv_show_id=asset['id'],
+									metadata=metadata,
+									override_fanart=default_fanart))
+
 
 	list_items.append(get_dir_entry(metadata={'infoLabels': {
 					'title' : xbmc_helper.translation('MEDIA_LIBRARIES'),
@@ -438,6 +460,7 @@ def index():
 						'plot' : xbmc_helper.translation('TV_GUIDE_PLOT'),
 						}, 'art': {}}, mode='epg',stream_type='LIVE'))
 
+	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'INDEX')
 
 def channels(stream_type, title):
@@ -479,7 +502,7 @@ def channels(stream_type, title):
 						is_folder=False,
 						metadata=metadata,
 						mode='play_video',
-						client_data=dumps(client_data),
+						client_data=libjoyn.get_livetv_clientdata(brand_epg['livestream']['id']),
 						video_id=brand_epg['livestream']['id'],
 						stream_type='LIVE'))
 
@@ -927,13 +950,16 @@ if 'mode' in param_keys:
 		elif mode == 'video' and 'tv_show_id' in param_keys and 'season_id' in param_keys:
 			videos(params['tv_show_id'],params['season_id'], title)
 
-		elif mode == 'play_video' and 'video_id' in param_keys and 'client_data' in param_keys:
-			if 'season_id' in param_keys:
-				play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type, season_id=params['season_id'])
-			elif 'compilation_id' in param_keys:
-				play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type, compilation_id=params['compilation_id'])
-			elif stream_type == 'LIVE':
-				play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type)
+		elif mode == 'play_video' and 'video_id' in param_keys:
+			if 'client_data' in param_keys:
+				if 'season_id' in param_keys:
+					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type, season_id=params['season_id'])
+				elif 'compilation_id' in param_keys:
+					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type, compilation_id=params['compilation_id'])
+			if stream_type == 'LIVE':
+				play_video(video_id=params['video_id'],
+						client_data=params.get('client_data', libjoyn.get_livetv_clientdata(params['video_id'])),
+						stream_type=stream_type)
 
 		elif mode == 'compilation_items' and 'compilation_id' in param_keys:
 			get_compilation_items(params['compilation_id'], title)

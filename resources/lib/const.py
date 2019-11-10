@@ -6,6 +6,9 @@ CONST = {
 	'PSF_URL'		: 'https://psf.player.v0.maxdome.cloud/dist/playback-source-fetcher.min.js',
 	'ENTITLEMENT_URL'	: 'entitlement-token/anonymous',
 	'IP_API_URL'		: 'http://ip-api.com/json?lang={:s}&fields=status,country,countryCode',
+	'AUTH_URL'		: 'https://auth.joyn.de/auth',
+	'AUTH_ANON_URL'		: '/anonymous',
+	'AUTH_REFRESH'		: '/refresh',
 
 	'PSF_VAR_DEFS'		: {
 					'SECRET' : {
@@ -89,6 +92,8 @@ CONST = {
 					'MSG_VIDEO_UNAVAILABLE'         : 30662,
 					'MSG_GAPHQL_ERROR'              : 30663,
 					'MSG_NO_CONTENT'		: 30664,
+					'CONTINUE_WATCHING'		: 30665,
+					'RECOMMENDATION'		: 30666,
 
 				},
 
@@ -240,9 +245,11 @@ CONST = {
 													'ART_LOGO' : {
 														'icon'		: 'profile:nextgen-web-artlogo-183x75',
 														'clearlogo'	: 'profile:nextgen-web-artlogo-183x75',
+														'clearart'	: 'profile:nextgen-web-artlogo-183x75',
 														},
 													'HERO_LANDSCAPE' : {
 														'fanart'	: 'profile:nextgen-web-herolandscape-1920x',
+														'landscape'	: 'profile:nextgen-web-herolandscape-1920x',
 														},
 													'HERO_PORTRAIT'  : {
 														'poster'	: 'profile:nextgen-webphone-heroportrait-563x',

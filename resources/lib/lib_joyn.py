@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from time import time
 from copy import deepcopy
 from codecs import encode
+from uuid import uuid4
 from .const import CONST
 from . import compat as compat
 from . import request_helper as request_helper
@@ -313,9 +314,10 @@ class lib_joyn:
 		return uEPG_data
 
 
-	def get_graphql_response(self, operation, variables={}):
+	def get_graphql_response(self, operation, variables={}, needs_auth=False):
 
 		xbmc_helper.log_debug('GraphQL Operation: ' + str(operation))
+
 		for required_var in CONST['GRAPHQL'][operation]['REQUIRED_VARIABLES']:
 			if required_var not in variables.keys():
 				if required_var in CONST['GRAPHQL']['STATIC_VARIABLES'].keys():
@@ -340,6 +342,20 @@ class lib_joyn:
 
 		post_data['extensions']['persistedQuery'].update({'sha256Hash': sha256(post_data['query'].encode('utf-8')).hexdigest()})
 
+		headers = self.config['GRAPHQL_HEADERS']
+
+		if needs_auth is True:
+
+			auth_token = self.get_auth_token()
+			joyn_user_id = self.get_auth_token()
+
+			if auth_token is not None and joyn_user_id is not None:
+				headers.append(('Authorization', 'Bearer ' + self.get_auth_token()))
+				headers.append(('Joyn-User-Id', self.get_joyn_userid()))
+			else:
+				xbmc_helper.log_error("Failed to get auth_token or joyn_user_id")
+				return {}
+
 		api_response = {}
 
 		try:
@@ -347,7 +363,7 @@ class lib_joyn:
 				CONST['GRAPHQL']['API_URL'],
 				self.config,
 				post_data,
-				self.config['GRAPHQL_HEADERS'],
+				headers,
 			)
 
 
@@ -367,6 +383,74 @@ class lib_joyn:
 				xbmc_helper.translation('MSG_GAPHQL_ERROR'),
 		)
 		exit(0)
+
+
+	def get_joyn_userid(self):
+
+		client_id_data = self.get_client_ids()
+		return client_id_data.get('anon_device_id', None)
+
+
+	def get_client_ids(self):
+
+		client_id_data = xbmc_helper.get_json_data('client_ids')
+		if client_id_data is None:
+			xbmc_helper.log_debug("Creating new client_data")
+			client_id_data = {
+				'anon_device_id': str(uuid4()),
+				'client_id': str(uuid4()),
+				'client_name': self.config['USER_AGENT'],
+			}
+			xbmc_helper.set_json_data('client_ids', client_id_data)
+
+		return client_id_data
+
+
+	def get_auth_token(self):
+
+		auth_token_data = xbmc_helper.get_json_data('auth_tokens')
+
+		if auth_token_data is None:
+			xbmc_helper.log_debug("Creating new auth_token_data")
+			client_id_data = self.get_client_ids()
+			auth_token_data = request_helper.post_json(
+				CONST['AUTH_URL'] + CONST['AUTH_ANON_URL'],
+				self.config,
+				client_id_data
+			)
+
+			auth_token_data.update({'created' : int(time())})
+			xbmc_helper.set_json_data('auth_tokens', auth_token_data)
+
+		#refresh the token at least 1h before it actual expires
+		auth_token_expires = auth_token_data['created'] + (auth_token_data['expires_in']/1000) - 3600
+
+		if time() >= auth_token_expires:
+			xbmc_helper.log_debug("Refreshing auth_token_data")
+			client_id_data = self.get_client_ids()
+			refresh_auth_token_req_data = {
+				'refresh_token': auth_token_data['refresh_token'],
+				'client_id': client_id_data['client_id'],
+				'client_name': client_id_data['client_name'],
+			}
+			refresh_auth_token_data = request_helper.post_json(
+				CONST['AUTH_URL'] + CONST['AUTH_REFRESH'],
+				self.config,
+				refresh_auth_token_req_data
+			)
+			refresh_auth_token_data.update({'created' : int(time())})
+			xbmc_helper.set_json_data('auth_tokens', refresh_auth_token_data)
+
+			return refresh_auth_token_data['access_token']
+
+		return auth_token_data.get('access_token', None)
+
+	@staticmethod
+	def get_livetv_clientdata(livestream_id):
+		return dumps({
+			'videoId' 	: None,
+			'channelId'	: livestream_id,
+		})
 
 
 	@staticmethod

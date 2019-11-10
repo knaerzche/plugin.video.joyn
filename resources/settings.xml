@@ -21,10 +21,13 @@
 	<category label="30001">
 		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int" />
 		<setting type="sep" />
+		<setting label="30128" type="slider" id="max_recommendations" default="3" range="0,1,20" option="int" />
+		<setting type="sep" />
 		<setting label="30110" type="bool" id="dont_show_watchlist_in_lastseen" default="false" />
 		<setting type="sep" />
 		<setting label="30111" type="select" id="season_order" lvalues="30123|30125|30126" default="2" />
 		<setting label="30112" type="select" id="episode_order" lvalues="30123|30114|30113" default="2" />
+		<setting type="sep" />
 		<setting label="30351" type="lsep" />
 		<setting label="30122" type="bool" id="enable_viewmodes" default="true" />
 		<setting label="30115" type="select" id="categories_view" values="Standard|IconWall|WideList|Custom" default="IconWall" enable="eq(-1,true)" />

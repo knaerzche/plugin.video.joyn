@@ -138,7 +138,11 @@ msgctxt "#30127"
 msgid "Disable folder cache"
 msgstr ""
 
-#empty strings from id 30128 to 30229
+msgctxt "#30128"
+msgid "Recommendations count"
+msgstr ""
+
+#empty strings from id 30129 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350
@@ -354,4 +358,12 @@ msgstr ""
 
 msgctxt "#30664"
 msgid "No content available"
+msgstr ""
+
+msgctxt "#30665"
+msgid "Continue watching: {:s}"
+msgstr ""
+
+msgctxt "#30666"
+msgid "Recommendation: {:s}"
 msgstr ""
