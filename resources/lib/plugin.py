@@ -457,7 +457,7 @@ def index():
 		list_items.append(get_dir_entry(metadata={'infoLabels': {
 						'title':  xbmc_helper.translation('TV_GUIDE'),
 						'plot': xbmc_helper.translation('TV_GUIDE_PLOT'),
-						}, 'art': {}}, mode='epg',stream_type='LIVE'))
+						}, 'art': {}}, mode='epg',stream_type='LIVE', is_folder=False))
 
 	addSortMethod(pluginhandle, SORT_METHOD_UNSORTED)
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'INDEX')
@@ -990,7 +990,9 @@ if 'mode' in param_keys:
 			drop_favorites(favorite_item=loads(params['favorite_item']),fav_type=params['fav_type'])
 
 		elif mode == 'epg':
+			executebuiltin('ActivateWindow(busydialognocancel)')
 			executebuiltin('RunScript(script.module.uepg,' + get_uepg_params() + ')')
+			executebuiltin('Dialog.Close(busydialognocancel)')
 
 		else:
 			index()
