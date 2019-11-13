@@ -10,7 +10,6 @@ from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE
 from xbmcaddon import Addon
 from datetime import datetime
 from time import time
-import dateutil.parser
 from json import dumps, loads
 from inputstreamhelper import Helper
 from .const import CONST

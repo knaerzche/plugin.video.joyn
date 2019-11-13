@@ -9,7 +9,7 @@ from math import floor
 from sys import exit
 from datetime import datetime, timedelta
 from time import time
-from copy import deepcopy
+from copy import copy
 from codecs import encode
 from uuid import uuid4
 from .const import CONST
@@ -342,16 +342,16 @@ class lib_joyn(object):
 
 		post_data['extensions']['persistedQuery'].update({'sha256Hash': sha256(post_data['query'].encode('utf-8')).hexdigest()})
 
-		headers = self.config['GRAPHQL_HEADERS']
+		headers = copy(self.config['GRAPHQL_HEADERS'])
 
 		if needs_auth is True:
 
 			auth_token = self.get_auth_token()
-			joyn_user_id = self.get_auth_token()
+			joyn_user_id = self.get_joyn_userid()
 
 			if auth_token is not None and joyn_user_id is not None:
-				headers.append(('Authorization', 'Bearer ' + self.get_auth_token()))
-				headers.append(('Joyn-User-Id', self.get_joyn_userid()))
+				headers.append(('Authorization', 'Bearer ' + auth_token))
+				headers.append(('Joyn-User-Id', joyn_user_id))
 			else:
 				xbmc_helper.log_error("Failed to get auth_token or joyn_user_id")
 				return {}

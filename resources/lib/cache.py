@@ -54,7 +54,7 @@ def get_json(cache_key, override_expire_secs=None):
 		try:
 			cache_data.update({'data': loads(cache_data['data'])})
 		except ValueError:
-			log('Could decode as json from cache: ' + cache_key)
+			xbmc_helper.log_error('Could decode as json from cache: ' + cache_key)
 			pass
 
 	return cache_data
@@ -65,5 +65,5 @@ def set_json(cache_key, data):
 	try:
 		_set(cache_key, CONST['CACHE'][cache_key]['key'] + '.json', dumps(data))
 	except ValueError:
-		log('Could not encode json' + cache_key)
+		xbmc_helper.log_error('Could not encode json from cache: ' + cache_key)
 		pass
