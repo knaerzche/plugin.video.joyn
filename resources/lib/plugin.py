@@ -810,10 +810,24 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 
 	if (video_data['streamingFormat'] == 'dash'):
 		if libjoyn.set_mpd_props(list_item, video_data['videoUrl'], stream_type) is not False:
-			if 'drm' in video_data.keys() and video_data['drm'] == 'widevine' and 'licenseUrl' in video_data.keys():
-				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.widevine.alpha')
-				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'] + '|' +
-					request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT'], 'Content-Type': 'application/octet-stream'}) + '|R{SSM}|')
+			if 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
+				if video_data['drm'] == 'widevine':
+					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.widevine.alpha')
+					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'] + '|' +
+						request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT'], 'Content-Type': 'application/octet-stream'}) + '|R{SSM}|')
+					xbmc_helper.log_notice('Using Widevine as DRM')
+				elif video_data['drm'] == 'playready':
+					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.microsoft.playready')
+					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'])
+					xbmc_helper.log_notice('Using PlayReady as DRM')
+
+				else:
+					xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('Unsupported DRM'),
+						xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM')
+					)
+					succeeded = False
+
 				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.stream_headers',  request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT']}))
 				if xbmc_helper.get_bool_setting('checkdrmcert') is True and 'certificateUrl' in video_data.keys():
 					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate',

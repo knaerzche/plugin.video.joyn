@@ -4,6 +4,8 @@
 		<setting type="sep" />
 		<setting label="30101" type="bool" id="checkdrmcert" default="false" />
 		<setting type="sep" />
+		<setting label="30130" type="bool" id="force_playready" default="false" enable="System.Platform.Android" />
+		<setting type="sep" />
 		<setting label="30127" type="bool" id="disable_foldercache" default="false" />
 		<setting type="sep" />
 		<setting label="30102" type="slider" id="configcachemins" default="120" range="0,30,1440" option="int" />

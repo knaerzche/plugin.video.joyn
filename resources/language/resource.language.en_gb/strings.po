@@ -146,7 +146,11 @@ msgctxt "#30129"
 msgid "Show episodes immediately if only one season is available"
 msgstr ""
 
-#empty strings from id 30130 to 30229
+msgctxt "#30130"
+msgid "Force PlayReady DRM (Android only)"
+msgstr ""
+
+#empty strings from id 30131 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350

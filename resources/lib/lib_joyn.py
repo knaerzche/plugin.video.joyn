@@ -189,6 +189,15 @@ class lib_joyn(object):
 
 		video_data = request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
 
+		if xbmc_helper.get_bool_setting('force_playready') and self.config['IS_ANDROID'] is True \
+				and 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
+
+			if stream_type == 'VOD' and video_data['licenseUrl'].find('/widevine/v1') is not -1:
+				video_data['licenseUrl'] = video_data['licenseUrl'].replace('/widevine/v1', '/playready/v1')
+				video_data['drm'] = 'playready'
+			elif stream_type == 'LIVE':
+				video_data['drm'] = 'playready'
+
 		if season_id is not None:
 			video_data.update({'season_id': season_id})
 		if  compilation_id is not None:
