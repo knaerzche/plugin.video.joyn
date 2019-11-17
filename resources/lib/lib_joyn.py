@@ -13,6 +13,8 @@ from copy import copy
 from codecs import encode
 from uuid import uuid4
 from .const import CONST
+from ipaddress import IPv4Network
+from random import choice
 from . import compat as compat
 from . import request_helper as request_helper
 from . import cache as cache
@@ -377,7 +379,7 @@ class lib_joyn(object):
 
 
 		except Exception as e:
-			xbmc_helper.log_error('Could not complte graphql request: ' + str(e) + 'post_data: ' + dumps(post_data))
+			xbmc_helper.log_error('Could not complete graphql request: ' + str(e) + 'post_data: ' + dumps(post_data))
 
 		if 'errors' in api_response.keys():
 			xbmc_helper.log_error('GraphQL query returned errors: ' + dumps(api_response['errors']) + 'post_data: ' + dumps(post_data))
@@ -631,6 +633,7 @@ class lib_joyn(object):
 				'IS_ARM'		: False,
 				'ADDON_VERSION'		: addon_version,
 				'country'		: None,
+				'http_headers'		: [],
 			}
 
 			os_uname = compat._uname_list()
@@ -658,8 +661,10 @@ class lib_joyn(object):
 
 			county_setting = xbmc_helper.get_setting('country')
 			xbmc_helper.log_debug("COUNTRY SETTING: " + county_setting)
+			ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'].format(xbmc_helper.translation('LANG_CODE')), config=config, silent=True)
+			config.update({'actual_country': ip_api_response.get('countryCode', 'Unknown')})
+
 			if county_setting is '' or county_setting is '0':
-				ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'].format(xbmc_helper.translation('LANG_CODE')), config=config, silent=True)
 				xbmc_helper.log_debug('IP API Response is: ' + dumps(ip_api_response))
 				if ip_api_response is not None and ip_api_response != '' and 'countryCode' in ip_api_response.keys():
 					if ip_api_response['countryCode'] in CONST['COUNTRIES'].keys():
@@ -679,38 +684,48 @@ class lib_joyn(object):
 			if config['country'] is None:
 				xbmc_helper.dialog_settings(xbmc_helper.translation('MSG_COUNTRY_NOT_DETECTED'))
 				exit(0)
+
+			if config['country'] != config['actual_country']:
+				config['http_headers'].append(('x-forwarded-for',
+					str(choice(list(IPv4Network(compat._unicode(choice(CONST['NETBLOCKS'][config.get('country', 'DE')]))).hosts())))))
+
 			main_js_src = None
 			graphql_headers = []
 			for match in findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
 				if match.find('/main') is not -1:
 					main_js_src = CONST['BASE_URL'] + match
 					main_js =  request_helper.get_url(main_js_src, config)
+					break
 
-					uri_start_match = CONST['GRAPHQL']['API_URL']
-					uri_start = main_js.find(uri_start_match)
+			if main_js_src is None:
+				xbmc_helper.log_debug('Using local main.js')
+				main_js = xbmc_helper.get_file_contents(xbmc_helper.get_resource_filepath('main.js', 'external'))
 
-					for key in config['CONFIG']:
-						find_str = key + ':"'
-						start = main_js.find(find_str)
-						length = main_js[start:].find('",')
-						config['CONFIG'][key] = main_js[(start+len(find_str)):(start+length)]
+			uri_start_match = CONST['GRAPHQL']['API_URL']
+			uri_start = main_js.find(uri_start_match)
 
-					if uri_start is not -1:
-						headers_conf_start = main_js[uri_start:].find('headers:') + uri_start
-						if headers_conf_start is not -1:
-							headers_start_match = '{'
-							headers_end_match = '}'
-							headers_start = main_js[headers_conf_start:].find(headers_start_match) + headers_conf_start
-							xbmc_helper.log_debug("HEADERS START " + str(headers_conf_start) + " --> " + str(headers_start))
-							if headers_start >= headers_conf_start:
-								headers_length = main_js[headers_start:].find(headers_end_match)
-								headers = main_js[(headers_start+len(headers_start_match)):(headers_start+headers_length)]
-								headers = headers.replace('"', '').split(',')
+			for key in config['CONFIG']:
+				find_str = key + ':"'
+				start = main_js.find(find_str)
+				length = main_js[start:].find('",')
+				config['CONFIG'][key] = main_js[(start+len(find_str)):(start+length)]
 
-								for header in headers:
-									header_parts = header.split(':')
-									if len(header_parts) == 2:
-										graphql_headers.append((header_parts[0], header_parts[1]))
+			if uri_start is not -1:
+				headers_conf_start = main_js[uri_start:].find('headers:') + uri_start
+				if headers_conf_start is not -1:
+					headers_start_match = '{'
+					headers_end_match = '}'
+					headers_start = main_js[headers_conf_start:].find(headers_start_match) + headers_conf_start
+					xbmc_helper.log_debug("HEADERS START " + str(headers_conf_start) + " --> " + str(headers_start))
+					if headers_start >= headers_conf_start:
+						headers_length = main_js[headers_start:].find(headers_end_match)
+						headers = main_js[(headers_start+len(headers_start_match)):(headers_start+headers_length)]
+						headers = headers.replace('"', '').split(',')
+
+						for header in headers:
+							header_parts = header.split(':')
+							if len(header_parts) == 2:
+								graphql_headers.append((header_parts[0], header_parts[1]))
 
 			for required_header in CONST['GRAPHQL']['REQUIRED_HEADERS']:
 				found = False

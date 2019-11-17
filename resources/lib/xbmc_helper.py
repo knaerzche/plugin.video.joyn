@@ -29,10 +29,14 @@ def get_file_path(directory, filename):
 
 	return translatePath(os.path.join(xbmc_directory, filename)).encode('utf-8').decode('utf-8')
 
+def get_resource_filepath(filename, subdir):
+
+	return translatePath(os.path.join(addon.getAddonInfo('path'), 'resources', subdir, filename)).encode('utf-8').decode('utf-8')
+
 
 def get_media_filepath(filename):
 
-	return translatePath(os.path.join(addon.getAddonInfo('path'), 'resources', 'media', filename)).encode('utf-8').decode('utf-8')
+	return get_resource_filepath(filename, 'media')
 
 
 def remove_dir(directory):
@@ -221,15 +225,20 @@ def get_addon_params(pluginquery):
            for k, v in parse_qs(pluginquery[1:]).items() )
 
 
+def get_file_contents(file_path):
+
+	data = None
+
+	if os.path.exists(file_path):
+		with open(file_path, 'r') as data_infile:
+			 data = data_infile.read()
+	return data
+
+
 def get_data(filename, dir_type='DATA_DIR'):
 
 	data_file_path = get_file_path(CONST[dir_type], filename)
-	data = None
-
-	if os.path.exists(data_file_path):
-		with open(data_file_path, 'r') as data_infile:
-			 data = data_infile.read()
-	return data
+	return get_file_contents(data_file_path)
 
 
 def set_data(filename, data, dir_type='DATA_DIR'):

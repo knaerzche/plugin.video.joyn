@@ -34,6 +34,9 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 		if additional_headers is not None:
 			headers.update(additional_headers)
 
+		if config.get('http_headers', None) is not None:
+			headers.update(config.get('http_headers', []))
+
 		if additional_query_string is not None:
 
 			if url.find('?') is not -1:
