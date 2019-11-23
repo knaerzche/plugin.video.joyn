@@ -12,14 +12,18 @@ from time import time
 from copy import copy
 from codecs import encode
 from uuid import uuid4
-from .const import CONST
-from ipaddress import IPv4Network
 from random import choice
+from .const import CONST
 from . import compat as compat
 from . import request_helper as request_helper
 from . import cache as cache
 from . import xbmc_helper as xbmc_helper
 from .mpd_parser import mpd_parser as mpd_parser
+
+try:
+	from ipaddress import IPv4Network
+except ImportError:
+	from external.ipaddress import IPv4Network
 
 if compat.PY2:
 	from urllib import urlencode
@@ -195,10 +199,10 @@ class lib_joyn(object):
 				and 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
 
 			if stream_type == 'VOD' and video_data['licenseUrl'].find('/widevine/v1') is not -1:
-				video_data['licenseUrl'] = video_data['licenseUrl'].replace('/widevine/v1', '/playready/v1')
-				video_data['drm'] = 'playready'
+				video_data.update({'licenseUrl': video_data['licenseUrl'].replace('/widevine/v1', '/playready/v1')})
+				video_data.update({'drm': 'playready'})
 			elif stream_type == 'LIVE':
-				video_data['drm'] = 'playready'
+				video_data.update({'drm': 'playready'})
 
 		if season_id is not None:
 			video_data.update({'season_id': season_id})

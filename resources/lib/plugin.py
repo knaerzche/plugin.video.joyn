@@ -811,6 +811,7 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 	if (video_data['streamingFormat'] == 'dash'):
 		if libjoyn.set_mpd_props(list_item, video_data['videoUrl'], stream_type) is not False:
 			if 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
+				list_item.setMimeType('application/dash+xml')
 				if video_data['drm'] == 'widevine':
 					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.widevine.alpha')
 					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'] + '|' +
