@@ -360,7 +360,7 @@ def show_favorites(title):
 			break_loop = False
 			if 'ChannelLane' in landingpage.keys():
 				for block_id, headline in landingpage['ChannelLane'].items():
-					channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
+					channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id}, True)
 					for channel in channels['block']['assets']:
 						if str(channel['id']) == str(favorite_item['channel_id']):
 							found = True
@@ -469,7 +469,7 @@ def channels(stream_type, title):
 	if stream_type == 'VOD':
 		if 'ChannelLane' in landingpage.keys():
 			for block_id, headline in landingpage['ChannelLane'].items():
-				channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
+				channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id}, True)
 				for channel in channels['block']['assets']:
 					list_items.append(get_dir_entry(mode='tvshows',
 						stream_type=stream_type,
@@ -512,7 +512,7 @@ def tvshows(channel_id, channel_path,  title):
 
 	list_items = []
 
-	tvshows = libjoyn.get_graphql_response('CHANNEL', {'path': channel_path})
+	tvshows = libjoyn.get_graphql_response('CHANNEL', {'path': channel_path}, True)
 	if tvshows is not None and tvshows.get('page', None) is not None and tvshows.get('page').get('assets', None) is not None:
 		for tvshow in tvshows['page']['assets']:
 
@@ -713,7 +713,7 @@ def search(stream_type, title):
 	search_term = Dialog().input('Suche', type=INPUT_ALPHANUM)
 
 	if len(search_term) > 0:
-		search_response = libjoyn.get_graphql_response('SEARCH', {'text': search_term})
+		search_response = libjoyn.get_graphql_response('SEARCH', {'text': search_term}, True)
 		list_items = []
 		if 'search' in search_response.keys() and 'results' in search_response['search'] and len(search_response['search']['results']) > 0:
 			for search_result in search_response['search']['results']:
@@ -765,7 +765,7 @@ def categories(stream_type, title):
 def category(block_id, title):
 
 	list_items = []
-	category = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
+	category = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id}, True)
 
 	if category is not None and category.get('block', None) is not None and category.get('block').get('assets', None) is not None:
 		for category_item in category['block']['assets']:

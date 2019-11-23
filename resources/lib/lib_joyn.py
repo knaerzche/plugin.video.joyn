@@ -251,7 +251,7 @@ class lib_joyn(object):
 			landingpage = cached_landingpage['data']
 		else:
 			landingpage = {}
-			raw_landingpage = self.get_graphql_response('LANDINGPAGE', {'path': '/'})
+			raw_landingpage = self.get_graphql_response('LANDINGPAGE', {'path': '/'}, True)
 			if 'page' in raw_landingpage.keys() and 'blocks' in raw_landingpage['page'].keys():
 				for block in raw_landingpage['page']['blocks']:
 					if block['isPersonalized'] is False:
