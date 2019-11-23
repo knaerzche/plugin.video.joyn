@@ -620,7 +620,8 @@ class lib_joyn(object):
 		if confg_cache_res['data'] is not None:
 			cached_config =  confg_cache_res['data']
 
-		if confg_cache_res['is_expired'] is False and  'ADDON_VERSION' in cached_config.keys() and cached_config['ADDON_VERSION'] == addon_version:
+		if (confg_cache_res['is_expired'] is False or expire_config_mins == 0) and cached_config is not None and  'ADDON_VERSION' in cached_config.keys() \
+			and cached_config['ADDON_VERSION'] == addon_version:
 			recreate_config = False
 			config = cached_config
 
@@ -792,7 +793,19 @@ class lib_joyn(object):
 				psf_vars[i] = psf_vars[i][1:-1]
 			config['PSF_VARS'] = psf_vars
 
-			if len(config['PSF_VARS']) >= CONST['PSF_VAR_DEFS']['SECRET']['INDEX']:
+			if cached_config is not None and cached_config.get('SECRET_INDEX', None) is not None and len(config['PSF_VARS']) >= cached_config['SECRET_INDEX']:
+				xbmc_helper.log_debug("Trying to reuse psf secret index from cached config: " + str(cached_config['SECRET_INDEX']))
+				decrypted_psf_client_config = lib_joyn.decrypt_psf_client_config(config['PSF_VARS'][cached_config['SECRET_INDEX']],
+					config['PLAYER_CONFIG']['toolkit']['psf'])
+				if decrypted_psf_client_config is not None:
+					config['PSF_CLIENT_CONFIG'] = decrypted_psf_client_config
+					config['SECRET'] = config['PSF_VARS'][cached_config['SECRET_INDEX']]
+					config['SECRET_INDEX'] = cached_config['SECRET_INDEX']
+					xbmc_helper.log_debug('Reusing psf secret index from cached config succeeded')
+				else:
+					xbmc_helper.log_debug('Reusing psf secret index from cached config failed')
+
+			if config.get('PSF_CLIENT_CONFIG', None) is None and len(config['PSF_VARS']) >= CONST['PSF_VAR_DEFS']['SECRET']['INDEX']:
 				decrypted_psf_client_config = lib_joyn.decrypt_psf_client_config(config['PSF_VARS'][CONST['PSF_VAR_DEFS']['SECRET']['INDEX']],
 					config['PLAYER_CONFIG']['toolkit']['psf'])
 				if decrypted_psf_client_config is not None:
@@ -817,6 +830,7 @@ class lib_joyn(object):
 						if decrypted_psf_client_config is not None:
 							config['PSF_CLIENT_CONFIG'] = decrypted_psf_client_config
 							config['SECRET'] = config['PSF_VARS'][index_secret]
+							config['SECRET_INDEX'] = index_secret
 							xbmc_helper.log_debug('PSF client config decryption succeded with new index: ' + str(index_secret))
 							break
 
