@@ -13,6 +13,7 @@ from copy import copy
 from codecs import encode
 from io import open as io_open
 from uuid import uuid4
+from xbmc import getCondVisibility
 from random import choice
 from .const import CONST
 from . import compat as compat
@@ -643,17 +644,34 @@ class lib_joyn(object):
 			}
 
 			os_uname = compat._uname_list()
+
 			#android
-			if os_uname[0] == 'Linux' and 'KODI_ANDROID_LIBS' in environ:
-				config['USER_AGENT'] = 'Mozilla/5.0 (Linux Android 8.1.0 Nexus 6P Build/OPM6.171019.030.B1) AppleWebKit/537.36 (KHTML, like Gecko) '\
-								'Chrome/68.0.3440.91 Mobile Safari/537.36'
+			if getCondVisibility('System.Platform.Android'):
+				from subprocess import check_output
+				try:
+					os_version = check_output(
+						['/system/bin/getprop', 'ro.build.version.release']).strip(' \t\n\r')
+					model = model = check_output(
+						['/system/bin/getprop', 'ro.product.model']).strip(' \t\n\r')
+					build_id = check_output(
+						['/system/bin/getprop', 'ro.build.id']).strip(' \t\n\r')
+
+					config['USER_AGENT'] ='Mozilla/5.0 (Linux; Android {}; {} Build/{})'.format(os_version, model, build_id)
+
+				except OSError:
+					config['USER_AGENT'] = 'Mozilla/5.0 (Linux; Android 8.1.0; Nexus 6P Build/OPM6.171019.030.B1)'
+					pass
+				config['USER_AGENT'] += ' AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.73 Mobile Safari/537.36'
 				config['IS_ANDROID'] = True
+
 			# linux on arm uses widevine from chromeos
 			elif os_uname[0] == 'Linux' and os_uname[4].lower().find('arm') is not -1:
 				config['USER_AGENT'] = 'Mozilla/5.0 (X11 CrOS '+  os_uname[4] + ' 4537.56.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/30.0.1599.38 Safari/537.36'
 				config['IS_ARM'] = True
 			elif os_uname[0] == 'Linux':
 				config['USER_AGENT'] = 'Mozilla/5.0 (X11 Linux ' + os_uname[4] + ') AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'
+			elif os_uname[0] == 'Darwin':
+				config['USER_AGENT'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_4) AppleWebKit/600.7.12 (KHTML, like Gecko) Version/8.0.7 Safari/600.7.12'
 			else:
 				config['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0 Win64 x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36'
 
