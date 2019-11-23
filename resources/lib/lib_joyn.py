@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from time import time
 from copy import copy
 from codecs import encode
+from io import open as io_open
 from uuid import uuid4
 from random import choice
 from .const import CONST
@@ -143,8 +144,8 @@ class lib_joyn(object):
 				sha_1.update(mpdparser.mpd_url)
 
 				mpd_filepath = xbmc_helper.get_file_path(CONST['TEMP_DIR'],  sha_1.hexdigest() + '.mpd')
-				with open (mpd_filepath, 'w') as mpd_filepath_out:
-					mpd_filepath_out.write(mpdparser.mpd_contents)
+				with io_open(file=mpd_filepath, mode='w', encoding='utf-8') as mpd_filepath_out:
+					mpd_filepath_out.write(compat._unicode(mpdparser.mpd_contents))
 
 				xbmc_helper.log_debug('Local MPD filepath is: ' + mpd_filepath)
 				list_item.setPath(mpd_filepath)

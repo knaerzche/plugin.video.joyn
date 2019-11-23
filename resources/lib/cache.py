@@ -4,9 +4,10 @@ from os import path
 from json import dumps, loads
 from datetime import datetime, timedelta
 from platform import system
+from io import open as io_open
 from .const import CONST
 from . import xbmc_helper as xbmc_helper
-
+from . import compat as compat
 
 def _get(cache_key, file_name, override_expire_secs=None):
 
@@ -30,7 +31,7 @@ def _get(cache_key, file_name, override_expire_secs=None):
 		if filemtime is None or filectime > filemtime:
 			filemtime = filectime
 
-		with open(file_name) as cache_infile:
+		with io_open(file=file_name, mode='r', encoding='utf-8') as cache_infile:
 			cache_data.update({'data': cache_infile.read()})
 
 		if filemtime >= expire_datetime or expire_datetime is None:
@@ -42,8 +43,8 @@ def _get(cache_key, file_name, override_expire_secs=None):
 def _set(cache_key, file_name, data):
 
 	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
-	with open (cache_path, 'w') as cache_outfile:
-		cache_outfile.write(data)
+	with io_open(file=cache_path, mode='w', encoding='utf-8') as cache_outfile:
+		cache_outfile.write(compat._unicode(data))
 
 
 def get_json(cache_key, override_expire_secs=None):

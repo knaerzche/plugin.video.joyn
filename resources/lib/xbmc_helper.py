@@ -2,6 +2,7 @@
 
 import os.path
 from sys import argv
+from io import open as io_open
 from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
 from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginCategory
 from xbmcvfs import mkdirs, exists, rmdir, listdir, delete
@@ -230,7 +231,7 @@ def get_file_contents(file_path):
 	data = None
 
 	if os.path.exists(file_path):
-		with open(file_path, 'r') as data_infile:
+		with io_open(file=file_path, mode='r', encoding='utf-8') as data_infile:
 			 data = data_infile.read()
 	return data
 
@@ -245,8 +246,8 @@ def set_data(filename, data, dir_type='DATA_DIR'):
 
 	data_file_path = get_file_path(CONST[dir_type], filename)
 
-	with open (data_file_path, 'w') as data_outfile:
-		data_outfile.write(data)
+	with io_open(file=data_file_path, mode='w', encoding='utf-8') as data_outfile:
+		data_outfile.write(compat._unicode(data))
 
 
 def get_json_data(filename, dir_type='DATA_DIR'):
