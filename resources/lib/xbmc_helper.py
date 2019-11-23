@@ -3,6 +3,7 @@
 import os.path
 from sys import argv
 from io import open as io_open
+from datetime import datetime, timedelta
 from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
 from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginCategory
 from xbmcvfs import mkdirs, exists, rmdir, listdir, delete
@@ -267,3 +268,17 @@ def get_json_data(filename, dir_type='DATA_DIR'):
 def set_json_data (filename, data, dir_type='DATA_DIR'):
 
 	set_data(filename, dumps(data), dir_type)
+
+
+def timestamp_to_datetime(timestamp, is_utc=False):
+
+	try:
+		if is_utc is True:
+			return datetime.utcfromtimestamp(0) + timedelta(seconds=int(timestamp))
+		else:
+			return datetime.fromtimestamp(0) + timedelta(seconds=int(timestamp))
+	except Exception as e:
+		log_notice('Could not convert timestamp ' + str(timestamp) + ' to datetime - Exception: ' + str(e))
+		pass
+
+	return False

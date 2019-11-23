@@ -7,7 +7,7 @@ from os import environ
 from hashlib import sha1, sha256
 from math import floor
 from sys import exit
-from datetime import datetime, timedelta
+from datetime import datetime
 from time import time
 from copy import copy
 from codecs import encode
@@ -512,10 +512,12 @@ class lib_joyn(object):
 		if query_type == 'EPISODE':
 
 			if 'endsAt' in data.keys() and data['endsAt'] is not None and data['endsAt'] < 9999999999:
-				metadata['infoLabels'].update({
-					'plot': compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE'))
-							.format( datetime.utcfromtimestamp(data['endsAt'])) + metadata['infoLabels'].get('plot', '')
-				})
+				endsAt = xbmc_helper.timestamp_to_datetime(data['endsAt'], True)
+				if endsAt is not False:
+					metadata['infoLabels'].update({
+						'plot': compat._unicode(xbmc_helper.translation('VIDEO_AVAILABLE'))
+								.format(endsAt) + metadata['infoLabels'].get('plot', '')
+					})
 
 			if 'number' in data.keys() and data['number'] is not None:
 				metadata['infoLabels'].update({
@@ -538,13 +540,14 @@ class lib_joyn(object):
 
 
 		if 'airdate' in data.keys() and data['airdate'] is not None:
-
-			broadcast_date = datetime.utcfromtimestamp(data['airdate']).strftime('%Y-%m-%d')
-			metadata['infoLabels'].update({
-				'premiered': broadcast_date,
-				'date': broadcast_date,
-				'aired': broadcast_date,
-			})
+			broadcast_datetime = xbmc_helper.timestamp_to_datetime(data['airdate'], True)
+			if broadcast_datetime is not False:
+				broadcast_date =broadcast_datetime.strftime('%Y-%m-%d')
+				metadata['infoLabels'].update({
+					'premiered': broadcast_date,
+					'date': broadcast_date,
+					'aired': broadcast_date,
+				})
 
 		if 'video' in data.keys() and data['video'] is not None \
 			and 'duration' in data['video'].keys() and data['video']['duration'] is not None:
@@ -576,10 +579,9 @@ class lib_joyn(object):
 		epg_metadata['infoLabels'].update({'title': compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(brand_title, '')})
 
 		for idx, epg_entry in enumerate(brand_livestream_epg['epg']):
-			end_time = datetime.fromtimestamp(epg_entry['endDate'])
-			start_time = datetime.fromtimestamp(epg_entry['startDate'])
+			end_time = xbmc_helper.timestamp_to_datetime(epg_entry['endDate'])
 
-			if end_time > dt_now:
+			if end_time is not False and end_time > dt_now:
 				epg_metadata = lib_joyn.get_metadata(epg_entry, 'EPG')
 				epg_metadata['infoLabels'].update({
 						'title': compat._unicode(xbmc_helper.translation('LIVETV_TITLE')).format(brand_title, epg_entry['title'])
