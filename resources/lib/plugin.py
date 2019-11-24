@@ -494,10 +494,6 @@ def channels(stream_type, title):
 		epg = libjoyn.get_epg()
 		for brand_epg in epg['brands']:
 			if brand_epg['livestream'] is not None:
-				client_data={
-					'videoId': None,
-					'channelId': brand_epg['livestream']['id']
-				}
 				if 'epg' in brand_epg['livestream'].keys() and len(brand_epg['livestream']['epg']) > 0:
 					metadata = libjoyn.get_epg_metadata(brand_epg['livestream'])
 
@@ -512,7 +508,7 @@ def channels(stream_type, title):
 						is_folder=False,
 						metadata=metadata,
 						mode='play_video',
-						client_data=libjoyn.get_livetv_clientdata(brand_epg['livestream']['id']),
+						client_data=dumps(libjoyn.get_client_data(brand_epg['livestream']['id'], 'LIVE')),
 						video_id=brand_epg['livestream']['id'],
 						stream_type='LIVE'))
 
@@ -530,12 +526,6 @@ def tvshows(channel_id, channel_path,  title):
 			if tvshow['__typename'] == 'Movie' and 'video' in tvshow.keys() and 'id' in tvshow['video'] :
 
 				movie_metadata =libjoyn.get_metadata(tvshow,'EPISODE', 'MOVIE')
-				client_data = {
-					'startTime': 0,
-					'videoId': tvshow['video']['id'],
-					'genre': [],
-				}
-
 				movie_metadata['infoLabels'].update({'mediatype': 'movie'})
 
 				list_items.append(get_dir_entry(
@@ -543,7 +533,7 @@ def tvshows(channel_id, channel_path,  title):
 					mode='play_video',
 					metadata=movie_metadata,
 					video_id=tvshow['video']['id'],
-					client_data=dumps(client_data),
+					client_data=dumps(libjoyn.get_client_data(tvshow['video']['id'], 'VOD', tvshow)),
 					override_fanart=default_fanart,
 				))
 			else:
@@ -638,17 +628,7 @@ def season_episodes(season_id, title):
 		for episode in episodes['season']['episodes']:
 			episode_metadata =  libjoyn.get_metadata(episode,'EPISODE')
 
-			client_data = {
-					'startTime': 0,
-					'videoId': episode['id'],
-					'genre': [],
-			}
-
-			if 'video' in episode.keys() and 'duration' in episode['video']:
-				client_data.update({'duration': (episode['video']['duration']*1000)})
-
-			if 'series' in episode.keys() and 'id' in episode['series']:
-				client_data.update({'tvShowId': episode['series']['id']})
+			if 'series' in episode.keys() and 'id' in episode['series'].keys():
 				if override_fanart == default_fanart:
 					tv_show_meta = libjoyn.get_metadata(episode['series'],'TVSHOW')
 					if 'fanart' in tv_show_meta['art']:
@@ -661,7 +641,7 @@ def season_episodes(season_id, title):
 				mode='play_video',
 				metadata=episode_metadata,
 				video_id=episode['id'],
-				client_data=dumps(client_data),
+				client_data=dumps(libjoyn.get_client_data(episode['id'], 'VOD', episode)),
 				override_fanart=override_fanart,
 				season_id=season_id
 				)
@@ -694,18 +674,7 @@ def get_compilation_items(compilation_id, title):
 		for compilation_item in compilation_items['compilation']['compilationItems']:
 
 			compilation_item_metadata = libjoyn.get_metadata(compilation_item,'EPISODE')
-			client_data = {
-					'startTime': 0,
-					'videoId': compilation_item['id'],
-					'genre': [],
-			}
-
-			if 'video' in compilation_item.keys() and 'duration' in compilation_item['video']:
-				client_data.update({'duration': (compilation_item['video']['duration']*1000)})
-
 			if 'compilation' in compilation_item.keys():
-				if 'id' in compilation_item['compilation']:
-					client_data.update({'tvShowId': compilation_item['compilation']['id']})
 				if override_fanart == default_fanart:
 					compilation_metadata = libjoyn.get_metadata(compilation_item['compilation'],'TVSHOW')
 					if 'fanart' in compilation_metadata['art']:
@@ -718,7 +687,7 @@ def get_compilation_items(compilation_id, title):
 				mode='play_video',
 				metadata=compilation_item_metadata,
 				video_id=compilation_item['id'],
-				client_data=dumps(client_data),
+				client_data=dumps(libjoyn.get_client_data(compilation_item['id'], 'VOD', compilation_item)),
 				override_fanart=override_fanart,
 				compilation_id=compilation_id
 				)
@@ -1007,7 +976,7 @@ if 'mode' in param_keys:
 					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type)
 			if stream_type == 'LIVE':
 				play_video(video_id=params['video_id'],
-						client_data=params.get('client_data', libjoyn.get_livetv_clientdata(params['video_id'])),
+						client_data=params.get('client_data', dumps(libjoyn.get_client_data(params['video_id'], stream_type))),
 						stream_type=stream_type)
 
 		elif mode == 'compilation_items' and 'compilation_id' in param_keys:

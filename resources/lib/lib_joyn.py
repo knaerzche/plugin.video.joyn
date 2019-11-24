@@ -175,6 +175,7 @@ class lib_joyn(object):
 	def get_video_data(self, video_id, client_data, stream_type, season_id=None, compilation_id=None):
 
 		video_url = self.config['PSF_CONFIG']['default'][stream_type.lower()]['playoutBaseUrl']
+		xbmc_helper.log_debug("GOT CLIENT DATA: "  + dumps(client_data))
 
 		if stream_type == 'VOD':
 			video_url += 'playout/video/' + client_data['videoId']
@@ -461,14 +462,6 @@ class lib_joyn(object):
 			return refresh_auth_token_data['access_token']
 
 		return auth_token_data.get('access_token', None)
-
-	@staticmethod
-	def get_livetv_clientdata(livestream_id):
-		return dumps({
-			'videoId' 	: None,
-			'channelId'	: livestream_id,
-		})
-
 
 	@staticmethod
 	def get_metadata(data, query_type, title_type_id=None):
@@ -888,6 +881,43 @@ class lib_joyn(object):
 			cache.set_json('CONFIG', config)
 
 		return config
+
+	@staticmethod
+	def get_client_data(asset_id, stream_type, asset_data={}):
+
+		client_data = {
+			'genre': [],
+			'startTime': 0,
+			'videoId': None,
+		}
+
+		if stream_type == 'VOD':
+			client_data.update({'videoId': asset_id})
+		elif stream_type == 'LIVE':
+			client_data.update({'channelId': asset_id})
+
+		if 'video' in asset_data.keys() and 'duration' in asset_data['video'].keys():
+			client_data.update({'duration': (asset_data['video']['duration'] * 1000)})
+
+		if 'genres' in asset_data.keys():
+			for genre in asset_data['genres']:
+				if 'name' in genre.keys():
+					client_data['genre'].append(genre['name'])
+
+		if 'series' in asset_data.keys() and 'id' in asset_data['series'].keys():
+			client_data.update({'tvShowId': asset_data['series']['id']})
+
+		if 'compilation' in asset_data.keys() and 'id' in asset_data['compilation'].keys():
+			client_data.update({'tvShowId': asset_data['compilation']['id']})
+
+		if 'tracking' in asset_data.keys():
+			if 'agofCode' in asset_data['tracking'].keys():
+				client_data.update({'agofCode': asset_data['tracking']['agofCode']})
+			if 'brand' in asset_data['tracking'].keys():
+				client_data.update({'brand': asset_data['tracking']['brand']})
+
+		return client_data
+
 
 	@staticmethod
 	def decrypt_psf_client_config(secret, encrypted_psf_config):
