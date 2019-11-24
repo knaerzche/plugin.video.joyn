@@ -399,3 +399,16 @@ msgstr "Weiterschauen: {:s}"
 msgctxt "#30666"
 msgid "Recommendation: {:s}"
 msgstr "Empfehlung: {:s}"
+
+msgctxt "#30667"
+msgid "Movie"
+msgstr "Film"
+
+msgctxt "#30668"
+msgid "Series"
+msgstr "Serie"
+
+msgctxt "#30669"
+msgid "{:s}[CR][LIGHT][I]{:s}[/I][/LIGHT]"
+msgstr "{:s}[CR][LIGHT][I]{:s}[/I][/LIGHT]"
+

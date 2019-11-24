@@ -471,7 +471,7 @@ class lib_joyn(object):
 
 
 	@staticmethod
-	def get_metadata(data, query_type):
+	def get_metadata(data, query_type, title_type_id=None):
 
 		metadata = {
 			'art': {},
@@ -484,6 +484,10 @@ class lib_joyn(object):
 					metadata['infoLabels'].update({text_mapping_key: HTMLParser().unescape(data[text_key])})
 				else:
 					metadata['infoLabels'].update({text_mapping_key: ''})
+
+		if title_type_id is not None and 'title' in metadata['infoLabels'].keys():
+			metadata['infoLabels'].update({'title' :  compat._unicode((xbmc_helper.translation('TITLE_LABEL'))).format(metadata['infoLabels']['title'], \
+				xbmc_helper.translation(title_type_id))})
 
 		if 'ART' in CONST['GRAPHQL']['METADATA'][query_type].keys():
 			for art_key, art_def in CONST['GRAPHQL']['METADATA'][query_type]['ART'].items():

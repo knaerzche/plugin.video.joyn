@@ -527,23 +527,43 @@ def tvshows(channel_id, channel_path,  title):
 	if tvshows is not None and tvshows.get('page', None) is not None and tvshows.get('page').get('assets', None) is not None:
 		for tvshow in tvshows['page']['assets']:
 
-			tvshow_metadata=libjoyn.get_metadata(tvshow,'TVSHOW')
-			tvshow_metadata['infoLabels'].update({'mediatype': 'tvshow'})
+			if tvshow['__typename'] == 'Movie' and 'video' in tvshow.keys() and 'id' in tvshow['video'] :
 
-			if tvshow['__typename'] == 'Series':
-				list_items.append(get_dir_entry
-					(mode='season',
-					tv_show_id=tvshow['id'],
-					metadata=tvshow_metadata,
-					override_fanart=default_fanart
-				))
-			elif tvshow['__typename'] == 'Compilation':
+				movie_metadata =libjoyn.get_metadata(tvshow,'EPISODE', 'MOVIE')
+				client_data = {
+					'startTime': 0,
+					'videoId': tvshow['video']['id'],
+					'genre': [],
+				}
+
+				movie_metadata['infoLabels'].update({'mediatype': 'movie'})
+
 				list_items.append(get_dir_entry(
-					mode='compilation_items',
-					compilation_id=tvshow['id'],
-					metadata=tvshow_metadata,
-					override_fanart=default_fanart
+					is_folder=False,
+					mode='play_video',
+					metadata=movie_metadata,
+					video_id=tvshow['video']['id'],
+					client_data=dumps(client_data),
+					override_fanart=default_fanart,
 				))
+			else:
+				tvshow_metadata=libjoyn.get_metadata(tvshow,'TVSHOW', 'SERIES')
+				tvshow_metadata['infoLabels'].update({'mediatype': 'tvshow'})
+
+				if tvshow['__typename'] == 'Series':
+					list_items.append(get_dir_entry
+						(mode='season',
+						tv_show_id=tvshow['id'],
+						metadata=tvshow_metadata,
+						override_fanart=default_fanart
+					))
+				elif tvshow['__typename'] == 'Compilation':
+					list_items.append(get_dir_entry(
+						mode='compilation_items',
+						compilation_id=tvshow['id'],
+						metadata=tvshow_metadata,
+						override_fanart=default_fanart
+					))
 
 	if len(list_items) == 0:
 		return xbmc_helper.notification(
@@ -983,6 +1003,8 @@ if 'mode' in param_keys:
 					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type, season_id=params['season_id'])
 				elif 'compilation_id' in param_keys:
 					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type, compilation_id=params['compilation_id'])
+				else:
+					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type)
 			if stream_type == 'LIVE':
 				play_video(video_id=params['video_id'],
 						client_data=params.get('client_data', libjoyn.get_livetv_clientdata(params['video_id'])),

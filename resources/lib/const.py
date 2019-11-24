@@ -94,6 +94,9 @@ CONST = {
 					'MSG_NO_CONTENT'		: 30664,
 					'CONTINUE_WATCHING'		: 30665,
 					'RECOMMENDATION'		: 30666,
+					'MOVIE'				: 30667,
+					'SERIES'			: 30668,
+					'TITLE_LABEL'			: 30669,
 
 				},
 
