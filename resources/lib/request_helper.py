@@ -19,7 +19,7 @@ from . import xbmc_helper as xbmc_helper
 from xbmcaddon import Addon
 
 
-def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None):
+def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None, fail_silent=False):
 
 	response_content = ''
 	xbmc_helper.log_debug('get_url - url: ' + str(url) + ' headers: ' + dumps(additional_headers) + ' qs: ' + dumps(additional_query_string) + ' post_data: ' +  dumps(post_data))
@@ -67,9 +67,9 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 			response_content =  compat._decode(GzipFile(fileobj=BytesIO(response.read())).read())
 		else:
 			response_content = compat._decode(response.read())
-	
+
 	except HTTPError as http_error:
-	
+
 		if http_error.code == 422:
 			xbmc_helper.notification(
 				'',
@@ -84,7 +84,15 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 
 		xbmc_helper.log_error('Failed to load url: ' + url + ' headers: ' + dumps(additional_headers) + ' qs: ' + dumps(additional_query_string) + ' post_data: '
 			+  dumps(post_data) + 'Exception: ' +  str(e))
-		pass
+
+		if fail_silent is True:
+			pass
+		else:
+			xbmc_helper.notification(
+						xbmc_helper.translation('ERROR').format('URL Access'),
+						xbmc_helper.translation('MSG_NO_ACCESS_TO_URL').format(str(url))
+					)
+			exit(0)
 
 	return response_content
 
@@ -97,9 +105,9 @@ def post_json(url, config, data=None, additional_headers=[], additional_query_st
 
 def get_json_response(url, config, headers=[], params=None, post_data=None, silent=False):
 	try:
-		
+
 		headers.append(('Accept', 'application/json'))
-		return loads(get_url(url, config, headers, params, post_data))
+		return loads(get_url(url, config, headers, params, post_data, silent))
 
 	except ValueError:
 		if silent is False:
