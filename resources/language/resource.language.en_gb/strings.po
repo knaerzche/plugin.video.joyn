@@ -170,7 +170,11 @@ msgctxt "#30134"
 msgid "Port"
 msgstr ""
 
-#empty strings from id 30137 to 30229
+msgctxt "#30135"
+msgid "Joyn platform"
+msgstr ""
+
+#empty strings from id 30136 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350

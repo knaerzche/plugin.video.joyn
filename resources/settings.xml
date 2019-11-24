@@ -2,6 +2,8 @@
 	<category label="30000">
 		<setting label="30105" type="select" id="country" lvalues="30106|30107" default="0"/>
 		<setting type="sep" />
+		<setting label="30135" type="select" id="joyn_platform" values="android|web|ios" default="android" />
+		<setting type="sep" />
 		<setting label="30101" type="bool" id="checkdrmcert" default="false" />
 		<setting type="sep" />
 		<setting label="30130" type="bool" id="force_playready" default="false" enable="System.Platform.Android" />

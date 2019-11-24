@@ -771,8 +771,12 @@ class lib_joyn(object):
 					exit(0)
 
 			for index, value in enumerate(graphql_headers):
-				if value[0].lower() in CONST['GRAPHQL']['REPLACE_HEADERS'].keys():
-					graphql_headers[index] = (value[0], CONST['GRAPHQL']['REPLACE_HEADERS'][value[0].lower()])
+				if value[0].lower() == 'joyn-platform':
+					if xbmc_helper.get_text_setting('joyn_platform') != '':
+						graphql_headers[index] = (value[0], xbmc_helper.get_text_setting('joyn_platform'))
+					else:
+						graphql_headers[index] = (value[0], 'android')
+					break
 
 			config['GRAPHQL_HEADERS'] = graphql_headers
 

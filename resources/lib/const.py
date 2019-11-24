@@ -214,9 +214,6 @@ CONST = {
 
 			'REQUIRED_HEADERS'	: ['x-api-key', 'joyn-platform'],
 
-			'REPLACE_HEADERS'	: {
-							'joyn-platform'	: 'android',
-						},
 
 			'STATIC_VARIABLES'	: {
 							'first':	1000,
