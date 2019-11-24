@@ -4,10 +4,10 @@ from . import compat as compat
 
 if compat.PY2:
 	from urllib import quote, urlencode
-	from urllib2 import Request, urlopen, HTTPError
+	from urllib2 import Request, urlopen, HTTPError, ProxyHandler, build_opener, install_opener
 elif compat.PY3:
 	from urllib.parse import quote, urlencode
-	from urllib.request import Request, urlopen
+	from urllib.request import Request, urlopen, ProxyHandler, build_opener, install_opener
 	from urllib.error import HTTPError
 
 from json import dumps, loads
@@ -43,6 +43,18 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 				url += '&' + urlencode(additional_query_string)
 			else:
 				url += '?' + urlencode(additional_query_string)
+
+		if xbmc_helper.get_bool_setting('use_https_proxy') is True and xbmc_helper.get_text_setting('https_proxy_host') != '' \
+				and xbmc_helper.get_int_setting('https_proxy_port') != 0:
+
+			proxy_uri = '{}:{}'.format(xbmc_helper.get_text_setting('https_proxy_host'), xbmc_helper.get_text_setting('https_proxy_port'))
+
+			xbmc_helper.log_debug('Using proxy uri: ' + proxy_uri)
+			prxy_handler=ProxyHandler({
+						'http': proxy_uri,
+						'https': proxy_uri,
+				})
+			install_opener(build_opener(prxy_handler))
 
 		if post_data is not None:
 			request = Request(url, data=post_data.encode('utf-8'), headers=headers)

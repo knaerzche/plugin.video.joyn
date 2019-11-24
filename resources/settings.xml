@@ -49,4 +49,11 @@
 		<setting label="30120" type="select" id="watchlist_view" values="Standard|WideList|Wall|Shift|InfoWall|Custom" default="Shift" enable="eq(-13,true)" />
 		<setting label="30124" type="number" id="watchlist_view_custom" visible="eq(-14,true) + eq(-1,5)" enable="eq(-1,5)" subsetting="true" />
 	</category>
+	<category label="30002">
+		<setting label="30131" type="bool" id="dont_verify_ssl_certificates" default="false" />
+		<setting type="sep" />
+		<setting label="30132" type="bool" id="use_https_proxy" default="false" />
+		<setting label="30133" type="text" id="https_proxy_host" enable="eq(-1,true)" subsetting="true" />
+		<setting label="30134" type="number" id="https_proxy_port" enable="eq(-2,true)" subsetting="true" />
+	</category>
 </settings>

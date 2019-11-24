@@ -27,7 +27,11 @@ msgctxt "#30001"
 msgid "View"
 msgstr ""
 
-#empty strings from id 30002 to 30100
+msgctxt "#30002"
+msgid "Connection"
+msgstr ""
+
+#empty strings from id 30003 to 30100
 # SETTINGS-BUTTONS
 
 msgctxt "#30101"
@@ -150,7 +154,23 @@ msgctxt "#30130"
 msgid "Force PlayReady DRM (Android only)"
 msgstr ""
 
-#empty strings from id 30131 to 30229
+msgctxt "#30131"
+msgid "Don't verfiy SSL certificates"
+msgstr ""
+
+msgctxt "#30132"
+msgid "Use HTTPS Proxy"
+msgstr ""
+
+msgctxt "#30133"
+msgid "Host"
+msgstr ""
+
+msgctxt "#30134"
+msgid "Port"
+msgstr ""
+
+#empty strings from id 30137 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350

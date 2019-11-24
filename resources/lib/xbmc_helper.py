@@ -85,6 +85,9 @@ def get_int_setting(setting_id):
 	else:
 		return None
 
+def get_text_setting(setting_id):
+
+	return str(get_setting(setting_id))
 
 def get_addon_version():
 
