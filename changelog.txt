@@ -47,3 +47,10 @@ show recommendation
 implement (anonymous) auth
 option to show epsiodes immediately
 improve secret detection
+v2.0.5
+add support from PlayReady DRM
+add preliminary for foreign countries
+add proxy settings
+add slection for joyn platform
+fixed dates in far future on 32-bit platforms
+add support for movies

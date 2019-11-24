@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-	<addon id="plugin.video.joyn" name="Joyn" version="2.0.0" provider-name="knaerzche">
+	<addon id="plugin.video.joyn" name="Joyn" version="2.0.5" provider-name="knaerzche">
 	<requires>
 		<import addon="xbmc.python" version="2.1.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
@@ -30,43 +30,13 @@
 			<screenshot>resources/media/screenshot03.jpg</screenshot>
 		</assets>
 		<news>
-v0.0.3.2 (03.08.2019)
-[new] Add EPG, search, categories
-v0.0.4.2 (13.08.2019)
-[new] Add Favorites, Last seen, EPG via uEPG, more sort methods for videos, full PY3.7 compat
-[fixed] Season names
-v1.0.0 (17.08.2019)
-[bump] inputstreamhelper version requirement
-[new] automatic country detection; prepare mult-country support
-[new] open inputstream.adaptive, uEPG setting from addon settings
-[new] clear cache from addon settings
-v1.1.0 (27.08.2019)
-[fixed] translation errors; changed nameing of some settings
-[fixed] max. 30 episodes per season where shown
-[fixed] string multline-error for Android user agent
-[fixed] use correct translation setting for ip-api country detection
-[fixed] add/remove category with unicode letters to/from watchlist
-[new] added cast information for season/episodes (if available)
-[new] changed Studio infomation from channelname to copyright owner
-[new] add clearlogo for episodes (if available)
-[new] option to exclude watchlist from lastseen
-[new] add correct contentype for each foldertype
-[new] set viewtype for each contenttype in addon settings (can be disabled (if you like your lists))
-[new] set sort order for episodes/seasons in addon settings (default descending as on Joyn Website)
-[new] show title according to container content
-[new] option to disable folder cache
-[new] some performance improvements
-v1.1.2
-[fixed] use dateutil to parse datestrings
-v1.9.6
-[new] implement new GraphQL API
-[fixed] Py3 support
-v2.0.0
-[fixed] make old livetv url work again
-[new] show recommendation
-[new] implement (anonymous) auth
-[new] option to show epsiodes immediately
-[improve] secret detection
+v2.0.5
+[new] add support from PlayReady DRM
+[new] add preliminary for foreign countries
+[new] add proxy settings
+[new] add slection for joyn platform
+[fixed] dates in far future on 32-bit platforms
+[new] add support for movies
 		</news>
 	</extension>
 </addon>
