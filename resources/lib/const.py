@@ -34,7 +34,10 @@ CONST = {
 					'CONFIG'	: { 'key' : 'config', 'expires' : 3600 },
 					'EPG'		: { 'key' : 'epg', 'expires': 36000 },
 					'LANDINGPAGE'	: { 'key' : 'landingpage', 'expires' : 600},
+					'ETAGS'		: { 'key' : 'etags', 'expires': None},
 				  },
+
+	'ETAGS_TTL'		: 1209600, #14 days
 
 	'LASTSEEN_ITEM_COUNT'	: 20,
 	'UPEG_REFRESH_INTERVAL'	: 7200,

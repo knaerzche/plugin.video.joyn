@@ -196,7 +196,8 @@ class lib_joyn(object):
 
 		video_url += '?' + urlencode(video_url_params)
 
-		video_data = request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], post_data='false')
+		video_data = request_helper.get_json_response(url=video_url, config=self.config, headers=[('Content-Type', 'application/x-www-form-urlencoded charset=utf-8')], \
+			post_data='false', no_cache=True)
 
 		if xbmc_helper.get_bool_setting('force_playready') and self.config['IS_ANDROID'] is True \
 				and 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
@@ -344,7 +345,7 @@ class lib_joyn(object):
 					xbmc_helper.log_error('Not all required variables set for operation: ' + operation)
 					exit(0)
 
-		post_data = {
+		params = {
 			'query'	: 'query ' + CONST['GRAPHQL'][operation]['OPERATION'] + ' ' + CONST['GRAPHQL'][operation]['QUERY'],
 			'extensions': {
 					'persistedQuery': {
@@ -356,9 +357,10 @@ class lib_joyn(object):
 		}
 
 		if len(variables.keys()) != 0:
-			post_data.update({'variables': variables})
+			params.update({'variables': dumps(variables)})
 
-		post_data['extensions']['persistedQuery'].update({'sha256Hash': sha256(post_data['query'].encode('utf-8')).hexdigest()})
+		params['extensions']['persistedQuery'].update({'sha256Hash': sha256(params['query'].encode('utf-8')).hexdigest()})
+		params.update({'extensions': dumps(params['extensions'])})
 
 		headers = copy(self.config['GRAPHQL_HEADERS'])
 
@@ -377,24 +379,24 @@ class lib_joyn(object):
 		api_response = {}
 
 		try:
-			api_response = request_helper.post_json(
-				CONST['GRAPHQL']['API_URL'],
-				self.config,
-				post_data,
-				headers,
+			api_response = request_helper.get_json_response(
+				url=CONST['GRAPHQL']['API_URL'],
+				config=self.config,
+				params=params,
+				headers=headers,
 			)
 
 
 		except Exception as e:
-			xbmc_helper.log_error('Could not complete graphql request: ' + str(e) + 'post_data: ' + dumps(post_data))
+			xbmc_helper.log_error('Could not complete graphql request: ' + str(e) + 'params: ' + dumps(params))
 
 		if 'errors' in api_response.keys():
-			xbmc_helper.log_error('GraphQL query returned errors: ' + dumps(api_response['errors']) + 'post_data: ' + dumps(post_data))
+			xbmc_helper.log_error('GraphQL query returned errors: ' + dumps(api_response['errors']) + 'params: ' + dumps(params))
 
 		if 'data' in api_response.keys() and api_response['data'] is not None:
 			return api_response['data']
 		else:
-			xbmc_helper.log_error('GraphQL query returned no data - response: ' + dumps(api_response) + 'post_data: '  + dumps(post_data))
+			xbmc_helper.log_error('GraphQL query returned no data - response: ' + dumps(api_response) + 'params: '  + dumps(params))
 
 		xbmc_helper.notification(
 				xbmc_helper.translation('ERROR').format('GraphQL'),
@@ -624,6 +626,10 @@ class lib_joyn(object):
 			and cached_config['ADDON_VERSION'] == addon_version:
 			recreate_config = False
 			config = cached_config
+
+		if cached_config is None or 'ADDON_VERSION' not in cached_config.keys() or ('ADDON_VERSION' in cached_config.keys() and cached_config['ADDON_VERSION'] != addon_version):
+			xbmc_helper.remove_dir(CONST['CACHE_DIR'])
+			xbmc_helper.log_debug('cleared cache')
 
 		if recreate_config == True:
 
@@ -874,9 +880,6 @@ class lib_joyn(object):
 					xbmc_helper.log_error('Could not decrypt config - PSF VARS: '  \
 						+ dumps(config['PSF_VARS']) + 'PLAYER CONFIG: ' + dumps(config['PLAYER_CONFIG']))
 					exit(0)
-
-			xbmc_helper.remove_dir(CONST['CACHE_DIR'])
-			xbmc_helper.log_debug('cleared cache')
 
 			cache.set_json('CONFIG', config)
 

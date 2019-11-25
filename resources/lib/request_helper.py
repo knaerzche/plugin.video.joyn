@@ -15,16 +15,28 @@ from base64 import urlsafe_b64encode
 from io import BytesIO
 from gzip import GzipFile
 from sys import exit
+from time import time
+from hashlib import sha512
+from datetime import datetime, timedelta
 from . import xbmc_helper as xbmc_helper
+from . import cache as cache
 from xbmcaddon import Addon
 
 
-def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None, fail_silent=False):
+def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None, fail_silent=False, no_cache=False):
 
 	response_content = ''
 	xbmc_helper.log_debug('get_url - url: ' + str(url) + ' headers: ' + dumps(additional_headers) + ' qs: ' + dumps(additional_query_string) + ' post_data: ' +  dumps(post_data))
 
+	request_hash = sha512((url+dumps(additional_headers)+dumps(additional_query_string)+dumps(post_data)).encode('utf-8')).hexdigest()
+
+	if no_cache is True:
+		etags_data = None
+	else:
+		etags_data = get_etags_data(request_hash)
+
 	try:
+
 		headers = {
 			'Accept-Encoding': 'gzip, deflate',
 			'User-Agent': config['USER_AGENT'],
@@ -36,6 +48,9 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 
 		if config.get('http_headers', None) is not None:
 			headers.update(config.get('http_headers', []))
+
+		if etags_data is not None:
+			headers.update({'If-None-Match': etags_data['etag']})
 
 		if additional_query_string is not None:
 
@@ -68,6 +83,11 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 		else:
 			response_content = compat._decode(response.read())
 
+		_etag = response.info().get('etag', None)
+		if no_cache is False and _etag is not None:
+			xbmc_helper.log_debug('ETAG: ' + str(_etag) + ' URL: ' + str(url))
+			set_etags_data(request_hash, _etag, response_content)
+
 	except HTTPError as http_error:
 
 		if http_error.code == 422:
@@ -78,6 +98,8 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 			)
 			pass
 			exit(0)
+		elif http_error.code == 304 and etags_data is not None:
+			response_content = etags_data.get('data')
 		else:
 			raise
 	except Exception as e:
@@ -103,11 +125,11 @@ def post_json(url, config, data=None, additional_headers=[], additional_query_st
 	return get_json_response(url, config, additional_headers, additional_query_string, dumps(data))
 
 
-def get_json_response(url, config, headers=[], params=None, post_data=None, silent=False):
+def get_json_response(url, config, headers=[], params=None, post_data=None, silent=False, no_cache=False):
 	try:
 
 		headers.append(('Accept', 'application/json'))
-		return loads(get_url(url, config, headers, params, post_data, silent))
+		return loads(get_url(url, config, headers, params, post_data, silent, no_cache))
 
 	except ValueError:
 		if silent is False:
@@ -144,3 +166,47 @@ def add_user_agend_header_string(uri, user_agent):
 	if uri.startswith('http') and uri.find('|User-Agent') == -1:
 		return uri + '|' + get_header_string({'User-Agent': user_agent})
 	return uri
+
+def get_etags_data(request_hash):
+
+	etags_data = cache.get_json('ETAGS').get('data')
+	if etags_data is None:
+		etags_data = {}
+
+	etag_data = etags_data.get(request_hash, None)
+	if etag_data is not None:
+		etags_data[request_hash].update({'access': int(time())})
+		cache.set_json('ETAGS', etags_data)
+		data = cache._get('ETAGS', request_hash + '.etag').get('data', None)
+		if data is not None:
+			etag_data.update({'data': data})
+			return etag_data
+	return None
+
+def set_etags_data(request_hash, etag, data):
+
+	etags_data = cache.get_json('ETAGS').get('data', {})
+	if etags_data is None:
+		etags_data = {}
+
+	etags_data.update({
+		request_hash: {
+				'etag': etag,
+				'access': int(time())
+			}
+		})
+	cache._set('ETAGS', request_hash + '.etag', data)
+	cache.set_json('ETAGS', etags_data)
+
+def purge_etags_cache(ttl):
+
+	etags_ttl = datetime.now() - timedelta(seconds=ttl)
+	xbmc_helper.log_debug('Removing etags older than: ' + str(etags_ttl))
+
+	etags_data = cache.get_json('ETAGS').get('data')
+	if etags_data is not None:
+		for request_hash, etag_data in etags_data.items():
+			if xbmc_helper.timestamp_to_datetime(etag_data.get('access', 0)) <= etags_ttl:
+				xbmc_helper.log_debug('Removing etags hash: ' + str(request_hash))
+				cache._remove('ETAGS', request_hash  + '.etag')
+				del etags_data[request_hash]

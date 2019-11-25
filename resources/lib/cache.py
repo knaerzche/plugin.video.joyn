@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from os import path
+from os import path, remove
 from json import dumps, loads
 from datetime import datetime, timedelta
 from platform import system
@@ -12,6 +12,7 @@ from . import compat as compat
 def _get(cache_key, file_name, override_expire_secs=None):
 
 	expire_datetime = None
+	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
 
 	if (override_expire_secs is not None):
 		expire_datetime = datetime.now() - timedelta(seconds=override_expire_secs)
@@ -23,18 +24,18 @@ def _get(cache_key, file_name, override_expire_secs=None):
 		'is_expired': True,
 	}
 
-	if path.exists(file_name):
+	if path.exists(cache_path):
 
-		filectime = datetime.fromtimestamp(path.getctime(file_name))
-		filemtime = datetime.fromtimestamp(path.getmtime(file_name))
+		filectime = datetime.fromtimestamp(path.getctime(cache_path))
+		filemtime = datetime.fromtimestamp(path.getmtime(cache_path))
 
 		if filemtime is None or filectime > filemtime:
 			filemtime = filectime
 
-		with io_open(file=file_name, mode='r', encoding='utf-8') as cache_infile:
+		with io_open(file=cache_path, mode='r', encoding='utf-8') as cache_infile:
 			cache_data.update({'data': cache_infile.read()})
 
-		if filemtime >= expire_datetime or expire_datetime is None:
+		if expire_datetime is None or filemtime >= expire_datetime:
 			cache_data.update({'is_expired': False})
 
 	return cache_data
@@ -47,9 +48,17 @@ def _set(cache_key, file_name, data):
 		cache_outfile.write(compat._unicode(data))
 
 
+def _remove(cache_key, file_name):
+
+	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
+	if path.exists(cache_path) and path.isfile(cache_path):
+		remove(cache_path)
+		return True
+	return False
+
 def get_json(cache_key, override_expire_secs=None):
 
-	cache_data = _get(cache_key, xbmc_helper.get_file_path(CONST['CACHE_DIR'], CONST['CACHE'][cache_key]['key'] + '.json'))
+	cache_data = _get(cache_key, CONST['CACHE'][cache_key]['key'] + '.json')
 
 	if cache_data['data'] is not None:
 		try:

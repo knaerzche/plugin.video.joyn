@@ -421,6 +421,8 @@ def index():
 		xbmc_helper.dialog_id('MSG_WIDEVINE_NOT_FOUND')
 		exit(0)
 
+	request_helper.purge_etags_cache(ttl=CONST['ETAGS_TTL'])
+
 	list_items = show_lastseen(xbmc_helper.get_int_setting('max_lastseen'))
 	max_recommendations = xbmc_helper.get_int_setting('max_recommendations')
 

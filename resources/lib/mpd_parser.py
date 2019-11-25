@@ -14,7 +14,7 @@ class mpd_parser(object):
 		self.mpd_tree = None
 		self.mpd_tree_ns = None
 
-		_mpd_contents = request_helper.get_url(url, config)
+		_mpd_contents = request_helper.get_url(url=url, config=config, no_cache=True)
 		if len(_mpd_contents) > 0:
 			_mpd_tree = ET.fromstring(_mpd_contents)
 			if  _mpd_tree.tag is not None:
