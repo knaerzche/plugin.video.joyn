@@ -10,7 +10,6 @@ from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE
 from xbmcaddon import Addon
 from datetime import datetime
 from time import time
-from json import dumps, loads
 from inputstreamhelper import Helper
 from .const import CONST
 from . import compat as compat
@@ -19,11 +18,15 @@ from . import xbmc_helper as xbmc_helper
 from . import request_helper as request_helper
 from .lib_joyn import lib_joyn as lib_joyn
 
-
 if compat.PY2:
 	from urllib import urlencode, quote
 elif compat.PY3:
 	from urllib.parse import urlencode, quote
+
+try:
+	from simplejson import loads, dumps
+except ImportError:
+	from json import loads, dumps
 
 if xbmc_helper.get_bool_setting('dont_verify_ssl_certificates') is True:
 

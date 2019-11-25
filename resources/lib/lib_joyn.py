@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from base64 import b64decode
-from json import loads, dumps
 from re import search, findall
 from os import environ
 from hashlib import sha1, sha256
@@ -23,9 +22,9 @@ from . import xbmc_helper as xbmc_helper
 from .mpd_parser import mpd_parser as mpd_parser
 
 try:
-	from ipaddress import IPv4Network
+	from simplejson import loads, dumps
 except ImportError:
-	from external.ipaddress import IPv4Network
+	from json import loads, dumps
 
 if compat.PY2:
 	from urllib import urlencode
@@ -715,6 +714,12 @@ class lib_joyn(object):
 				exit(0)
 
 			if config['country'] != config['actual_country']:
+
+				try:
+					from ipaddress import IPv4Network
+				except ImportError:
+					from external.ipaddress import IPv4Network
+
 				config['http_headers'].append(('x-forwarded-for',
 					str(choice(list(IPv4Network(compat._unicode(choice(CONST['NETBLOCKS'][config.get('country', 'DE')]))).hosts())))))
 

@@ -9,7 +9,6 @@ from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginC
 from xbmcvfs import mkdirs, exists, rmdir, listdir, delete
 from xbmcaddon import Addon
 from xbmcgui import Dialog, NOTIFICATION_ERROR
-from json import loads, dumps
 from . import compat as compat
 from .const import CONST
 
@@ -17,6 +16,12 @@ if compat.PY2:
 	from urlparse import parse_qs
 elif compat.PY3:
 	from urllib.parse import parse_qs
+
+try:
+	from simplejson import loads, dumps
+except ImportError:
+	from json import loads, dumps
+
 
 addon = Addon()
 

@@ -10,7 +10,6 @@ elif compat.PY3:
 	from urllib.request import Request, urlopen, ProxyHandler, build_opener, install_opener
 	from urllib.error import HTTPError
 
-from json import dumps, loads
 from base64 import urlsafe_b64encode
 from io import BytesIO
 from gzip import GzipFile
@@ -22,6 +21,10 @@ from . import xbmc_helper as xbmc_helper
 from . import cache as cache
 from xbmcaddon import Addon
 
+try:
+	from simplejson import loads, dumps
+except ImportError:
+	from json import loads, dumps
 
 def get_url(url, config, additional_headers=None, additional_query_string=None, post_data=None, fail_silent=False, no_cache=False):
 

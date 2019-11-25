@@ -1,13 +1,18 @@
 # -*- coding: utf-8 -*-
 
 from os import path, remove
-from json import dumps, loads
 from datetime import datetime, timedelta
 from platform import system
 from io import open as io_open
 from .const import CONST
 from . import xbmc_helper as xbmc_helper
 from . import compat as compat
+
+try:
+	from simplejson import loads, dumps
+except ImportError:
+	from json import loads, dumps
+
 
 def _get(cache_key, file_name, override_expire_secs=None):
 
