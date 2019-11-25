@@ -54,3 +54,6 @@ add proxy settings
 add slection for joyn platform
 fixed dates in far future on 32-bit platforms
 add support for movies
+v2.0.6
+implement simple caching system
+favor simplejson for json processing
