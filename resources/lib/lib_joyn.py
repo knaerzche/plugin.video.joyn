@@ -635,7 +635,7 @@ class lib_joyn(object):
 			xbmc_helper.log_debug('get_config(): create config')
 
 			config = {
-				'CONFIG'		: {'SevenTV_player_config_url': None},
+				'CONFIG'		: {'PLAYERCONFIG_URL': None, 'API_GW_API_KEY': None},
 				'PSF_CONFIG' 		: {},
 				'PLAYER_CONFIG'		: {},
 				'PSF_VARS'		: {},
@@ -744,50 +744,6 @@ class lib_joyn(object):
 				length = main_js[start:].find('",')
 				config['CONFIG'][key] = main_js[(start+len(find_str)):(start+length)]
 
-			if uri_start is not -1:
-				headers_conf_start = main_js[uri_start:].find('headers:') + uri_start
-				if headers_conf_start is not -1:
-					headers_start_match = '{'
-					headers_end_match = '}'
-					headers_start = main_js[headers_conf_start:].find(headers_start_match) + headers_conf_start
-					xbmc_helper.log_debug("HEADERS START " + str(headers_conf_start) + " --> " + str(headers_start))
-					if headers_start >= headers_conf_start:
-						headers_length = main_js[headers_start:].find(headers_end_match)
-						headers = main_js[(headers_start+len(headers_start_match)):(headers_start+headers_length)]
-						headers = headers.replace('"', '').split(',')
-
-						for header in headers:
-							header_parts = header.split(':')
-							if len(header_parts) == 2:
-								graphql_headers.append((header_parts[0], header_parts[1]))
-
-			for required_header in CONST['GRAPHQL']['REQUIRED_HEADERS']:
-				found = False
-				for graphql_header in graphql_headers:
-					xbmc_helper.log_debug("REQUIRED HEADER: " + required_header.lower() +  " GRAPHQL HEADER: " + graphql_header[0].lower())
-					if graphql_header[0].lower() == required_header.lower():
-						found = True
-						break
-
-				if found == False:
-					xbmc_helper.notification(
-						xbmc_helper.translation('ERROR').format('GraphQL Headers'),
-						xbmc_helper.translation('MSG_CONFIG_VALUES_INCOMPLETE').format(required_header)
-					)
-					xbmc_helper.log_error('Could not extract all required  GraphQL header from js: '\
-						 + required_header + ' JS source: ' + str(main_js_src) + 'extracted: ' + dumps(graphql_headers))
-					exit(0)
-
-			for index, value in enumerate(graphql_headers):
-				if value[0].lower() == 'joyn-platform':
-					if xbmc_helper.get_text_setting('joyn_platform') != '':
-						graphql_headers[index] = (value[0], xbmc_helper.get_text_setting('joyn_platform'))
-					else:
-						graphql_headers[index] = (value[0], 'android')
-					break
-
-			config['GRAPHQL_HEADERS'] = graphql_headers
-
 			for essential_config_item_key, essential_config_item in config['CONFIG'].items():
 				if essential_config_item is None or essential_config_item is '':
 					xbmc_helper.notification(
@@ -797,7 +753,12 @@ class lib_joyn(object):
 					xbmc_helper.log_error('Could not extract configuration value from js: KEY: ' + essential_config_item_key + ' JS source: ' + str(main_js_src))
 					exit(0)
 
-			config['PLAYER_CONFIG'] = request_helper.get_json_response(url=config['CONFIG']['SevenTV_player_config_url'], config=config)
+			config['GRAPHQL_HEADERS'] = [
+				('x-api-key', config['CONFIG']['API_GW_API_KEY']),
+				('joyn-platform', xbmc_helper.get_text_setting('joyn_platform'))
+			]
+
+			config['PLAYER_CONFIG'] = request_helper.get_json_response(url=config['CONFIG']['PLAYERCONFIG_URL'], config=config)
 			if config['PLAYER_CONFIG'] is None:
 				xbmc_helper.notification(
 						xbmc_helper.translation('ERROR').format('Player Config'),
