@@ -103,8 +103,7 @@ def get_url(url, config, additional_headers=None, additional_query_string=None, 
 			exit(0)
 		elif http_error.code == 304 and etags_data is not None:
 			response_content = etags_data.get('data')
-		else:
-			raise
+
 	except Exception as e:
 
 		xbmc_helper.log_error('Failed to load url: ' + url + ' headers: ' + dumps(additional_headers) + ' qs: ' + dumps(additional_query_string) + ' post_data: '

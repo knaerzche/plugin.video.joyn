@@ -690,6 +690,14 @@ class lib_joyn(object):
 			county_setting = xbmc_helper.get_setting('country')
 			xbmc_helper.log_debug("COUNTRY SETTING: " + county_setting)
 			ip_api_response = request_helper.get_json_response(url=CONST['IP_API_URL'].format(xbmc_helper.translation('LANG_CODE')), config=config, silent=True)
+
+			if type(ip_api_response) != type(dict()) or 'countryCode' not in ip_api_response.keys():
+
+				ip_api_response = {
+							'status'	: 'success',
+							'country'	: 'Deutschland',
+							'countryCode'	: 'DE',
+					}
 			config.update({'actual_country': ip_api_response.get('countryCode', 'Unknown')})
 
 			if county_setting is '' or county_setting is '0':

@@ -57,3 +57,5 @@ add support for movies
 v2.0.6
 implement simple caching system
 favor simplejson for json processing
+v2.0.8
+workaround ip-api.com error
