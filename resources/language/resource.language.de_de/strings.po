@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-08-25 12:22+0000\n"
+"POT-Creation-Date: 2019-11-27 18:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -31,7 +31,11 @@ msgctxt "#30002"
 msgid "Connection"
 msgstr "Verbindung"
 
-#empty strings from id 30003 to 30100
+msgctxt "#30003"
+msgid "Advanced"
+msgstr "Erweitert"
+
+#empty strings from id 30004 to 30100
 # SETTINGS-BUTTONS
 
 msgctxt "#30101"
@@ -39,8 +43,8 @@ msgid "DRM certificate check"
 msgstr "DRM Zertifikatsprüfung"
 
 msgctxt "#30102"
-msgid "How often to renew config (in minutes)"
-msgstr "Wie oft Konfiguration neu herunterladen (in Minuten)"
+msgid "How often to renew config (in days)"
+msgstr "Wie oft Konfiguration neu herunterladen (in Tagen)"
 
 msgctxt "#30103"
 msgid "Count of lastseen seasons in main menu"
@@ -174,7 +178,27 @@ msgctxt "#30135"
 msgid "Joyn platform"
 msgstr "Joyn Platform"
 
-#empty strings from id 30136 to 30229
+msgctxt "#30136"
+msgid "Login"
+msgstr "Anmelden"
+
+msgctxt "#30137"
+msgid "Logout"
+msgstr "Abmelden"
+
+msgctxt "#30138"
+msgid "Force to remove all files when clearing cache"
+msgstr "Löschen aller Dateien aus dem Cache erzwingen"
+
+msgctxt "#30139"
+msgid "Debug"
+msgstr "Debug"
+
+msgctxt "#30140"
+msgid "Debug requests"
+msgstr "Debug requests"
+
+#empty strings from id 30141 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350
@@ -183,7 +207,11 @@ msgctxt "#30351"
 msgid "Use 'Custom'+View ID for all non-Estuary skins"
 msgstr "'Custom'+View ID für alle nicht-Estuary skins verwenden."
 
-# empty strings from id 30352 to 30500
+msgctxt "#30352"
+msgid "Account"
+msgstr "Konto"
+
+# empty strings from id 30353 to 3050
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -202,7 +230,15 @@ msgctxt "#30504"
 msgid "Open addon Settings"
 msgstr "Addon Settings öffnen"
 
-#empty strings from id 30505 to 30520
+msgctxt "#30505"
+msgid "Retry"
+msgstr "Erneut versuchen"
+
+msgctxt "#30506"
+msgid "Continue without account"
+msgstr "Ohne Anmeldung fortfahren"
+
+#empty strings from id 30507 to 30520
 # WARNING/INFORMATION-MESSAGES-NOTIFICATION
 
 msgctxt "#30521"
@@ -257,7 +293,15 @@ msgctxt "#30533"
 msgid "It looks like you are located in {:s} - this country is currently not supported by this Joyn addon.[CR]If you are sure, that your are located in another country, please set it in the addon settings (at your own risk)"
 msgstr "Es scheint, dass Sie in aus {:s} kommen. Dieses Land wird derzeit von Joyn-Addon nicht unterstützt.[CR]Wenn Sie sicher sind, dass Sie aus einem andern Land kommen, bitte in den Addon Einstellungen setzen (auf eigene Gefahr)"
 
-#empty strings from id 30534 to 30600
+msgctxt "#30534"
+msgid "The authorization of your account could not get refreshed automatically - please login again"
+msgstr "Die Authorisierung für das Konto konnte nicht automatisch aktualisiert werden - bitte erneut einloggen"
+
+msgctxt "#30535"
+msgid "Authorization could not be done - check log for errors"
+msgstr "Es konnte keine Authorisierung erfolgen - bitte Log auf Fehler überprüfen"
+
+#empty strings from id 30536 to 30600
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"
@@ -409,6 +453,89 @@ msgid "Series"
 msgstr "Serie"
 
 msgctxt "#30669"
-msgid "{:s}[CR][LIGHT][I]{:s}[/I][/LIGHT]"
-msgstr "{:s}[CR][LIGHT][I]{:s}[/I][/LIGHT]"
+msgid "[I]{:s}[/I]"
+msgstr"[I]{:s}[/I]"
 
+msgctxt "#30670"
+msgid "Logged in as {:s}"
+msgstr "Angemeldet als {:s}"
+
+msgctxt "#30671"
+msgid "Login failed"
+msgstr "Login fehlgeschlagen"
+
+msgctxt "#30672"
+msgid "Plus+ {:s}[CR]HD {:s}"
+msgstr "Plus+ {:s}[CR]HD {:s}"
+
+msgctxt "#30673"
+msgid "Yes"
+msgstr "Ja"
+
+msgctxt "#30674"
+msgid "No"
+msgstr "Nein"
+
+msgctxt "#30675"
+msgid "Username (email)"
+msgstr "Benutzername (E-Mail)"
+
+msgctxt "#30676"
+msgid "Password"
+msgstr "Passwort"
+
+msgctxt "#30677"
+msgid "Invalid email (format)"
+msgstr "Ungültige E-Mail-Adresse (Format)"
+
+msgctxt "#30678"
+msgid "Logged out successfully"
+msgstr "Erfolgreich abgemeldet"
+
+msgctxt "#30679"
+msgid "Not logged in"
+msgstr "Nicht angemeldet"
+
+msgctxt "#30680"
+msgid "Logout failed"
+msgstr "Abmeldung fehlgeschlagen"
+
+msgctxt "#30681"
+msgid "Joyn Bookmarks"
+msgstr "Joyn Merkliste"
+
+msgctxt "#30682"
+msgid "[B]{:s}[/B]"
+msgstr "[B]{:s}[/B]"
+
+msgctxt "#30683"
+msgid "Successfully added"
+msgstr "Erfolgreich hinzugefügt"
+
+msgctxt "#30684"
+msgid "Failed to add"
+msgstr "Hinzufügen fehlgeschlagen"
+
+msgctxt "#30685"
+msgid "Successfully removed"
+msgstr "Erfolgreich entfernt"
+
+msgctxt "#30686"
+msgid "Failed to remove"
+msgstr "Entfernen fehlgeschlagen"
+
+msgctxt "#30687"
+msgid "Add to Joyn Bookmarks"
+msgstr "Zur Joyn Merkliste hinzufügen"
+
+msgctxt "#30688"
+msgid "Remove from Joyn bookmarks"
+msgstr "Aus der Joyn Merkliste entfernen"
+
+msgctxt "#30689"
+msgid "MPAA pin"
+msgstr "FSK Pin"
+
+msgctxt "#30690"
+msgid "The given MPP pin is invalid - please enter the correct one"
+msgstr "Der eingegebene FSK Pin ist ungültig - bitte den korrekten eingeben"

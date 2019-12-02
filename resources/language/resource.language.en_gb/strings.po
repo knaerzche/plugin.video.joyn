@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-08-25 12:22+0000\n"
+"POT-Creation-Date: 2019-11-27 18:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -31,7 +31,11 @@ msgctxt "#30002"
 msgid "Connection"
 msgstr ""
 
-#empty strings from id 30003 to 30100
+msgctxt "#30003"
+msgid "Advanced"
+msgstr "Erweitert"
+
+#empty strings from id 30004 to 30100
 # SETTINGS-BUTTONS
 
 msgctxt "#30101"
@@ -39,7 +43,7 @@ msgid "DRM certificate check"
 msgstr ""
 
 msgctxt "#30102"
-msgid "How often to renew config (in minutes)"
+msgid "How often to renew config (in days)"
 msgstr ""
 
 msgctxt "#30103"
@@ -174,7 +178,27 @@ msgctxt "#30135"
 msgid "Joyn platform"
 msgstr ""
 
-#empty strings from id 30136 to 30229
+msgctxt "#30136"
+msgid "Login"
+msgstr ""
+
+msgctxt "#30137"
+msgid "Logout"
+msgstr ""
+
+msgctxt "#30138"
+msgid "Force to remove all files when clearing cache"
+msgstr ""
+
+msgctxt "#30139"
+msgid "Debug"
+msgstr ""
+
+msgctxt "#30140"
+msgid "Debug requests"
+msgstr ""
+
+#empty strings from id 30141 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350
@@ -183,7 +207,11 @@ msgctxt "#30351"
 msgid "Use 'Custom'+View ID for all non-Estuary skins"
 msgstr ""
 
-# empty strings from id 30352 to 30500
+msgctxt "#30352"
+msgid "Account"
+msgstr ""
+
+# empty strings from id 30353 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -202,7 +230,15 @@ msgctxt "#30504"
 msgid "Open addon Settings"
 msgstr ""
 
-#empty strings from id 30505 to 30520
+msgctxt "#30505"
+msgid "Retry"
+msgstr ""
+
+msgctxt "#30506"
+msgid "Continue without account"
+msgstr ""
+
+#empty strings from id 30507 to 30520
 # WARNING/INFORMATION-MESSAGES-NOTIFICATION
 
 msgctxt "#30521"
@@ -257,7 +293,15 @@ msgctxt "#30533"
 msgid "It looks like you are located in {:s} - this country is currently not supported by this Joyn addon.[CR]If you are sure, that your are located in another country, please set it in the addon settings (at your own risk)"
 msgstr ""
 
-#empty strings from id 30534 to 30600
+msgctxt "#30534"
+msgid "The authorization of your account could not get refreshed automatically - please login again"
+msgstr ""
+
+msgctxt "#30535"
+msgid "Authorization could not be done - check log for errors"
+msgstr ""
+
+#empty strings from id 30536 to 30600
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"
@@ -409,6 +453,86 @@ msgid "Series"
 msgstr ""
 
 msgctxt "#30669"
-msgid "{:s}[CR][LIGHT][I]{:s}[/I][/LIGHT]"
+msgid "[I]{:s}[/I]"
+msgstr ""
+
+msgctxt "#30670"
+msgid "Logged in as {:s}"
+msgstr ""
+
+msgctxt "#30671"
+msgid "Login failed"
+msgstr ""
+
+msgctxt "#30672"
+msgid "Plus+ {:s}[CR]HD {:s}"
+msgstr ""
+
+msgctxt "#30673"
+msgid "Yes"
+msgstr ""
+
+msgctxt "#30674"
+msgid "No"
+msgstr ""
+
+msgctxt "#30675"
+msgid "Username (email)"
+msgstr ""
+
+msgctxt "#30676"
+msgid "Password"
+msgstr ""
+
+msgctxt "#30677"
+msgid "Invalid email (format)"
+msgstr ""
+
+msgctxt "#30678"
+msgid "Logged out successfully"
+msgstr ""
+
+msgctxt "#30679"
+msgid "Not logged in"
+msgstr ""
+
+msgctxt "#30680"
+msgid "Logout failed"
+msgstr ""
+
+msgctxt "#30681"
+msgid "Joyn Bookmarks"
+msgstr ""
+
+msgctxt "#30682"
+msgid "[B]{:s}[/B]"
+msgstr ""
+
+msgctxt "#30683"
+msgid "Successfully added"
+msgstr ""
+
+msgctxt "#30684"
+msgid "Failed to add"
+msgstr ""
+
+msgctxt "#30685"
+msgid "Successfully removed"
+msgstr ""
+
+msgctxt "#30686"
+msgid "Failed to remove"
+msgstr ""
+
+msgctxt "#30687"
+msgid "Add to Joyn Bookmarks"
+msgstr ""
+
+msgctxt "#30688"
+msgid "Remove from Joyn bookmarks"
+msgstr ""
+
+msgctxt "#30689"
+msgid "MPAA pin"
 msgstr ""
 

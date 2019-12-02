@@ -2,17 +2,11 @@
 	<category label="30000">
 		<setting label="30105" type="select" id="country" lvalues="30106|30107" default="0"/>
 		<setting type="sep" />
-		<setting label="30135" type="select" id="joyn_platform" values="android|web|ios" default="android" />
-		<setting type="sep" />
-		<setting label="30101" type="bool" id="checkdrmcert" default="false" />
-		<setting type="sep" />
-		<setting label="30130" type="bool" id="force_playready" default="false" enable="System.Platform.Android" />
+		<setting label="30104" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)" option="close" />
 		<setting type="sep" />
 		<setting label="30127" type="bool" id="disable_foldercache" default="false" />
 		<setting type="sep" />
-		<setting label="30102" type="slider" id="configcachemins" default="120" range="0,30,1440" option="int" />
-		<setting type="sep" />
-		<setting label="30104" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)" option="close" />
+		<setting label="30102" type="slider" id="configcachedays" default="5" range="0,1,30" option="int" />
 		<setting type="sep" />
 		<setting label="30108" type="action" id="inputstream_adaptive_settings"
 			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;forein_addon_id=inputstream.adaptive)"
@@ -21,6 +15,13 @@
 			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;forein_addon_id=script.module.uepg)"
 			enable="System.HasAddon(script.module.uepg)" option="close" />
 
+	</category>
+	<category label="30352">
+		<setting label="30136" type="action" id="login" action="RunPlugin(plugin://plugin.video.joyn/?mode=login)" option="close" />
+		<setting type="sep" />
+		<setting label="30137" type="action" id="logout" action="RunPlugin(plugin://plugin.video.joyn/?mode=logout)" option="close" />
+		<setting type="sep" />
+		<setting label="30689" type="number" id="mpaa_pin" />
 	</category>
 	<category label="30001">
 		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int" />
@@ -57,5 +58,17 @@
 		<setting label="30132" type="bool" id="use_https_proxy" default="false" />
 		<setting label="30133" type="text" id="https_proxy_host" enable="eq(-1,true)" subsetting="true" />
 		<setting label="30134" type="number" id="https_proxy_port" enable="eq(-2,true)" subsetting="true" />
+	</category>
+	<category label="30003">
+		<setting label="30139" type="bool" id="debug_mode" default="false" />
+		<setting label="30140" type="bool" id="debug_requests" default="false" />
+		<setting type="sep" />
+		<setting label="30135" type="select" id="joyn_platform" values="android|web|ios" default="web" />
+		<setting type="sep" />
+		<setting label="30101" type="bool" id="checkdrmcert" default="false" />
+		<setting type="sep" />
+		<setting label="30130" type="bool" id="force_playready" default="false" enable="System.Platform.Android" />
+		<setting type="sep" />
+		<setting label="30138" type="bool" id="force_clean_all_files" default="false" />
 	</category>
 </settings>

@@ -4,7 +4,8 @@ import os.path
 from sys import argv
 from io import open as io_open
 from datetime import datetime, timedelta
-from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
+from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, \
+    sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
 from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginCategory
 from xbmcvfs import mkdirs, exists, rmdir, listdir, delete
 from xbmcaddon import Addon
@@ -14,14 +15,15 @@ from .const import CONST
 
 if compat.PY2:
 	from urlparse import parse_qs
+
+	try:
+		from simplejson import loads, dumps
+	except ImportError:
+		from json import loads, dumps
+
 elif compat.PY3:
 	from urllib.parse import parse_qs
-
-try:
-	from simplejson import loads, dumps
-except ImportError:
 	from json import loads, dumps
-
 
 addon = Addon()
 
@@ -35,6 +37,7 @@ def get_file_path(directory, filename):
 		mkdirs(xbmc_directory)
 
 	return translatePath(os.path.join(xbmc_directory, filename)).encode('utf-8').decode('utf-8')
+
 
 def get_resource_filepath(filename, subdir):
 
@@ -54,8 +57,9 @@ def remove_dir(directory):
 	remove_ok = 1
 
 	dirs, files = listdir(xbmc_directory)
-	for file in files:
-		remove_ok = delete(os.path.join(xbmc_directory, file))
+	for _file in files:
+		if get_bool_setting('force_clean_all_files') is True or _file not in CONST['CACHE_FILES_KEEP']:
+			remove_ok = delete(os.path.join(xbmc_directory, _file))
 
 	for directory in dirs:
 		if directory != '.' and directory != '..':
@@ -67,8 +71,9 @@ def remove_dir(directory):
 
 def addon_enabled(addon_id):
 
-	result = executeJSONRPC('{"jsonrpc":"2.0","method":"Addons.GetAddonDetails","id":1,\
-		"params":{"addonid":"%s", "properties": ["enabled"]}}' % addon_id)
+	result = executeJSONRPC(
+	        '{"jsonrpc":"2.0","method":"Addons.GetAddonDetails","id":1, "params":{"addonid":"%s", "properties": ["enabled"]}}' %
+	        addon_id)
 	return False if '"error":' in result or '"enabled":false' in result else True
 
 
@@ -86,13 +91,15 @@ def get_int_setting(setting_id):
 
 	setting_val = get_setting(setting_id)
 	if setting_val.isdigit():
-		return int(setting_val,10)
+		return int(setting_val, 10)
 	else:
 		return None
+
 
 def get_text_setting(setting_id):
 
 	return str(get_setting(setting_id))
+
 
 def get_addon_version():
 
@@ -115,16 +122,49 @@ def notification(msg, description, icon=NOTIFICATION_ERROR):
 	return Dialog().notification(msg, description, icon, time)
 
 
-def dialog(msg, msg_line2=None, msg_line3=None, header=addon.getAddonInfo('name')):
-	return Dialog().ok(header, msg, msg_line2, msg_line3)
+def dialog(msg, msg_line2=None, msg_line3=None, header_appendix=None, open_settings_on_ok=False):
 
+	if header_appendix is not None:
+		header = '{} - {}'.format(str(header_appendix), addon.getAddonInfo('name'))
+	else:
+		header = addon.getAddonInfo('name')
 
-def dialog_settings(msg,msg_line2=None, msg_line3=None, header=addon.getAddonInfo('name')):
+	ret = Dialog().ok(header, msg, msg_line2, msg_line3)
 
-	dialog_res = Dialog().yesno(header, msg, msg_line2, msg_line3, nolabel=translation('CANCEL'), yeslabel=translation('OPEN_ADDON_SETTINGS'))
-
-	if dialog_res is 1:
+	if open_settings_on_ok is True and ret is 1:
 		addon.openSettings()
+
+	return ret
+
+
+def dialog_action(msg,
+                  msg_line2=None,
+                  msg_line3=None,
+                  header_appendix=None,
+                  yes_label_translation='OPEN_ADDON_SETTINGS',
+                  ok_addon_parameters=None,
+                  cancel_label_translation='CANCEL',
+                  cancel_addon_parameters=None):
+
+	if header_appendix is not None:
+		header = '{} - {}'.format(str(header_appendix), addon.getAddonInfo('name'))
+	else:
+		header = addon.getAddonInfo('name')
+
+	dialog_res = Dialog().yesno(header,
+	                            msg,
+	                            msg_line2,
+	                            msg_line3,
+	                            nolabel=translation(cancel_label_translation),
+	                            yeslabel=translation(yes_label_translation))
+	if dialog_res:
+		if ok_addon_parameters is not None:
+			executebuiltin('RunPlugin({}{})'.format('plugin://' + addon.getAddonInfo('id'), '?' + str(ok_addon_parameters)))
+		else:
+			addon.openSettings()
+
+	elif cancel_addon_parameters is not None:
+		executebuiltin('RunPlugin({}{})'.format('plugin://' + addon.getAddonInfo('id'), '?' + str(cancel_addon_parameters)))
 
 
 def dialog_id(id):
@@ -142,7 +182,8 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 	if 'content_type' in folder_defs.keys():
 		log_debug('set_folder: set content_type: ' + folder_defs['content_type'])
 		setContent(pluginhandle, folder_defs['content_type'])
-	endOfDirectory(handle=pluginhandle,cacheToDisc=(folder_defs.get('cacheable', False) and (get_bool_setting('disable_foldercache') is False)))
+	endOfDirectory(handle=pluginhandle,
+	               cacheToDisc=(folder_defs.get('cacheable', False) and (get_bool_setting('disable_foldercache') is False)))
 
 	wait_for_container(pluginurl, pluginquery)
 
@@ -152,6 +193,7 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 	if 'sort' in folder_defs.keys():
 		set_folder_sort(folder_defs['sort'])
 
+
 def set_folder_sort(folder_sort_def):
 
 	order = get_setting(folder_sort_def['setting_id'])
@@ -160,8 +202,10 @@ def set_folder_sort(folder_sort_def):
 	if order != CONST['SETTING_VALS']['SORT_ORDER_DEFAULT']:
 		executebuiltin('Container.SetSortMethod({:s})'.format(str(folder_sort_def['order_type'])))
 
-		if ((order == CONST['SETTING_VALS']['SORT_ORDER_DESC'] and str(getCondVisibility('Container.SortDirection(ascending)')) == '1') or
-			(order == CONST['SETTING_VALS']['SORT_ORDER_ASC'] and str(getCondVisibility('Container.SortDirection(descending)')) == '1')):
+		if ((order == CONST['SETTING_VALS']['SORT_ORDER_DESC']
+		     and str(getCondVisibility('Container.SortDirection(ascending)')) == '1')
+		    or (order == CONST['SETTING_VALS']['SORT_ORDER_ASC']
+		        and str(getCondVisibility('Container.SortDirection(descending)')) == '1')):
 			executebuiltin('Container.SetSortDirection()')
 
 
@@ -171,7 +215,6 @@ def set_view_mode(setting_id):
 
 	if get_bool_setting('enable_viewmodes') is True:
 
-
 		setting_val = get_setting(setting_id)
 
 		if setting_val == 'Custom':
@@ -179,28 +222,30 @@ def set_view_mode(setting_id):
 		else:
 			viewmode = CONST['VIEW_MODES'].get(setting_val, {}).get(skin_name, '0')
 
-		log_debug('--> Viewmode ' + str(setting_id) + ': ' + setting_val + ': ' + viewmode + ': ' + skin_name )
+		log_debug('Viewmode :{}:{}:{}:{}'.format(setting_id, setting_val, viewmode, skin_name))
 
 		if viewmode is not '0':
 			executebuiltin('Container.SetViewMode({:s})'.format(viewmode))
 
 
-def wait_for_container(pluginurl, pluginquery):
+def wait_for_container(pluginurl, pluginquery, sleep_msecs=5, cycles=1000):
 
 	#sadly it's necesary to wait until kodi has the new Container ...
 	#this is necessary to make sure that all upcoming transactions are done with the correct container
 	#provided the previous container had a differnd pluginurl/pluginquery
 	pluginpath = pluginurl + pluginquery
-
-	log_debug('wait_for_container pluginurl ' + str(pluginpath))
-
+	folder_path = ''
 	counter = 0
-	while counter <= 100:
+
+	while counter <= cycles:
 		counter += 1
-		xbmc_sleep(5)
+		xbmc_sleep(sleep_msecs)
 		folder_path = str(getInfoLabel('Container.FolderPath'))
 		if folder_path == pluginpath:
 			break
+
+	log_debug('wait_for_container pluginurl: msecs waited: ' + str((counter * sleep_msecs)) + ' pluginurls do match ' +
+	          str(folder_path == pluginpath) + ' final folder path ' + folder_path)
 
 
 def log_error(content):
@@ -215,7 +260,10 @@ def log_notice(content):
 
 def log_debug(content):
 
-	_log(content, LOGDEBUG)
+	if get_bool_setting('debug_mode') is True:
+		log_notice(content)
+	else:
+		_log(content, LOGDEBUG)
 
 
 def _log(msg, level=LOGNOTICE):
@@ -226,13 +274,12 @@ def _log(msg, level=LOGNOTICE):
 
 def translation(id):
 
-	return  compat._encode(addon.getLocalizedString(CONST['MSG_IDS'][id]))
+	return compat._encode(addon.getLocalizedString(CONST['MSG_IDS'][id]))
 
 
 def get_addon_params(pluginquery):
 
-	return dict( (k, v if len(v)>1 else v[0] )
-           for k, v in parse_qs(pluginquery[1:]).items() )
+	return dict((k, v if len(v) > 1 else v[0]) for k, v in parse_qs(pluginquery[1:]).items())
 
 
 def get_file_contents(file_path):
@@ -241,7 +288,7 @@ def get_file_contents(file_path):
 
 	if os.path.exists(file_path):
 		with io_open(file=file_path, mode='r', encoding='utf-8') as data_infile:
-			 data = data_infile.read()
+			data = data_infile.read()
 	return data
 
 
@@ -267,13 +314,13 @@ def get_json_data(filename, dir_type='DATA_DIR'):
 		try:
 			data = loads(get_data(filename, dir_type))
 		except ValueError:
-			log('Could not decode data as json: ' + filename )
+			log('Could not decode data as json {} '.format(filename))
 			pass
 
 	return data
 
 
-def set_json_data (filename, data, dir_type='DATA_DIR'):
+def set_json_data(filename, data, dir_type='DATA_DIR'):
 
 	set_data(filename, dumps(data), dir_type)
 
@@ -286,7 +333,7 @@ def timestamp_to_datetime(timestamp, is_utc=False):
 		else:
 			return datetime.fromtimestamp(0) + timedelta(seconds=int(timestamp))
 	except Exception as e:
-		log_notice('Could not convert timestamp ' + str(timestamp) + ' to datetime - Exception: ' + str(e))
+		log('Could not convert timestamp {} to datetime - Exception: {}'.format(timestamp, e))
 		pass
 
 	return False
