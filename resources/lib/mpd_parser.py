@@ -2,6 +2,7 @@
 
 from . import request_helper as request_helper
 from . import xbmc_helper as xbmc_helper
+from . import compat
 import xml.etree.ElementTree as ET
 
 
@@ -25,7 +26,7 @@ class mpd_parser(object):
 					self.mpd_tree_ns = _mpd_tree_ns
 					return
 
-		raise ValueError('{} could not by parsed as an valid MPD'.format(url))
+		raise ValueError(compat._format('{} could not by parsed as an valid MPD', url))
 
 	def query(self, query_path):
 

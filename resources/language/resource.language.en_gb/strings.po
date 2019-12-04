@@ -536,3 +536,6 @@ msgctxt "#30689"
 msgid "MPAA pin"
 msgstr ""
 
+msgctxt "#30690"
+msgid "The given MPP pin is invalid - please enter the correct one"
+msgstr ""

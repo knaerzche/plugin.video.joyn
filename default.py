@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-#entrypoint
+# entrypoint
 from resources.lib import plugin

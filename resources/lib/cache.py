@@ -16,6 +16,7 @@ if compat.PY2:
 elif compat.PY3:
 	from json import loads, dumps
 
+
 def _get(cache_key, file_name, override_expire_secs=None):
 
 	expire_datetime = None
@@ -27,8 +28,8 @@ def _get(cache_key, file_name, override_expire_secs=None):
 		expire_datetime = datetime.now() - timedelta(seconds=CONST['CACHE'][cache_key]['expires'])
 
 	cache_data = {
-		'data': None,
-		'is_expired': True,
+	        'data': None,
+	        'is_expired': True,
 	}
 
 	if path.exists(cache_path):
@@ -63,8 +64,10 @@ def _remove(cache_key, file_name):
 		return True
 	return False
 
+
 def remove_json(cache_key):
 	_remove(cache_key, CONST['CACHE'][cache_key]['key'] + '.json')
+
 
 def get_json(cache_key, override_expire_secs=None):
 

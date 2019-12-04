@@ -211,7 +211,7 @@ msgctxt "#30352"
 msgid "Account"
 msgstr "Konto"
 
-# empty strings from id 30353 to 3050
+# empty strings from id 30353 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -454,7 +454,7 @@ msgstr "Serie"
 
 msgctxt "#30669"
 msgid "[I]{:s}[/I]"
-msgstr"[I]{:s}[/I]"
+msgstr "[I]{:s}[/I]"
 
 msgctxt "#30670"
 msgid "Logged in as {:s}"
