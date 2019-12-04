@@ -59,3 +59,8 @@ implement simple caching system
 favor simplejson for json processing
 v2.0.8
 workaround ip-api.com error
+v2.2.0
+implement sign-in
+implement joyn bookmarks
+implement 'Plus+'
+implement MPAA-Pin setting

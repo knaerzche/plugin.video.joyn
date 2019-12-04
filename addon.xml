@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.joyn" name="Joyn" version="2.0.8" provider-name="knaerzche">
+<addon id="plugin.video.joyn" name="Joyn" version="2.2.0" provider-name="knaerzche">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
@@ -31,18 +31,12 @@
 			<screenshot>resources/media/screenshot03.jpg</screenshot>
 		</assets>
 		<news>
-v2.0.5
-[new] add support from PlayReady DRM
-[new] add preliminary for foreign countries
-[new] add proxy settings
-[new] add slection for joyn platform
-[fixed] dates in far future on 32-bit platforms
-[new] add support for movies
-v2.0.6
-[new] implement simple caching system
-[new] favor simplejson for json processing
-v2.0.8
-[fix] workarround ip-api.com error
+v2.2.0
+[new] implement sign-in
+[new} implement joyn bookmarks
+[new] implement 'Plus+'
+[new] implement MPAA-Pin setting
+
 		</news>
 	</extension>
 </addon>
