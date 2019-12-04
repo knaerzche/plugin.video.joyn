@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-from sys import argv
 from io import open as io_open
 from datetime import datetime, timedelta
 from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, \
     sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
 from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginCategory
-from xbmcvfs import mkdirs, exists, rmdir, listdir, delete
+from xbmcvfs import mkdirs, exists, listdir, delete
 from xbmcaddon import Addon
 from xbmcgui import Dialog, NOTIFICATION_ERROR
 from . import compat as compat
@@ -66,7 +65,7 @@ def remove_dir(directory):
 			directory = directory.decode("utf-8")
 			remove_ok = remove_dir(os.path.join(xbmc_directory, directory))
 
-	return (remove_ok == 1)
+	return remove_ok == 1
 
 
 def addon_enabled(addon_id):
@@ -103,12 +102,12 @@ def get_text_setting(setting_id):
 
 def get_addon_version():
 
-	return addon.getAddonInfo('id') + '-' + addon.getAddonInfo('version')
+	return compat._format('{} - {}', addon.getAddonInfo('id'), addon.getAddonInfo('version'))
 
 
 def open_foreign_addon_settings(foreign_addon_id):
 
-	log_debug('open_foreign_addon_settings ' + foreign_addon_id)
+	log_debug(compat._format('open_foreign_addon_settings {}', foreign_addon_id))
 	Addon(foreign_addon_id).openSettings()
 
 
@@ -125,7 +124,7 @@ def notification(msg, description, icon=NOTIFICATION_ERROR):
 def dialog(msg, msg_line2=None, msg_line3=None, header_appendix=None, open_settings_on_ok=False):
 
 	if header_appendix is not None:
-		header = '{} - {}'.format(str(header_appendix), addon.getAddonInfo('name'))
+		header = compat._format('{} - {}', str(header_appendix), addon.getAddonInfo('name'))
 	else:
 		header = addon.getAddonInfo('name')
 
@@ -147,7 +146,7 @@ def dialog_action(msg,
                   cancel_addon_parameters=None):
 
 	if header_appendix is not None:
-		header = '{} - {}'.format(str(header_appendix), addon.getAddonInfo('name'))
+		header = compat._format('{} - {}', str(header_appendix), addon.getAddonInfo('name'))
 	else:
 		header = addon.getAddonInfo('name')
 
@@ -159,12 +158,12 @@ def dialog_action(msg,
 	                            yeslabel=translation(yes_label_translation))
 	if dialog_res:
 		if ok_addon_parameters is not None:
-			executebuiltin('RunPlugin({}{})'.format('plugin://' + addon.getAddonInfo('id'), '?' + str(ok_addon_parameters)))
+			executebuiltin(compat._format('RunPlugin(plugin://{}?{})', addon.getAddonInfo('id'), ok_addon_parameters))
 		else:
 			addon.openSettings()
 
 	elif cancel_addon_parameters is not None:
-		executebuiltin('RunPlugin({}{})'.format('plugin://' + addon.getAddonInfo('id'), '?' + str(cancel_addon_parameters)))
+		executebuiltin(compat._format('RunPlugin(plugin://{}?{})', addon.getAddonInfo('id'), cancel_addon_parameters))
 
 
 def dialog_id(id):
@@ -180,7 +179,7 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 		setPluginCategory(pluginhandle, title)
 
 	if 'content_type' in folder_defs.keys():
-		log_debug('set_folder: set content_type: ' + folder_defs['content_type'])
+		log_debug(compat._format('set_folder: set content_type: {}', folder_defs['content_type']))
 		setContent(pluginhandle, folder_defs['content_type'])
 	endOfDirectory(handle=pluginhandle,
 	               cacheToDisc=(folder_defs.get('cacheable', False) and (get_bool_setting('disable_foldercache') is False)))
@@ -197,10 +196,10 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 def set_folder_sort(folder_sort_def):
 
 	order = get_setting(folder_sort_def['setting_id'])
-	log_debug('set_folder_sort ' + dumps(folder_sort_def) + ': ' + order)
+	log_debug(compat._format('set_folder_sort {}: {}', folder_sort_def, order))
 
 	if order != CONST['SETTING_VALS']['SORT_ORDER_DEFAULT']:
-		executebuiltin('Container.SetSortMethod({:s})'.format(str(folder_sort_def['order_type'])))
+		executebuiltin(compat._format('Container.SetSortMethod({:s})', str(folder_sort_def['order_type'])))
 
 		if ((order == CONST['SETTING_VALS']['SORT_ORDER_DESC']
 		     and str(getCondVisibility('Container.SortDirection(ascending)')) == '1')
@@ -212,27 +211,25 @@ def set_folder_sort(folder_sort_def):
 def set_view_mode(setting_id):
 
 	skin_name = str(getSkinDir())
-
 	if get_bool_setting('enable_viewmodes') is True:
 
 		setting_val = get_setting(setting_id)
-
 		if setting_val == 'Custom':
-			viewmode = get_setting(setting_id + '_custom')
+			viewmode = get_setting(compat._format('{}_custom', setting_id))
 		else:
 			viewmode = CONST['VIEW_MODES'].get(setting_val, {}).get(skin_name, '0')
 
-		log_debug('Viewmode :{}:{}:{}:{}'.format(setting_id, setting_val, viewmode, skin_name))
+		log_debug(compat._format('Viewmode :{}:{}:{}:{}', setting_id, setting_val, viewmode, skin_name))
 
 		if viewmode is not '0':
-			executebuiltin('Container.SetViewMode({:s})'.format(viewmode))
+			executebuiltin(compat._format('Container.SetViewMode({})', viewmode))
 
 
 def wait_for_container(pluginurl, pluginquery, sleep_msecs=5, cycles=1000):
 
-	#sadly it's necesary to wait until kodi has the new Container ...
-	#this is necessary to make sure that all upcoming transactions are done with the correct container
-	#provided the previous container had a differnd pluginurl/pluginquery
+	# sadly it's necessary to wait until kodi has the new Container ...
+	# this is necessary to make sure that all upcoming transactions are done with the correct container
+	# provided the previous container had a different pluginurl/pluginquery
 	pluginpath = pluginurl + pluginquery
 	folder_path = ''
 	counter = 0
@@ -244,8 +241,9 @@ def wait_for_container(pluginurl, pluginquery, sleep_msecs=5, cycles=1000):
 		if folder_path == pluginpath:
 			break
 
-	log_debug('wait_for_container pluginurl: msecs waited: ' + str((counter * sleep_msecs)) + ' pluginurls do match ' +
-	          str(folder_path == pluginpath) + ' final folder path ' + folder_path)
+	log_debug(
+	        compat._format('wait_for_container pluginurl: msecs waited: {} pluginurls do match {} final folder path {}',
+	                       (counter * sleep_msecs), (folder_path == pluginpath), folder_path))
 
 
 def log_error(content):
@@ -268,8 +266,7 @@ def log_debug(content):
 
 def _log(msg, level=LOGNOTICE):
 
-	msg = compat._encode(msg)
-	log('[' + get_addon_version() + ']' + msg, level)
+	log(compat._format('[{}] {}', get_addon_version(), msg), level)
 
 
 def translation(id):
@@ -314,7 +311,7 @@ def get_json_data(filename, dir_type='DATA_DIR'):
 		try:
 			data = loads(get_data(filename, dir_type))
 		except ValueError:
-			log('Could not decode data as json {} '.format(filename))
+			log(compat._format('Could not decode data as json {} ', filename))
 			pass
 
 	return data
@@ -333,7 +330,7 @@ def timestamp_to_datetime(timestamp, is_utc=False):
 		else:
 			return datetime.fromtimestamp(0) + timedelta(seconds=int(timestamp))
 	except Exception as e:
-		log('Could not convert timestamp {} to datetime - Exception: {}'.format(timestamp, e))
+		log_notice(compat._format('Could not convert timestamp {} to datetime - Exception: {}', timestamp, e))
 		pass
 
 	return False

@@ -42,3 +42,8 @@ def _uname_list():
 		return list(uname())
 	else:
 		return uname()
+
+
+def _format(format_str, *format_args):
+
+	return _unicode(format_str).format(*tuple(map(_unicode, format_args)))

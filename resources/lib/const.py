@@ -16,7 +16,7 @@ CONST = {
 
         'PSF_VAR_DEFS'  : {
      'SECRET' : {
-       'INDEX'  : 1192,
+       'INDEX'  : 1194,
        'VAL_BEFORE' : 'vas',
        'VAL_AFTER' : '@oasis/vas-sdk',
        'FALLBACK' : '5C7838365C7864665C786638265C783064595C783935245C7865395C7838323F5C7866333D3B5C78386635',
@@ -46,8 +46,8 @@ CONST = {
         'ETAGS_TTL'  : 1209600, #14 days
 
         'LASTSEEN_ITEM_COUNT' : 20,
-        'UPEG_REFRESH_INTERVAL' : 7200,
-        'UPEG_ROWCOUNT'  : 5,
+        'UEPG_REFRESH_INTERVAL' : 7200,
+        'UEPG_ROWCOUNT'  : 5,
         'INPUTSTREAM_ADDON' : 'inputstream.adaptive',
 
         'MSG_IDS'  : {
@@ -384,6 +384,7 @@ CONST = {
        'OPERATION' : 'SingleBlockQuery',
        'REQUIRED_VARIABLES' : ['blockId', 'offset', 'first'],
        'AUTH': True,
+       'BOOKMARKS': True,
 
 
    },
@@ -407,15 +408,18 @@ CONST = {
        'OPERATION': 'ChannelPageQuery',
        'REQUIRED_VARIABLES': ['path', 'offset', 'first'],
        'AUTH': True,
+       'BOOKMARKS': True,
    },
 
    'SEASONS'  : {
-       'QUERY': '($seriesId: ID!) { series(id: $seriesId) { __typename id title description images { __typename type url accentColor '\
+       'QUERY': '($seriesId: ID!) { series(id: $seriesId) { __typename id isBookmarked title description images { __typename type url accentColor '\
         '} numberOfSeasons brands { __typename id logo { __typename id url accentColor } title }  trailer { __typename id title images '\
         '{ __typename id url } video { __typename id duration } } seasons { __typename id number numberOfEpisodes } genres { __typename '\
         'name type } ageRating { __typename label minAge ratingSystem } copyrights tagline isBingeable subtype } }',
        'OPERATION' : 'getSeries',
        'REQUIRED_VARIABLES' : ['seriesId'],
+       'BOOKMARKS': True,
+       'AUTH': True,
    },
 
    'EPISODES'  : {
@@ -434,13 +438,15 @@ CONST = {
    'COMPILATION_ITEMS' : {
        'QUERY': '($id: ID!, $offset: Int!, $first: Int!) { compilation(id: $id) { __typename id compilationItems(first: $first, offset: $offset) '\
         '{ __typename ... on CompilationItem {   ...CompilationItemCoverFragment } } } } fragment CompilationItemCoverFragment on '\
-        'CompilationItem { __typename id compilation { __typename id title brands { __typename id logo {   __typename   url } title } path '\
+        'CompilationItem { __typename id compilation { __typename id title isBookmarked brands { __typename id logo {   __typename   url } title } path '\
         'images { __typename accentColor type url } ageRating { __typename label minAge ratingSystem } } description endsAt genres { '\
         '__typename name type } images { __typename accentColor type url } path startsAt title video '\
         '{ __typename id duration licenses { __typename startDate endDate type } } tracking { __typename primaryAirdateBrand agofCode '\
         'trackingId visibilityStart brand } }',
        'OPERATION' : 'GetCompilationItemsQuery',
        'REQUIRED_VARIABLES' : ['id', 'first', 'offset'],
+       'BOOKMARKS': True,
+       'AUTH': True,
    },
 
    'EPG'   : {
@@ -469,6 +475,7 @@ CONST = {
        'REQUIRED_VARIABLES': ['text'],
        'AUTH': True,
        'NO_CACHE': True,
+       'BOOKMARKS': True,
    },
 
    'ACCOUNT'  : {

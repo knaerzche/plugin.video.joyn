@@ -1,19 +1,16 @@
 # -*- coding: utf-8 -*-
 
 from sys import argv, exit
-import os.path
-from xbmc import translatePath, executebuiltin, sleep as xbmc_sleep
+from xbmc import executebuiltin, sleep as xbmc_sleep
 from xbmcgui import Dialog, ListItem, INPUT_ALPHANUM, ALPHANUM_HIDE_INPUT
 from xbmcplugin import setResolvedUrl, addSortMethod
-from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE, SORT_METHOD_DATEADDED, SORT_METHOD_EPISODE, \
-    SORT_METHOD_DURATION, SORT_METHOD_TITLE
+from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE, SORT_METHOD_DATEADDED, \
+        SORT_METHOD_EPISODE, SORT_METHOD_DURATION, SORT_METHOD_TITLE
 from xbmcaddon import Addon
 from datetime import datetime
 from time import time
-from inputstreamhelper import Helper
 from .const import CONST
 from . import compat as compat
-from . import cache as cache
 from . import xbmc_helper as xbmc_helper
 from . import request_helper as request_helper
 from .lib_joyn import lib_joyn as lib_joyn
@@ -32,7 +29,6 @@ elif compat.PY3:
 if xbmc_helper.get_bool_setting('dont_verify_ssl_certificates') is True:
 
 	import ssl
-
 	try:
 		_create_unverified_https_context = ssl._create_unverified_context
 	except AttributeError:
@@ -116,17 +112,17 @@ def add_favorites(favorite_item, fav_type=''):
 		favorites = get_favorites()
 		favorite_item.update({'added': time()})
 		favorites.append(favorite_item)
-		favorites = xbmc_helper.set_json_data('favorites', favorites)
+		xbmc_helper.set_json_data('favorites', favorites)
 
 		executebuiltin("Container.Refresh")
 		xbmc_sleep(100)
 		xbmc_helper.notification(xbmc_helper.translation('WATCHLIST'),
-		                         xbmc_helper.translation('WL_TYPE_ADDED').format(fav_type), default_icon)
+		                         compat._format(xbmc_helper.translation('WL_TYPE_ADDED'), fav_type), default_icon)
 
 
-def drop_favorites(favorite_item, siltent=False, fav_type=''):
+def drop_favorites(favorite_item, silent=False, fav_type=''):
 
-	xbmc_helper.log_debug('drop_favorites  - item: ' + dumps(favorite_item))
+	xbmc_helper.log_debug(compat._format('drop_favorites  - item {}: ', favorite_item))
 	favorites = get_favorites()
 	found = False
 
@@ -164,9 +160,9 @@ def drop_favorites(favorite_item, siltent=False, fav_type=''):
 
 	favorites = xbmc_helper.set_json_data('favorites', favorites)
 
-	if siltent == False and found is True:
+	if silent is False and found is True:
 		xbmc_helper.notification(xbmc_helper.translation('WATCHLIST'),
-		                         xbmc_helper.translation('WL_TYPE_REMOVED').format(fav_type), default_icon)
+		                         compat._format(xbmc_helper.translation('WL_TYPE_REMOVED'), fav_type), default_icon)
 		executebuiltin("Container.Refresh")
 		xbmc_sleep(100)
 
@@ -210,25 +206,22 @@ def show_lastseen(max_lastseen_count):
 
 	if len(lastseen) > 0:
 		for lastseen_item in lastseen:
-
-			found = False
-
 			if lastseen_item.get('season_id', None) is not None:
 				if xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and check_favorites(
 				        {'seasonId': lastseen_item['season_id']}) is True:
 					continue
 
 				season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId': lastseen_item['season_id'], 'first': 1})
-				xbmc_helper.log_debug('season_data: ' + dumps(season_data))
 				if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(
 				        season_data['season']['episodes']) > 0:
 					season_metadata = libjoyn.get_metadata(season_data['season']['episodes'][0]['series'], 'TVSHOW')
 
 					season_metadata['infoLabels'].update({
 					        'title':
-					        xbmc_helper.translation('CONTINUE_WATCHING').format(
-					                compat._encode(season_metadata['infoLabels'].get('title', '') + ' - ' +
-					                               xbmc_helper.translation('SEASON_NO').format(str(season_data['season']['number']))))
+					        compat._format(
+					                xbmc_helper.translation('CONTINUE_WATCHING'),
+					                compat._format('{} - {}', season_metadata['infoLabels'].get('title', ''),
+					                               compat._format(xbmc_helper.translation('SEASON_NO'), str(season_data['season']['number']))))
 					})
 					list_items.append(
 					        get_dir_entry(
@@ -238,10 +231,7 @@ def show_lastseen(max_lastseen_count):
 					                override_fanart=default_fanart,
 					        ))
 
-					found = True
-
 			elif lastseen_item.get('compilation_id', None) is not None:
-
 				if xbmc_helper.get_bool_setting('dont_show_watchlist_in_lastseen') is True and check_favorites(
 				        {'compilation_id': lastseen_item['compilation_id']}) is True:
 					continue
@@ -249,14 +239,11 @@ def show_lastseen(max_lastseen_count):
 				compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id': lastseen_item['compilation_id'], 'first': 1})
 				if compilation_data.get('compilation', None) is not None and compilation_data.get('compilation').get(
 				        'compilationItems', None) is not None and len(compilation_data['compilation']['compilationItems']) > 0:
-
-					found = True
 					compilation_metadata = libjoyn.get_metadata(compilation_data['compilation']['compilationItems'][0]['compilation'],
 					                                            'TVSHOW')
 					compilation_metadata['infoLabels'].update({
 					        'title':
-					        xbmc_helper.translation('CONTINUE_WATCHING').format(
-					                compat._encode(compilation_metadata['infoLabels'].get('title', '')))
+					        compat._format(xbmc_helper.translation('CONTINUE_WATCHING'), compilation_metadata['infoLabels'].get('title', ''))
 					})
 					list_items.append(
 					        get_dir_entry(mode='compilation_items',
@@ -281,17 +268,16 @@ def show_favorites(title):
 	addSortMethod(pluginhandle, SORT_METHOD_DATEADDED)
 
 	for favorite_item in favorites:
-		found = False
+
 		if favorite_item.get('season_id', None) is not None:
 			season_data = libjoyn.get_graphql_response('EPISODES', {'seasonId': favorite_item['season_id'], 'first': 1})
 			if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(
 			        season_data['season']['episodes']) > 0:
-				found = True
 				season_metadata = libjoyn.get_metadata(season_data['season']['episodes'][0]['series'], 'TVSHOW')
 				season_metadata['infoLabels'].update({
 				        'title':
-				        '{} - {}'.format(season_metadata['infoLabels'].get('title', ''),
-				                         xbmc_helper.translation('SEASON_NO').format(str(season_data['season']['number'])))
+				        compat._format('{} - {}', season_metadata['infoLabels'].get('title', ''),
+				                       compat._format(xbmc_helper.translation('SEASON_NO'), str(season_data['season']['number'])))
 				})
 
 				if 'added' in favorite_item.keys():
@@ -308,7 +294,6 @@ def show_favorites(title):
 		elif favorite_item.get('tv_show_id', None) is not None:
 			seasons = libjoyn.get_graphql_response('SEASONS', {'seriesId': favorite_item['tv_show_id']})
 			if seasons.get('series', None) is not None:
-				found = True
 				tvshow_metadata = libjoyn.get_metadata(seasons['series'], 'TVSHOW')
 
 				if 'added' in favorite_item.keys():
@@ -324,8 +309,6 @@ def show_favorites(title):
 			compilation_data = libjoyn.get_graphql_response('COMPILATION_ITEMS', {'id': favorite_item['compilation_id'], 'first': 1})
 			if compilation_data.get('compilation', None) is not None and compilation_data.get('compilation').get(
 			        'compilationItems', None) is not None and len(compilation_data['compilation']['compilationItems']) > 0:
-
-				found = True
 				compilation_metadata = libjoyn.get_metadata(compilation_data['compilation']['compilationItems'][0]['compilation'], 'TVSHOW')
 
 				if 'added' in favorite_item.keys():
@@ -343,11 +326,10 @@ def show_favorites(title):
 			for lane_type, categories in landingpage.items():
 				for category_block_id, category_name in categories.items():
 					if category_block_id == favorite_item['block_id'] and lane_type in CONST['CATEGORY_LANES']:
-						found = True
 						list_items.append(
 						        get_dir_entry(metadata={
 						                'infoLabels': {
-						                        'title': xbmc_helper.translation('CATEGORY') + ': ' + category_name,
+						                        'title': compat._format('{}: {}', xbmc_helper.translation('CATEGORY'), category_name),
 						                        'plot': ''
 						                },
 						                'art': {}
@@ -367,10 +349,12 @@ def show_favorites(title):
 					channels = libjoyn.get_graphql_response('SINGLEBLOCK', {'blockId': block_id})
 					for channel in channels['block']['assets']:
 						if str(channel['id']) == str(favorite_item['channel_id']):
-							found = True
 							tv_channel_metadata = libjoyn.get_metadata(channel, 'TVCHANNEL')
-							tv_channel_metadata['infoLabels'].update(
-							        {'title': xbmc_helper.translation('MEDIA_LIBRARY') + ': ' + tv_channel_metadata['infoLabels'].get('title', '')})
+							tv_channel_metadata['infoLabels'].update({
+							        'title':
+							        compat._format('{}: {}', xbmc_helper.translation('MEDIA_LIBRARY'),
+							                       tv_channel_metadata['infoLabels'].get('title', ''))
+							})
 							list_items.append(
 							        get_dir_entry(mode='tvshows',
 							                      stream_type=stream_type,
@@ -381,6 +365,10 @@ def show_favorites(title):
 							break
 					if break_loop:
 						break
+
+	if len(list_items) == 0:
+		return xbmc_helper.notification(xbmc_helper.translation('WATCHLIST'), xbmc_helper.translation('MSG_NO_FAVS_YET'),
+		                                default_icon)
 
 	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'WATCHLIST', title)
 
@@ -429,12 +417,9 @@ def remove_joyn_bookmark(asset_id):
 
 def get_uepg_params():
 
-	params = 'json=' + quote(dumps(libjoyn.get_uepg_data(pluginurl)))
-	params += '&refresh_path=' + quote(pluginurl + '?mode=epg')
-	params += '&refresh_interval=' + quote(str(CONST['UPEG_REFRESH_INTERVAL']))
-	params += '&row_count=' + quote(str(CONST['UPEG_ROWCOUNT']))
-
-	return params
+	return compat._format('json={}&refresh_path={}epg&refresh_interval={}&row_count={}',
+	                      quote(dumps(libjoyn.get_uepg_data(pluginurl))), quote(compat._format('{}?mode=epg', pluginurl)),
+	                      quote(str(CONST['UEPG_REFRESH_INTERVAL'])), quote(str(CONST['UEPG_ROWCOUNT'])))
 
 
 def get_list_items(response_items, prefix_label=None):
@@ -448,10 +433,8 @@ def get_list_items(response_items, prefix_label=None):
 			movie_metadata['infoLabels'].update({'mediatype': 'movie'})
 
 			if prefix_label is not None:
-				movie_metadata['infoLabels'].update({
-				        'title':
-				        xbmc_helper.translation(prefix_label).format(compat._encode(movie_metadata['infoLabels'].get('title', '')))
-				})
+				movie_metadata['infoLabels'].update(
+				        {'title': compat._format(xbmc_helper.translation(prefix_label), movie_metadata['infoLabels'].get('title', ''))})
 
 			list_items.append(
 			        get_dir_entry(is_folder=False,
@@ -466,10 +449,8 @@ def get_list_items(response_items, prefix_label=None):
 
 			channel_metadata = libjoyn.get_metadata(response_item, 'TVCHANNEL')
 			if prefix_label is not None:
-				channel_metadata['infoLabels'].update({
-				        'title':
-				        xbmc_helper.translation(prefix_label).format(compat._encode(channel_metadata['infoLabels'].get('title', '')))
-				})
+				channel_metadata['infoLabels'].update(
+				        {'title': compat._format(xbmc_helper.translation(prefix_label), channel_metadata['infoLabels'].get('title', ''))})
 
 			list_items.append(
 			        get_dir_entry(mode='tvshows',
@@ -482,10 +463,8 @@ def get_list_items(response_items, prefix_label=None):
 			tvshow_metadata['infoLabels'].update({'mediatype': 'tvshow'})
 
 			if prefix_label is not None:
-				tvshow_metadata['infoLabels'].update({
-				        'title':
-				        xbmc_helper.translation(prefix_label).format(compat._encode(tvshow_metadata['infoLabels'].get('title', '')))
-				})
+				tvshow_metadata['infoLabels'].update(
+				        {'title': compat._format(xbmc_helper.translation(prefix_label), tvshow_metadata['infoLabels'].get('title', ''))})
 
 			if response_item['__typename'] == 'Series':
 				list_items.append(
@@ -509,6 +488,7 @@ def index():
 		xbmc_helper.dialog_id('MSG_INPUSTREAM_NOT_ENABLED')
 		exit(0)
 
+	from inputstreamhelper import Helper
 	is_helper = Helper('mpd', drm='com.widevine.alpha')
 	if not is_helper.check_inputstream():
 		xbmc_helper.dialog_id('MSG_WIDEVINE_NOT_FOUND')
@@ -627,9 +607,9 @@ def channels(stream_type, title):
 
 					if 'logo' in brand_epg.keys():
 						metadata['art'].update({
-						        'icon': brand_epg['logo']['url'] + '/profile:nextgen-web-artlogo-183x75',
-						        'clearlogo': brand_epg['logo']['url'] + '/profile:nextgen-web-artlogo-183x75',
-						        'thumb': brand_epg['logo']['url'] + '/profile:original',
+						        'icon': compat._format('{}/profile:nextgen-web-artlogo-183x75', brand_epg['logo']['url']),
+						        'clearlogo': compat._format('{}/profile:nextgen-web-artlogo-183x75', brand_epg['logo']['url']),
+						        'thumb': compat._format('{}/profile:original', brand_epg['logo']['url']),
 						})
 
 					list_items.append(
@@ -679,19 +659,22 @@ def seasons(tv_show_id, title):
 				season_number = counter
 
 			if xbmc_helper.get_bool_setting('show_episodes_immediately') and len(seasons['series']['seasons']) == 1:
-				return season_episodes(season['id'], title + ' - ' + xbmc_helper.translation('SEASON_NO').format(str(season_number)))
+				return season_episodes(
+				        season['id'],
+				        compat._format('{} - {}', title, compat._format(xbmc_helper.translation('SEASON_NO'), str(season_number))))
 
 			tvshow_metadata['infoLabels'].update({
-			        'title': xbmc_helper.translation('SEASON_NO').format(str(season_number)),
+			        'title': compat._format(xbmc_helper.translation('SEASON_NO'), str(season_number)),
 			        'season': seasons_count,
 			        'sortseason': season_number,
 			        'mediatype': 'season',
 			})
 
 			list_items.append(
-			        get_dir_entry(mode='season_episodes', season_id=season['id'], metadata=tvshow_metadata,
-			                      title_prefix=(title + ' - ')))
-
+			        get_dir_entry(mode='season_episodes',
+			                      season_id=season['id'],
+			                      metadata=tvshow_metadata,
+			                      title_prefix=compat._format('{} - ', title)))
 			counter += 1
 
 	if len(list_items) == 0:
@@ -798,7 +781,7 @@ def search(stream_type, title):
 
 		if len(list_items) == 0:
 			return xbmc_helper.notification(xbmc_helper.translation('SEARCH'),
-			                                xbmc_helper.translation('MSG_NO_SEARCH_RESULTS').format(search_term), default_icon)
+			                                compat._format(xbmc_helper.translation('MSG_NO_SEARCH_RESULTS'), search_term), default_icon)
 		else:
 			xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'TV_SHOWS', title)
 
@@ -845,43 +828,45 @@ def category(block_id, title):
 
 def play_video(video_id, client_data, stream_type, season_id=None, compilation_id=None):
 
-	xbmc_helper.log_debug('play_video: video_id: ' + video_id)
+	xbmc_helper.log_debug(compat._format('play_video: video_id {}', video_id))
 	list_item = ListItem()
 	video_data = libjoyn.get_video_data(video_id, loads(client_data), stream_type, season_id, compilation_id)
 	succeeded = True
 
-	if ('streamingFormat' in video_data.keys() and video_data['streamingFormat'] == 'dash'):
+	if 'streamingFormat' in video_data.keys() and video_data['streamingFormat'] == 'dash':
 		if libjoyn.set_mpd_props(list_item, video_data['videoUrl'], stream_type) is not False:
 			if 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
 				list_item.setMimeType('application/dash+xml')
 				if video_data['drm'] == 'widevine':
-					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.widevine.alpha')
+					list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.widevine.alpha')
 					list_item.setProperty(
-					        CONST['INPUTSTREAM_ADDON'] + '.license_key',
-					        video_data['licenseUrl'] + '|' + request_helper.get_header_string({
-					                'User-Agent': libjoyn.config['USER_AGENT'],
-					                'Content-Type': 'application/octet-stream'
-					        }) + '|R{SSM}|')
+					        compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']),
+					        compat._format(
+					                '{}|{}|R{{SSM}}|', video_data['licenseUrl'],
+					                request_helper.get_header_string({
+					                        'User-Agent': libjoyn.config.get('USER_AGENT'),
+					                        'Content-Type': 'application/octet-stream'
+					                })))
 					xbmc_helper.log_notice('Using Widevine as DRM')
 				elif video_data['drm'] == 'playready':
-					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_type', 'com.microsoft.playready')
-					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.license_key', video_data['licenseUrl'])
+					list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.microsoft.playready')
+					list_item.setProperty(compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']), video_data['licenseUrl'])
 					xbmc_helper.log_notice('Using PlayReady as DRM')
 
 				else:
-					xbmc_helper.notification(
-					        xbmc_helper.translation('ERROR').format('Unsupported DRM'), xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
+					xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'Unsupported DRM'),
+					                         xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
 					succeeded = False
 
-				list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.stream_headers',
+				list_item.setProperty(compat._format('{}.stream_headers', CONST['INPUTSTREAM_ADDON']),
 				                      request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT']}))
 				if xbmc_helper.get_bool_setting('checkdrmcert') is True and 'certificateUrl' in video_data.keys():
-					list_item.setProperty(CONST['INPUTSTREAM_ADDON'] + '.server_certificate',
+					list_item.setProperty(compat._format('{}.server_certificate', CONST['INPUTSTREAM_ADDON']),
 					                      libjoyn.add_user_agent_http_header(video_data['certificateUrl']))
-					xbmc_helper.log_debug('SET DRM CERT: ' + video_data['certificateUrl'])
+					xbmc_helper.log_debug(compat._format('SET DRM CERT: {}', video_data['certificateUrl']))
 		else:
-			xbmc_helper.notification(
-			        xbmc_helper.translation('ERROR').format('Video-Stream'), xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
+			xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'Video-Stream'),
+			                         xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
 			xbmc_helper.log_error('Could not get valid MPD')
 			succeeded = False
 
@@ -914,8 +899,8 @@ def get_favorite_entry(favorite_item, favorite_type):
 		                                     'title':
 		                                     xbmc_helper.translation('ADD_TO_WATCHLIST'),
 		                                     'plot':
-		                                     xbmc_helper.translation('ADD_TO_WATCHLIST_PRX').format(
-		                                             xbmc_helper.translation(favorite_type)),
+		                                     compat._format(xbmc_helper.translation('ADD_TO_WATCHLIST_PRX'),
+		                                                    xbmc_helper.translation(favorite_type)),
 		                             },
 		                             'art': fav_add_art
 		                     },
@@ -929,8 +914,8 @@ def get_favorite_entry(favorite_item, favorite_type):
 		                                     'title':
 		                                     xbmc_helper.translation('REMOVE_FROM_WATCHLIST'),
 		                                     'plot':
-		                                     xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX').format(
-		                                             xbmc_helper.translation(favorite_type)),
+		                                     compat._format(xbmc_helper.translation('REMOVE_FROM_WATCHLIST_PRFX'),
+		                                                    xbmc_helper.translation(favorite_type)),
 		                             },
 		                             'art': fav_del_art
 		                     },
@@ -999,7 +984,7 @@ def get_dir_entry(mode,
 
 	list_item.setArt(metadata['art'])
 
-	if (mode == 'play_video' and video_id is not '' and client_data is not ''):
+	if mode == 'play_video' and video_id is not '' and client_data is not '':
 		list_item.setProperty('IsPlayable', 'True')
 
 	if metadata.get('is_bookmarked', None) is not None and libjoyn.get_auth_token().get('has_account', False) is True:
@@ -1015,23 +1000,20 @@ def get_dir_entry(mode,
 		if asset_id is not None:
 			if metadata.get('is_bookmarked', False) is True:
 				list_item.addContextMenuItems([(xbmc_helper.translation('DEL_FROM_JOYN_BOOKMARKS_LABEL'),
-				                                'RunPlugin({}?{})'.format(pluginurl,
-				                                                          urlencode({
-				                                                                  'mode': 'remove_joyn_bookmark',
-				                                                                  'asset_id': asset_id
-				                                                          })))])
+				                                compat._format('RunPlugin({}?{})', pluginurl,
+				                                               urlencode({
+				                                                       'mode': 'remove_joyn_bookmark',
+				                                                       'asset_id': asset_id
+				                                               })))])
 			else:
 				list_item.addContextMenuItems([(xbmc_helper.translation('ADD_TO_JOYN_BOOKMARKS_LABEL'),
-				                                'RunPlugin({}?{})'.format(pluginurl,
-				                                                          urlencode({
-				                                                                  'mode': 'add_joyn_bookmark',
-				                                                                  'asset_id': asset_id
-				                                                          })))])
+				                                compat._format('RunPlugin({}?{})', pluginurl,
+				                                               urlencode({
+				                                                       'mode': 'add_joyn_bookmark',
+				                                                       'asset_id': asset_id
+				                                               })))])
 
-	url = pluginurl + '?'
-	url += urlencode(params)
-
-	return (url, list_item, is_folder)
+	return (compat._format('{}?{}', pluginurl, urlencode(params)), list_item, is_folder)
 
 
 def clear_cache():
@@ -1069,15 +1051,15 @@ def login(username=None, password=None, dont_check_account=False):
 	if dont_check_account is False and libjoyn.get_auth_token().get('has_account', False) is True:
 		executebuiltin('ActivateWindow(busydialognocancel)')
 		account_info = libjoyn.get_account_info(True)
-		xbmc_helper.dialog(msg=compat._unicode(xbmc_helper.translation('LOGGED_IN_LABEL')).format(
-		        account_info.get('me', {}).get('profile', {}).get('email', '')),
-		                   msg_line2=compat._unicode(xbmc_helper.translation('ACCOUNT_INFO_LABEL')).format(
-		                           compat._unicode(xbmc_helper.translation('NO_LABEL'))
-		                           if libjoyn.get_account_subscription_config('hasActivePlus') is False else compat._unicode(
-		                                   xbmc_helper.translation('YES_LABEL')),
-		                           compat._unicode(xbmc_helper.translation('NO_LABEL'))
-		                           if libjoyn.get_account_subscription_config('hasActiveHD') is False else compat._unicode(
-		                                   xbmc_helper.translation('YES_LABEL'))))
+		xbmc_helper.dialog(
+		        msg=compat._format(xbmc_helper.translation('LOGGED_IN_LABEL'),
+		                           account_info.get('me', {}).get('profile', {}).get('email', '')),
+		        msg_line2=compat._format(
+		                xbmc_helper.translation('ACCOUNT_INFO_LABEL'),
+		                xbmc_helper.translation('NO_LABEL') if libjoyn.get_account_subscription_config('hasActivePlus') is False else
+		                xbmc_helper.translation('YES_LABEL'),
+		                xbmc_helper.translation('NO_LABEL')
+		                if libjoyn.get_account_subscription_config('hasActiveHD') is False else xbmc_helper.translation('YES_LABEL')))
 		return executebuiltin('Dialog.Close(busydialognocancel)')
 
 	elif username is None:
@@ -1087,9 +1069,9 @@ def login(username=None, password=None, dont_check_account=False):
 			from re import match as re_match
 			if re_match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", _username) is None:
 				xbmc_helper.notification('Login', xbmc_helper.translation('MSG_INVALID_EMAIL'), default_icon)
-				executebuiltin('RunPlugin({}{})'.format(pluginurl, pluginquery))
+				executebuiltin(compat._format('RunPlugin({}{})', pluginurl, pluginquery))
 			else:
-				executebuiltin('RunPlugin({}{}&{})'.format(pluginurl, pluginquery, urlencode({'username': _username})))
+				executebuiltin(compat._format('RunPlugin({}{}&{})', pluginurl, pluginquery, urlencode({'username': _username})))
 	else:
 		if password is None:
 			executebuiltin('Dialog.Close(all, true)')
@@ -1098,7 +1080,7 @@ def login(username=None, password=None, dont_check_account=False):
 			                           option=ALPHANUM_HIDE_INPUT)
 
 			if len(_password) > 0:
-				executebuiltin('RunPlugin({}{}&{})'.format(pluginurl, pluginquery, urlencode({'password': _password})))
+				executebuiltin(compat._format('RunPlugin({}{}&{})', pluginurl, pluginquery, urlencode({'password': _password})))
 		else:
 			auth_token = libjoyn.get_auth_token(username=username, password=password)
 			if auth_token is False or auth_token.get('has_account', False) is False:
@@ -1110,7 +1092,7 @@ def login(username=None, password=None, dont_check_account=False):
 			else:
 				executebuiltin("Container.Refresh")
 				xbmc_sleep(100)
-				executebuiltin('RunPlugin({}{})'.format(pluginurl, '?mode=login'))
+				executebuiltin(compat._format('RunPlugin({}{})', pluginurl, '?mode=login'))
 
 
 pluginurl = argv[0]
@@ -1130,8 +1112,8 @@ if 'mode' in param_keys:
 	if mode == 'clear_cache':
 		clear_cache()
 
-	elif mode == 'open_foreign_settings' and 'forein_addon_id' in param_keys:
-		xbmc_helper.open_foreign_addon_settings(params['forein_addon_id'])
+	elif mode == 'open_foreign_settings' and 'foreign_addon_id' in param_keys:
+		xbmc_helper.open_foreign_addon_settings(params['foreign_addon_id'])
 
 	else:
 		libjoyn = lib_joyn(default_icon)
@@ -1143,9 +1125,6 @@ if 'mode' in param_keys:
 
 		elif mode == 'season_episodes' and 'season_id' in param_keys:
 			season_episodes(params['season_id'], title)
-
-		elif mode == 'video' and 'tv_show_id' in param_keys and 'season_id' in param_keys:
-			videos(params['tv_show_id'], params['season_id'], title)
 
 		elif mode == 'play_video' and 'video_id' in param_keys:
 			if 'client_data' in param_keys:
@@ -1195,7 +1174,7 @@ if 'mode' in param_keys:
 
 		elif mode == 'epg':
 			executebuiltin('ActivateWindow(busydialognocancel)')
-			executebuiltin('RunScript(script.module.uepg,' + get_uepg_params() + ')')
+			executebuiltin(compat._format('RunScript(script.module.uepg,{})', get_uepg_params()))
 			executebuiltin('Dialog.Close(busydialognocancel)')
 
 		elif mode == 'show_joyn_bookmarks':
