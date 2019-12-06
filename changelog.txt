@@ -64,3 +64,5 @@ implement sign-in
 implement joyn bookmarks
 implement 'Plus+'
 implement MPAA-Pin setting
+v2.2.1
+fix: re-set container-focus after 'refresh'
