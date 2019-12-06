@@ -173,6 +173,9 @@ def dialog_id(id):
 def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, title=None):
 
 	folder_defs = CONST['FOLDERS'].get(folder_type)
+	old_pluginurl = getInfoLabel('Container.FolderPath')
+	old_postion = getInfoLabel('Container.CurrentItem')
+
 	addDirectoryItems(pluginhandle, list_items, len(list_items))
 
 	if title is not None:
@@ -191,6 +194,20 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 
 	if 'sort' in folder_defs.keys():
 		set_folder_sort(folder_defs['sort'])
+
+	# reset the postion to the last known, if pluginurls matching -> likely to be a 'refresh'
+	if getInfoLabel('Container.FolderPath') == old_pluginurl and old_postion.isdigit():
+		from xbmcgui import  Window, getCurrentWindowId
+		log_debug(compat._format('FolderPath old pos {} ', old_postion))
+
+		focus_id = Window(getCurrentWindowId()).getFocusId()
+		# different skins/viewtypes counting differently ?!?!
+		if str(getSkinDir()) == 'skin.estuary' and focus_id in [53, 55]:
+			old_postion = str(int(old_postion) + 1)
+
+		cmd = compat._format('Control.SetFocus({},{})', focus_id, old_postion)
+		executebuiltin(cmd)
+		log_debug(compat._format('set current pos executebuiltin({})', cmd))
 
 
 def set_folder_sort(folder_sort_def):

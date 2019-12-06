@@ -150,8 +150,7 @@ def get_url(url,
 		else:
 			xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'URL Access'),
 			                         compat._format(xbmc_helper.translation('MSG_NO_ACCESS_TO_URL'), str(url)))
-			raise e
-			#exit(0)
+			exit(0)
 
 	return response_content
 
