@@ -115,7 +115,6 @@ def add_favorites(favorite_item, fav_type=''):
 		xbmc_helper.set_json_data('favorites', favorites)
 
 		executebuiltin("Container.Refresh")
-		xbmc_sleep(100)
 		xbmc_helper.notification(xbmc_helper.translation('WATCHLIST'),
 		                         compat._format(xbmc_helper.translation('WL_TYPE_ADDED'), fav_type), default_icon)
 
@@ -164,8 +163,6 @@ def drop_favorites(favorite_item, silent=False, fav_type=''):
 		xbmc_helper.notification(xbmc_helper.translation('WATCHLIST'),
 		                         compat._format(xbmc_helper.translation('WL_TYPE_REMOVED'), fav_type), default_icon)
 		executebuiltin("Container.Refresh")
-		xbmc_sleep(100)
-
 
 def check_favorites(favorite_item):
 
@@ -397,7 +394,6 @@ def add_joyn_bookmark(asset_id):
 
 	add_joyn_bookmark_res = libjoyn.get_graphql_response('ADD_BOOKMARK', {'assetId': asset_id})
 	executebuiltin("Container.Refresh")
-	xbmc_sleep(100)
 	return xbmc_helper.notification(
 	        xbmc_helper.translation('JOYN_BOOKMARKS'),
 	        xbmc_helper.translation('MSG_JOYN_BOOKMARK_ADD_SUCC' if add_joyn_bookmark_res.get('setBookmark', '') is not '' else
@@ -408,7 +404,6 @@ def remove_joyn_bookmark(asset_id):
 
 	del_bookmark_res = libjoyn.get_graphql_response('DEL_BOOKMARK', {'assetId': asset_id})
 	executebuiltin("Container.Refresh")
-	xbmc_sleep(100)
 	return xbmc_helper.notification(
 	        xbmc_helper.translation('JOYN_BOOKMARKS'),
 	        xbmc_helper.translation('MSG_JOYN_BOOKMARK_DEL_SUCC' if del_bookmark_res.get('removeBookmark', False) is True else
@@ -1039,7 +1034,6 @@ def logout(dont_check_account=False):
 		if libjoyn.get_auth_token().get('has_account', False) is False:
 			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_OK_LABEL')))
 			executebuiltin("Container.Refresh")
-			xbmc_sleep(100)
 		else:
 			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_NOK_LABEL')))
 	else:
@@ -1091,7 +1085,6 @@ def login(username=None, password=None, dont_check_account=False):
 				                          cancel_addon_parameters='mode=logout&dont_check_account=true')
 			else:
 				executebuiltin("Container.Refresh")
-				xbmc_sleep(100)
 				executebuiltin(compat._format('RunPlugin({}{})', pluginurl, '?mode=login'))
 
 
