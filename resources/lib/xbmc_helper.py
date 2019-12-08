@@ -197,12 +197,15 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 
 	# reset the postion to the last known, if pluginurls matching -> likely to be a 'refresh'
 	if getInfoLabel('Container.FolderPath') == old_pluginurl and old_postion.isdigit():
+		# close all dialogs, before focus can be set
+		executebuiltin('Dialog.Close(all, true)')
+
 		from xbmcgui import  Window, getCurrentWindowId
 		log_debug(compat._format('FolderPath old pos {} ', old_postion))
 
 		focus_id = Window(getCurrentWindowId()).getFocusId()
 		# different skins/viewtypes counting differently ?!?!
-		if str(getSkinDir()) == 'skin.estuary' and focus_id in [53, 55]:
+		if str(getSkinDir()).startswith('skin.estuary') and focus_id in [53, 55, 50]:
 			old_postion = str(int(old_postion) + 1)
 
 		cmd = compat._format('Control.SetFocus({},{})', focus_id, old_postion)

@@ -66,3 +66,7 @@ implement 'Plus+'
 implement MPAA-Pin setting
 v2.2.1
 fix: re-set container-focus after 'refresh'
+v2.2.2
+fixed: re-set container-focus fails on some systems
+refix access to ip-api.com fails
+add usage disclaimer

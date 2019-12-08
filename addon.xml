@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.joyn" name="Joyn" version="2.2.1" provider-name="knaerzche">
+<addon id="plugin.video.joyn" name="Joyn" version="2.2.2" provider-name="knaerzche">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
@@ -15,6 +15,8 @@
 		<summary lang="de_DE">Joyn Video On Demand and Live TV</summary>
 		<description lang="en_GB">Watch VOD content und Live TV provided by Joyn</description>
 		<description lang="de_DE">Video On Demand und Live TV von Joyn</description>
+		<disclaimer lang="en_GB">The use of this addon may violate the terms and conditions of Joyn GmbH - especially, but not exclusively, if it is used outside of Germany.</disclaimer>
+		<disclaimer lang="'de_DE">Die Nutzung dieses Addon verstösst eventuell gegen die AGB der Joyn GmbH - insbesondere, aber nicht ausschliesslich, wenn es außerhalb von Deutschland verwendet wird</disclaimer>
 		<language></language>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>
@@ -31,6 +33,10 @@
 			<screenshot>resources/media/screenshot03.jpg</screenshot>
 		</assets>
 		<news>
+v2.2.2
+[fix] re-set container-focus fails on some systems
+[fix] refix access to ip-api.com fails
+[new] add usage disclaimer
 v2.2.1
 [fix] re-set container-focus after 'refresh'
 v2.2.0

@@ -894,7 +894,7 @@ class lib_joyn(object):
 			try:
 				ip_api_response = request_helper.get_json_response(url=compat._format(CONST['IP_API_URL'],
 				                                                                      xbmc_helper.translation('LANG_CODE')),
-				                                                   config=config)
+				                                                   config=config, silent=True)
 
 			except Exception as e:
 				xbmc_helper.log_debug(compat._format('ip-api request failed - {}', e))
