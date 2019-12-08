@@ -197,20 +197,34 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 
 	# reset the postion to the last known, if pluginurls matching -> likely to be a 'refresh'
 	if getInfoLabel('Container.FolderPath') == old_pluginurl and old_postion.isdigit():
-		# close all dialogs, before focus can be set
-		executebuiltin('Dialog.Close(all, true)')
+		from xbmcgui import Window, getCurrentWindowId, getCurrentWindowDialogId
 
-		from xbmcgui import  Window, getCurrentWindowId
+		# wait untl all Dialogs are closed; 10099 => WINDOW_DIALOG_POINTER => smallest dialog_id; max 1000 msecs
+		dialog_wait_counter = 0
+		while dialog_wait_counter <= 200 and getCurrentWindowDialogId() >= 10099:
+			xbmc_sleep(5)
+			dialog_wait_counter += 1
+		log_debug(compat._format('waited {} msecs for all dialogs to be closed', (dialog_wait_counter * 5)))
+
 		log_debug(compat._format('FolderPath old pos {} ', old_postion))
-
 		focus_id = Window(getCurrentWindowId()).getFocusId()
 		# different skins/viewtypes counting differently ?!?!
 		if str(getSkinDir()).startswith('skin.estuary') and focus_id in [53, 55, 50]:
-			old_postion = str(int(old_postion) + 1)
+			set_postion = str(int(old_postion) + 1)
+		else:
+			set_postion = old_postion
 
-		cmd = compat._format('Control.SetFocus({},{})', focus_id, old_postion)
+		cmd = compat._format('Control.SetFocus({},{})', focus_id, set_postion)
 		executebuiltin(cmd)
 		log_debug(compat._format('set current pos executebuiltin({})', cmd))
+
+		#wait for the correct postion to be applied; max 1000 msecs
+		postion_wait_counter = 0
+		while postion_wait_counter <= 200 and getInfoLabel('Container.CurrentItem') != old_postion:
+			xbmc_sleep(5)
+			postion_wait_counter += 1
+
+		log_debug(compat._format('waited {} msecs the correct position to be applied', (postion_wait_counter * 5)))
 
 
 def set_folder_sort(folder_sort_def):
@@ -264,7 +278,6 @@ def wait_for_container(pluginurl, pluginquery, sleep_msecs=5, cycles=1000):
 	log_debug(
 	        compat._format('wait_for_container pluginurl: msecs waited: {} pluginurls do match {} final folder path {}',
 	                       (counter * sleep_msecs), (folder_path == pluginpath), folder_path))
-
 
 def log_error(content):
 
