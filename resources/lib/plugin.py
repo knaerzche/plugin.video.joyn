@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
 from sys import argv, exit
-from xbmc import executebuiltin, sleep as xbmc_sleep
-from xbmcgui import Dialog, ListItem, INPUT_ALPHANUM, ALPHANUM_HIDE_INPUT
+from xbmc import executebuiltin
+from xbmcgui import Dialog, ListItem, INPUT_ALPHANUM
 from xbmcplugin import setResolvedUrl, addSortMethod
 from xbmcplugin import SORT_METHOD_UNSORTED, SORT_METHOD_LABEL, SORT_METHOD_DATE, SORT_METHOD_DATEADDED, \
         SORT_METHOD_EPISODE, SORT_METHOD_DURATION, SORT_METHOD_TITLE
@@ -14,6 +14,8 @@ from . import compat as compat
 from . import xbmc_helper as xbmc_helper
 from . import request_helper as request_helper
 from .lib_joyn import lib_joyn as lib_joyn
+
+start_time = time()
 
 if compat.PY2:
 	from urllib import urlencode, quote
@@ -163,6 +165,7 @@ def drop_favorites(favorite_item, silent=False, fav_type=''):
 		xbmc_helper.notification(xbmc_helper.translation('WATCHLIST'),
 		                         compat._format(xbmc_helper.translation('WL_TYPE_REMOVED'), fav_type), default_icon)
 		executebuiltin("Container.Refresh")
+
 
 def check_favorites(favorite_item):
 
@@ -422,6 +425,10 @@ def get_list_items(response_items, prefix_label=None):
 	list_items = []
 
 	for response_item in response_items:
+
+		if isinstance(response_item.get('licenseTypes', None), list) and libjoyn.check_license(response_item) is False:
+			continue
+
 		if response_item['__typename'] == 'Movie' and 'video' in response_item.keys() and 'id' in response_item['video']:
 
 			movie_metadata = libjoyn.get_metadata(response_item, 'EPISODE', 'MOVIE')
@@ -455,7 +462,6 @@ def get_list_items(response_items, prefix_label=None):
 
 		else:
 			tvshow_metadata = libjoyn.get_metadata(response_item, 'TVSHOW')
-			tvshow_metadata['infoLabels'].update({'mediatype': 'tvshow'})
 
 			if prefix_label is not None:
 				tvshow_metadata['infoLabels'].update(
@@ -489,8 +495,9 @@ def index():
 		xbmc_helper.dialog_id('MSG_WIDEVINE_NOT_FOUND')
 		exit(0)
 
-	request_helper.purge_etags_cache(ttl=CONST['ETAGS_TTL'])
+	from xbmc import getCondVisibility
 
+	request_helper.purge_etags_cache(ttl=CONST['ETAGS_TTL'])
 	list_items = show_lastseen(xbmc_helper.get_int_setting('max_lastseen'))
 	max_recommendations = xbmc_helper.get_int_setting('max_recommendations')
 
@@ -512,25 +519,40 @@ def index():
 	        },
 	                      mode='channels',
 	                      stream_type='VOD'))
+
 	list_items.append(
 	        get_dir_entry(metadata={
 	                'infoLabels': {
-	                        'title': xbmc_helper.translation('CATEGORIES'),
-	                        'plot': xbmc_helper.translation('CATEGORIES_PLOT'),
+	                        'title': xbmc_helper.translation('LIVE_TV'),
+	                        'plot': xbmc_helper.translation('LIVE_TV_PLOT'),
 	                },
 	                'art': {}
 	        },
-	                      mode='categories',
-	                      stream_type='VOD'))
-	list_items.append(
-	        get_dir_entry(metadata={
-	                'infoLabels': {
-	                        'title': xbmc_helper.translation('WATCHLIST'),
-	                        'plot': xbmc_helper.translation('WATCHLIST_PLOT'),
-	                },
-	                'art': {}
-	        },
-	                      mode='show_favs'))
+	                      mode='channels',
+	                      stream_type='LIVE'))
+
+	if xbmc_helper.get_bool_setting('show_categories_in_main_menu'):
+		list_items.extend(categories('', '', True))
+	else:
+		list_items.append(
+		        get_dir_entry(metadata={
+		                'infoLabels': {
+		                        'title': xbmc_helper.translation('CATEGORIES'),
+		                        'plot': xbmc_helper.translation('CATEGORIES_PLOT'),
+		                },
+		                'art': {}
+		        },
+		                      mode='categories',
+		                      stream_type='VOD'))
+		list_items.append(
+		        get_dir_entry(metadata={
+		                'infoLabels': {
+		                        'title': xbmc_helper.translation('WATCHLIST'),
+		                        'plot': xbmc_helper.translation('WATCHLIST_PLOT'),
+		                },
+		                'art': {}
+		        },
+		                      mode='show_favs'))
 
 	if libjoyn.get_auth_token().get('has_account', False) is True:
 		list_items.append(
@@ -552,18 +574,7 @@ def index():
 	                'art': {}
 	        },
 	                      mode='search'))
-	list_items.append(
-	        get_dir_entry(metadata={
-	                'infoLabels': {
-	                        'title': xbmc_helper.translation('LIVE_TV'),
-	                        'plot': xbmc_helper.translation('LIVE_TV_PLOT'),
-	                },
-	                'art': {}
-	        },
-	                      mode='channels',
-	                      stream_type='LIVE'))
-
-	if compat.PY2 is True:
+	if compat.PY2 is True and getCondVisibility('System.HasAddon(script.module.uepg)'):
 		list_items.append(
 		        get_dir_entry(metadata={
 		                'infoLabels': {
@@ -594,7 +605,7 @@ def channels(stream_type, title):
 			xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEORIES', title)
 
 	elif stream_type == 'LIVE':
-		epg = libjoyn.get_epg()
+		epg = libjoyn.get_epg(first=2, use_cache=False)
 		for brand_epg in epg['brands']:
 			if brand_epg['livestream'] is not None:
 				if 'epg' in brand_epg['livestream'].keys() and len(brand_epg['livestream']['epg']) > 0:
@@ -662,7 +673,6 @@ def seasons(tv_show_id, title):
 			        'title': compat._format(xbmc_helper.translation('SEASON_NO'), str(season_number)),
 			        'season': seasons_count,
 			        'sortseason': season_number,
-			        'mediatype': 'season',
 			})
 
 			list_items.append(
@@ -691,6 +701,8 @@ def season_episodes(season_id, title):
 	if episodes is not None and episodes.get('season', None) is not None and episodes.get('season').get('episodes',
 	                                                                                                    None) is not None:
 		for episode in episodes['season']['episodes']:
+			if isinstance(episode.get('licenseTypes', None), list) and libjoyn.check_license(episode) is False:
+				continue
 			episode_metadata = libjoyn.get_metadata(episode, 'EPISODE')
 
 			if 'series' in episode.keys() and 'id' in episode['series'].keys():
@@ -781,26 +793,30 @@ def search(stream_type, title):
 			xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'TV_SHOWS', title)
 
 
-def categories(stream_type, title):
+def categories(stream_type, title, return_list_items=False):
 
 	list_items = []
 	landingpage = libjoyn.get_landingpage()
 
 	for lane_type in CONST['CATEGORY_LANES']:
 		if lane_type in landingpage.keys():
-			for category_block_id, category_name in landingpage[lane_type].items():
+			block_ids = list(landingpage[lane_type].keys())
+			block_ids.reverse()
+			for block_id in block_ids:
 				list_items.append(
 				        get_dir_entry(metadata={
 				                'infoLabels': {
-				                        'title': category_name,
+				                        'title': landingpage[lane_type][block_id],
 				                        'plot': ''
 				                },
 				                'art': {}
 				        },
 				                      mode='category',
-				                      block_id=category_block_id))
-
-	xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEORIES', title)
+				                      block_id=block_id))
+	if return_list_items is True:
+		return list_items
+	else:
+		xbmc_helper.set_folder(list_items, pluginurl, pluginhandle, pluginquery, 'CATEORIES', title)
 
 
 def category(block_id, title):
@@ -823,55 +839,92 @@ def category(block_id, title):
 
 def play_video(video_id, client_data, stream_type, season_id=None, compilation_id=None):
 
+	from .mpd_parser import mpd_parser as mpd_parser
+
 	xbmc_helper.log_debug(compat._format('play_video: video_id {}', video_id))
+	succeeded = False
 	list_item = ListItem()
-	video_data = libjoyn.get_video_data(video_id, loads(client_data), stream_type, season_id, compilation_id)
-	succeeded = True
 
-	if 'streamingFormat' in video_data.keys() and video_data['streamingFormat'] == 'dash':
-		if libjoyn.set_mpd_props(list_item, video_data['videoUrl'], stream_type) is not False:
-			if 'drm' in video_data.keys() and 'licenseUrl' in video_data.keys():
+	try:
+		video_data = libjoyn.get_video_data(video_id, loads(client_data), stream_type, season_id, compilation_id)
+
+		xbmc_helper.log_debug(compat._format('Got video data: {}', video_data.get('licenseUrl')))
+
+		parser = video_data.get('parser', None)
+		if parser is not None:
+			list_item.setProperty('inputstreamaddon', CONST['INPUTSTREAM_ADDON'])
+			# DASH
+			if isinstance(parser, mpd_parser):
 				list_item.setMimeType('application/dash+xml')
-				if video_data['drm'] == 'widevine':
-					list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.widevine.alpha')
-					list_item.setProperty(
-					        compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']),
-					        compat._format(
-					                '{}|{}|R{{SSM}}|', video_data['licenseUrl'],
-					                request_helper.get_header_string({
-					                        'User-Agent': libjoyn.config.get('USER_AGENT'),
-					                        'Content-Type': 'application/octet-stream'
-					                })))
-					xbmc_helper.log_notice('Using Widevine as DRM')
-				elif video_data['drm'] == 'playready':
-					list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.microsoft.playready')
-					list_item.setProperty(compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']), video_data['licenseUrl'])
-					xbmc_helper.log_notice('Using PlayReady as DRM')
-
+				list_item.setProperty(compat._format('{}.manifest_type', CONST['INPUTSTREAM_ADDON']), 'mpd')
+				if parser.mpd_filepath is not None:
+					list_item.setPath(parser.mpd_filepath)
+				elif parser.mpd_url is not None:
+					list_item.setPath(libjoyn.add_user_agent_http_header(parser.mpd_url))
 				else:
-					xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'Unsupported DRM'),
-					                         xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
-					succeeded = False
+					raise ValueError(compat._format('Could not find a valid DASH Manifest - parser: {}', vars(mpd_parser)))
 
-				list_item.setProperty(compat._format('{}.stream_headers', CONST['INPUTSTREAM_ADDON']),
-				                      request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT']}))
-				if xbmc_helper.get_bool_setting('checkdrmcert') is True and 'certificateUrl' in video_data.keys():
-					list_item.setProperty(compat._format('{}.server_certificate', CONST['INPUTSTREAM_ADDON']),
-					                      libjoyn.add_user_agent_http_header(video_data['certificateUrl']))
-					xbmc_helper.log_debug(compat._format('SET DRM CERT: {}', video_data['certificateUrl']))
+				drm = video_data.get('drm', '')
+				license_key = video_data.get('licenseUrl', None)
+				license_cert = video_data.get('certificateUrl', None)
+				xbmc_helper.log_debug(compat._format('drm: {} key: {} cert: {}', drm, license_key, license_cert))
+
+				if license_key is not None:
+					if drm.lower() == 'widevine':
+						xbmc_helper.log_notice('Using Widevine as DRM')
+						list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.widevine.alpha')
+						list_item.setProperty(
+						        compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']),
+						        compat._format(
+						                '{}|{}|R{{SSM}}|', license_key,
+						                request_helper.get_header_string({
+						                        'User-Agent': libjoyn.config.get('USER_AGENT'),
+						                        'Content-Type': 'application/octet-stream'
+						                })))
+
+					elif drm.lower() == 'playready':
+						xbmc_helper.log_notice('Using PlayReady as DRM')
+						list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.microsoft.playready')
+						list_item.setProperty(
+						        compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']),
+						        compat._format(
+						                '{}|{}|R{{SSM}}|', license_key,
+						                request_helper.get_header_string({
+						                        'User-Agent':
+						                        libjoyn.config.get('USER_AGENT'),
+						                        'Content-Type':
+						                        'text/xml',
+						                        'SOAPAction':
+						                        'http://schemas.microsoft.com/DRM/2007/03/protocols/AcquireLicense'
+						                })))
+					else:
+						raise ValueError(compat._format('Unsupported DRM {}', drm))
+
+					if license_cert is not None and xbmc_helper.get_bool_setting('checkdrmcert') is True:
+						xbmc_helper.log_debug(compat._format('Set DRM cert: {}', license_cert))
+						list_item.setProperty(compat._format('{}.server_certificate', CONST['INPUTSTREAM_ADDON']),
+						                      libjoyn.add_user_agent_http_header(license_cert))
+
+			list_item.setProperty(compat._format('{}.stream_headers', CONST['INPUTSTREAM_ADDON']),
+			                      request_helper.get_header_string({'User-Agent': libjoyn.config['USER_AGENT']}))
+			if stream_type == 'LIVE':
+				list_item.setProperty(compat._format('{}.manifest_update_parameter', CONST['INPUTSTREAM_ADDON']), 'full')
+
+			succeeded = True
+
+			if 'season_id' in video_data.keys() and video_data['season_id'] is not None:
+				add_lastseen(season_id=video_data['season_id'], max_lastseen=CONST['LASTSEEN_ITEM_COUNT'])
+			elif 'compilation_id' in video_data.keys() and video_data['compilation_id'] is not None:
+				add_lastseen(compilation_id=video_data['compilation_id'], max_lastseen=CONST['LASTSEEN_ITEM_COUNT'])
+
 		else:
-			xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'Video-Stream'),
-			                         xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
-			xbmc_helper.log_error('Could not get valid MPD')
-			succeeded = False
+			raise ValueError(compat._format('Could not get parser: {}', parser))
 
-	else:
-		succeeded = False
-
-	if succeeded is True and 'season_id' in video_data.keys() and video_data['season_id'] is not None:
-		add_lastseen(season_id=video_data['season_id'], max_lastseen=CONST['LASTSEEN_ITEM_COUNT'])
-	elif succeeded is True and 'compilation_id' in video_data.keys() and video_data['compilation_id'] is not None:
-		add_lastseen(compilation_id=video_data['compilation_id'], max_lastseen=CONST['LASTSEEN_ITEM_COUNT'])
+	except Exception as e:
+		xbmc_helper.log_error(compat._format('Getting videostream / manifest failed with Exception: {}', e))
+		xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'Video-Stream'),
+		                         xbmc_helper.translation('MSG_ERROR_NO_VIDEOSTEAM'))
+		pass
 
 	setResolvedUrl(pluginhandle, succeeded, list_item)
 
@@ -1019,73 +1072,11 @@ def clear_cache():
 
 
 def logout(dont_check_account=False):
-
-	if dont_check_account is True:
-		libjoyn.get_auth_token(reset_anon=True)
-
-		if libjoyn.get_auth_token().get('has_account', False) is False:
-			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_OK_LABEL')))
-		else:
-			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_NOK_LABEL')))
-
-	elif libjoyn.get_auth_token().get('has_account', False) is True:
-		xbmc_helper.log_debug('LOGOUT')
-		libjoyn.get_auth_token(logout=True)
-		if libjoyn.get_auth_token().get('has_account', False) is False:
-			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_OK_LABEL')))
-			executebuiltin("Container.Refresh")
-		else:
-			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_NOK_LABEL')))
-	else:
-		xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('NOT_LOGGED_IN_LABEL')))
+	return libjoyn.logout(dont_check_account=dont_check_account)
 
 
-def login(username=None, password=None, dont_check_account=False):
-
-	if dont_check_account is False and libjoyn.get_auth_token().get('has_account', False) is True:
-		executebuiltin('ActivateWindow(busydialognocancel)')
-		account_info = libjoyn.get_account_info(True)
-		xbmc_helper.dialog(
-		        msg=compat._format(xbmc_helper.translation('LOGGED_IN_LABEL'),
-		                           account_info.get('me', {}).get('profile', {}).get('email', '')),
-		        msg_line2=compat._format(
-		                xbmc_helper.translation('ACCOUNT_INFO_LABEL'),
-		                xbmc_helper.translation('NO_LABEL') if libjoyn.get_account_subscription_config('hasActivePlus') is False else
-		                xbmc_helper.translation('YES_LABEL'),
-		                xbmc_helper.translation('NO_LABEL')
-		                if libjoyn.get_account_subscription_config('hasActiveHD') is False else xbmc_helper.translation('YES_LABEL')))
-		return executebuiltin('Dialog.Close(busydialognocancel)')
-
-	elif username is None:
-		executebuiltin('Dialog.Close(all, true)')
-		_username = Dialog().input(compat._unicode(xbmc_helper.translation('USERNAME_LABEL')), type=INPUT_ALPHANUM)
-		if len(_username) > 0:
-			from re import match as re_match
-			if re_match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", _username) is None:
-				xbmc_helper.notification('Login', xbmc_helper.translation('MSG_INVALID_EMAIL'), default_icon)
-				executebuiltin(compat._format('RunPlugin({}{})', pluginurl, pluginquery))
-			else:
-				executebuiltin(compat._format('RunPlugin({}{}&{})', pluginurl, pluginquery, urlencode({'username': _username})))
-	else:
-		if password is None:
-			executebuiltin('Dialog.Close(all, true)')
-			_password = Dialog().input(compat._unicode(xbmc_helper.translation('PASSWORD_LABEL')),
-			                           type=INPUT_ALPHANUM,
-			                           option=ALPHANUM_HIDE_INPUT)
-
-			if len(_password) > 0:
-				executebuiltin(compat._format('RunPlugin({}{}&{})', pluginurl, pluginquery, urlencode({'password': _password})))
-		else:
-			auth_token = libjoyn.get_auth_token(username=username, password=password)
-			if auth_token is False or auth_token.get('has_account', False) is False:
-				xbmc_helper.dialog_action(msg=compat._unicode(xbmc_helper.translation('LOGIN_FAILED_LABEL')),
-				                          yes_label_translation='RETRY',
-				                          cancel_label_translation='CONTINUE_ANONYMOUS',
-				                          ok_addon_parameters='mode=login',
-				                          cancel_addon_parameters='mode=logout&dont_check_account=true')
-			else:
-				executebuiltin("Container.Refresh")
-				executebuiltin(compat._format('RunPlugin({}{})', pluginurl, '?mode=login'))
+def login(dont_check_account=False, failed=False, no_account_dialog=False):
+	return libjoyn.login(dont_check_account=dont_check_account, failed=failed, no_account_dialog=no_account_dialog)
 
 
 pluginurl = argv[0]
@@ -1097,7 +1088,7 @@ default_fanart = addon.getAddonInfo('fanart')
 default_logo = xbmc_helper.get_media_filepath('logo.gif')
 params = xbmc_helper.get_addon_params(pluginquery)
 param_keys = params.keys()
-
+xbmc_helper.log_debug(compat._format('PLUGIN CALLED WITH QUERY {}', pluginquery))
 if 'mode' in param_keys:
 
 	mode = params['mode']
@@ -1133,7 +1124,7 @@ if 'mode' in param_keys:
 					           compilation_id=params['compilation_id'])
 				else:
 					play_video(video_id=params['video_id'], client_data=params['client_data'], stream_type=stream_type)
-			if stream_type == 'LIVE':
+			elif stream_type == 'LIVE':
 				play_video(video_id=params['video_id'],
 				           client_data=params.get('client_data', dumps(libjoyn.get_client_data(params['video_id'], stream_type))),
 				           stream_type=stream_type)
@@ -1177,10 +1168,10 @@ if 'mode' in param_keys:
 			login_params = {}
 			if 'dont_check_account' in param_keys:
 				login_params.update({'dont_check_account': True})
-			if 'username' in param_keys:
-				login_params.update({'username': params['username']})
-			if 'password' in param_keys:
-				login_params.update({'password': params['password']})
+			if 'failed' in param_keys:
+				login_params.update({'failed': False if params.get('failed') != 'true' else True})
+			if 'no_account_dialog' in param_keys:
+				login_params.update({'no_account_dialog': False if params.get('no_account_dialog') != 'true' else True})
 
 			login(**login_params)
 
@@ -1201,3 +1192,5 @@ if 'mode' in param_keys:
 else:
 	libjoyn = lib_joyn(default_icon)
 	index()
+
+xbmc_helper.log_debug(compat._format('PLUGIN ENDED - time {}', (time() - start_time)))

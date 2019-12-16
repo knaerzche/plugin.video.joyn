@@ -211,7 +211,23 @@ msgctxt "#30352"
 msgid "Account"
 msgstr ""
 
-# empty strings from id 30353 to 30500
+msgctxt "#30353"
+msgid "Show Plus+ contents without subscription"
+msgstr ""
+
+msgctxt "#30354"
+msgid "Highlight Plus+ content"
+msgstr ""
+
+msgctxt "#30355"
+msgid "Show categories on main menu"
+msgstr ""
+
+msgctxt "#30356"
+msgid "Save username/password encrypted"
+msgstr ""
+
+# empty strings from id 30357 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -301,7 +317,19 @@ msgctxt "#30535"
 msgid "Authorization could not be done - check log for errors"
 msgstr ""
 
-#empty strings from id 30536 to 30600
+msgctxt "#30357"
+msgid "Try to fixup VOD streams"
+msgstr ""
+
+msgctxt "#30358"
+msgid "Try to fixup live streams"
+msgstr ""
+
+msgctxt "#30359"
+msgid "Try to force local manifest"
+msgstr ""
+
+# empty strings from id 30360 to 30500
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"
@@ -538,4 +566,16 @@ msgstr ""
 
 msgctxt "#30690"
 msgid "The given MPP pin is invalid - please enter the correct one"
+msgstr ""
+
+msgctxt "#30691"
+msgid "[COLOR blue]{:s}[/COLOR]"
+msgstr ""
+
+msgctxt "#30692"
+msgid "Invalid password (length)"
+msgstr ""
+
+msgctxt "#30693"
+msgid "No information available"
 msgstr ""

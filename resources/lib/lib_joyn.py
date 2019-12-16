@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from base64 import b64decode
 from re import findall
 from hashlib import sha1, sha256
@@ -7,7 +8,6 @@ from datetime import datetime
 from time import time
 from copy import copy, deepcopy
 from codecs import encode
-from io import open as io_open
 from xbmc import getCondVisibility, sleep as xbmc_sleep
 from .const import CONST
 from . import compat as compat
@@ -44,11 +44,11 @@ class lib_joyn(object):
 
 		sha_input = compat._format('{},{},{}{}', video_id, entitlement_token, encoded_client_data,
 		                           compat._decode(encode(self.config['SECRET'].encode('utf-8'), 'hex')))
-		xbmc_helper.log_debug(compat._format('Build signature: {}', sha_input))
+		xbmc_helper.log_debug(compat._format('Build signature: {} {}', sha_input, type(self.config['SECRET'])))
 
 		return sha1(sha_input.encode('utf-8')).hexdigest()
 
-	def set_mpd_props(self, list_item, url, stream_type='VOD'):
+	def get_mpd_parser(self, url, stream_type='VOD'):
 
 		xbmc_helper.log_debug(compat._format('set_mpd_props {} stream_type {}', url, stream_type))
 		mpdparser = None
@@ -75,84 +75,44 @@ class lib_joyn(object):
 			except Exception as e:
 				xbmc_helper.log_error(compat._format('Invalid Orginal MPD - Exception: {}', e))
 
-		if mpdparser is not None and mpdparser.mpd_tree is not None:
+		if mpdparser is not None:
 
-			list_item.setProperty('inputstreamaddon', CONST['INPUTSTREAM_ADDON'])
-			list_item.setProperty(compat._format('{}.manifest_type', CONST['INPUTSTREAM_ADDON']), 'mpd')
-
-			if stream_type == 'LIVE':
-				list_item.setProperty(compat._format('{}.manifest_update_parameter', CONST['INPUTSTREAM_ADDON']), 'full')
-
-			toplevel_base_url = None
-
-			# the mpd has a Base URL at toplevel at a remote location
-			# inputstream adaptive currently can't handle this correctly
-			# it's known that this Base URL can be used to retrieve a 'better' mpd
-			toplevel_base_url_res = mpdparser.get_toplevel_base_url()
-			if toplevel_base_url_res is not None and toplevel_base_url_res.startswith('http'):
-				xbmc_helper.log_debug(compat._format('Found MPD with Base URL at toplevel: {}', toplevel_base_url_res))
-				toplevel_base_url = toplevel_base_url_res
-
-			if toplevel_base_url is not None:
-				if stream_type == 'VOD':
+			toplevel_base_url = mpdparser.get_toplevel_base_url()
+			if xbmc_helper.get_bool_setting('fixup_vod') is True and stream_type == 'VOD' and toplevel_base_url is not None:
+				if toplevel_base_url.startswith('http'):
 					new_mpd_url = compat._format('{}.mpd?filter=', toplevel_base_url)
+					xbmc_helper.log_debug(compat._format('Try to force new MPD with URL: {}', new_mpd_url))
 					try:
-						test_mpdparser = mpd_parser(new_mpd_url, self.config)
-						if test_mpdparser.mpd_tree is not None:
-							mpdparser = test_mpdparser
-							toplevel_base_url = None
-							toplevel_base_url_res = mpdparser.get_toplevel_base_url()
-							if toplevel_base_url_res is not None and toplevel_base_url_res.startswith('http'):
-								xbmc_helper.log_debug(
-								        compat._format('Found MPD with Base URL at toplevel in REPLACED url {} new url {}', toplevel_base_url_res,
-								                       new_mpd_url))
-								toplevel_base_url = toplevel_base_url_res
-							else:
-								toplevel_base_url = None
+						_mpdparser = mpd_parser(new_mpd_url, self.config)
+						if _mpdparser is not None and _mpdparser.mpd_tree is not None:
+							mpdparser = _mpdparser
+							url = new_mpd_url
+						else:
+							raise Exception('Could not be parsed as valid MPD')
 					except Exception as e:
-						xbmc_helper.log_debug(compat._format('Invalid MPD - Exception {}', e))
-						pass
+						xbmc_helper.log_notice(
+						        compat._format('Trying to force new MPD for VOD failed with URL: {} - Exception: {}', new_mpd_url, e))
 
-				elif stream_type == 'LIVE':
-					period_base_url_res = mpdparser.query_node_value(['Period', 'BaseURL'])
-					if period_base_url_res is not None and period_base_url_res.startswith('/') and period_base_url_res.endswith('/'):
-						new_mpd_url = compat._format('{}{}cenc-default.mpd', toplevel_base_url, period_base_url_res)
+			elif xbmc_helper.get_bool_setting('fixup_live') is True and stream_type == 'LIVE' and toplevel_base_url is not None:
+				period_base_url = mpdparser.query_node_value(['Period', 'BaseURL'])
+				if period_base_url is not None:
+					new_mpd_url = compat._format('{}{}cenc-default.mpd', toplevel_base_url, period_base_url)
+					xbmc_helper.log_debug(compat._format('Trying to fixup Livestream with new URL: {}', new_mpd_url))
+					try:
+						_mpdparser = mpd_parser(new_mpd_url, self.config)
+						if _mpdparser is not None and _mpdparser.mpd_tree is not None:
+							mpdparser = _mpdparser
+							url = new_mpd_url
+						else:
+							raise Exception('Could not be parsed as valid MPD')
+					except Exception as e:
+						xbmc_helper.log_notice(
+						        compat._format('Trying to fixup Livestream failed with new URL: {} - Exception: {}', new_mpd_url, e))
 
-						try:
-							test_mpdparser = mpd_parser(new_mpd_url, self.config)
-							if test_mpdparser.mpd_tree is not None:
-								mpdparser = test_mpdparser
-								toplevel_base_url = None
-								toplevel_base_url_res = mpdparser.get_toplevel_base_url()
-								if toplevel_base_url_res is not None and toplevel_base_url_res.startswith('http'):
-									xbmc_helper.log_debug(
-									        compat._format('Found MPD with Base URL at toplevel in REPLACED url {} new url {}', toplevel_base_url_res,
-									                       new_mpd_url))
-									toplevel_base_url = toplevel_base_url_res
-								else:
-									toplevel_base_url = None
-						except Exception as e:
-							xbmc_helper.log_debug(compat._format('Invalid MPD - Exception: {}', e))
-							pass
+		if xbmc_helper.get_bool_setting('force_local_manifest') is True:
+			mpdparser.set_local_path()
 
-			if toplevel_base_url is not None:
-				xbmc_helper.log_debug('Writing MPD file to local disc, since it has a remote top Level Base URL ...')
-				sha_1 = sha1()
-				sha_1.update(mpdparser.mpd_url)
-
-				mpd_filepath = xbmc_helper.get_file_path(CONST['TEMP_DIR'], compat._format('{}.mpd', sha_1.hexdigest()))
-				with io_open(file=mpd_filepath, mode='w', encoding='utf-8') as mpd_filepath_out:
-					mpd_filepath_out.write(compat._unicode(mpdparser.mpd_contents))
-
-				xbmc_helper.log_notice(compat._format('Local MPD filepath is: {}', mpd_filepath))
-				list_item.setPath(mpd_filepath)
-
-			else:
-				list_item.setPath(self.add_user_agent_http_header(mpdparser.mpd_url))
-
-			return True
-
-		return False
+		return mpdparser
 
 	def get_entitlement_data(self, video_id, stream_type, pin_required=False, invalid_pin=False):
 
@@ -232,15 +192,18 @@ class lib_joyn(object):
 			                                              post_data='false',
 			                                              no_cache=True)
 
-			if xbmc_helper.get_bool_setting('force_playready') and self.config['IS_ANDROID'] is True and 'drm' in video_data.keys(
-			) and 'licenseUrl' in video_data.keys():
-
-				if stream_type == 'VOD' and video_data['licenseUrl'].find('/widevine/v1') is not -1:
-					video_data.update({'licenseUrl': video_data['licenseUrl'].replace('/widevine/v1', '/playready/v1')})
-					video_data.update({'drm': 'playready'})
-				elif stream_type == 'LIVE':
-					video_data.update({'drm': 'playready'})
-
+			if isinstance(video_data, dict) and video_data.get('streamingFormat',
+			                                                   '') == 'dash' and video_data.get('videoUrl', None) is not None:
+				mpdparser = self.get_mpd_parser(url=video_data.get('videoUrl'), stream_type=stream_type)
+				if mpdparser is not None:
+					video_data.update({'parser': mpdparser})
+					if xbmc_helper.get_bool_setting('force_playready') and self.config['IS_ANDROID'] is True and 'drm' in video_data.keys(
+					) and 'licenseUrl' in video_data.keys() and mpdparser.supports_playready is True:
+						if stream_type == 'VOD' and video_data['licenseUrl'].find('/widevine/v1') is not -1:
+							video_data.update({'licenseUrl': video_data['licenseUrl'].replace('/widevine/v1', '/playready/v1')})
+							video_data.update({'drm': 'playready'})
+						elif stream_type == 'LIVE':
+							video_data.update({'drm': 'playready'})
 			if season_id is not None:
 				video_data.update({'season_id': season_id})
 			if compilation_id is not None:
@@ -248,34 +211,47 @@ class lib_joyn(object):
 
 		return video_data
 
-	def get_epg(self):
+	def get_epg(self, first=30, use_cache=True):
 
-		cached_epg = cache.get_json('EPG')
 		dt_now = datetime.now()
-		if cached_epg['data'] is not None and cached_epg['is_expired'] is False and 'epg_expires' in cached_epg['data'].keys(
-		) and datetime.fromtimestamp(cached_epg['data']['epg_expires']) > dt_now:
+		if use_cache is True:
+			cached_epg = cache.get_pickle('EPG')
 
-			xbmc_helper.log_debug('EPG FROM CACHE')
-			epg_data = cached_epg['data']['epg_data']
-		else:
-			xbmc_helper.log_debug('EPG FROM API')
-			epg_data = self.get_graphql_response('EPG')
-			epg = {
-			        'epg_data': epg_data,
-			        'epg_expires': None,
-			}
+			if cached_epg['data'] is not None and cached_epg['is_expired'] is False and 'epg_expires' in cached_epg['data'].keys(
+			) and datetime.fromtimestamp(cached_epg['data']['epg_expires']) > dt_now:
 
-			for brand_epg in epg_data['brands']:
-				if brand_epg.get('livestream', None) is not None and 'epg' in brand_epg['livestream'].keys() and len(
-				        brand_epg['livestream']['epg']) > 0:
+				xbmc_helper.log_debug('EPG FROM CACHE')
+				return cached_epg['data']['epg_data']
 
-					brand_live_stream_epg_count = len(brand_epg['livestream']['epg'])
-					if brand_live_stream_epg_count > 0:
-						penultimate_brand_live_stream_epg_timestamp = brand_epg['livestream']['epg'][(brand_live_stream_epg_count -
-						                                                                              2)]['startDate']
-						if epg['epg_expires'] is None or epg['epg_expires'] > penultimate_brand_live_stream_epg_timestamp:
-							epg.update({'epg_expires': penultimate_brand_live_stream_epg_timestamp})
-			cache.set_json('EPG', epg)
+		xbmc_helper.log_debug('EPG FROM API')
+		epg_data = self.get_graphql_response(operation='EPG',
+		                                     variables={'first': first},
+		                                     force_cache=False if use_cache is True else True)
+		epg = {
+		        'epg_data': epg_data,
+		        'epg_expires': None,
+		}
+
+		for brand_epg in epg_data['brands']:
+			if brand_epg.get('livestream', None) is not None:
+				if not isinstance(brand_epg['livestream'].get('epg', None), list):
+					brand_epg['livestream']['epg'] = []
+				brand_live_stream_epg_count = len(brand_epg['livestream']['epg'])
+				if brand_live_stream_epg_count > 0:
+					penultimate_brand_live_stream_epg_timestamp = brand_epg['livestream']['epg'][(brand_live_stream_epg_count -
+					                                                                              2)]['startDate']
+					if epg['epg_expires'] is None or epg['epg_expires'] > penultimate_brand_live_stream_epg_timestamp:
+						epg.update({'epg_expires': penultimate_brand_live_stream_epg_timestamp})
+				else:
+					brand_epg['livestream']['epg'].append({
+					        '__typename': 'EpgEntry',
+					        'startDate': int(time()),
+					        'endDate': int(time()) + 36000,
+					        'title': compat._format(xbmc_helper.translation('NO_INFORMATION_AVAILABLE')),
+					        'secondaryTitle': compat._format(xbmc_helper.translation('NO_INFORMATION_AVAILABLE'))
+					})
+		if use_cache is True:
+			cache.set_pickle('EPG', epg)
 
 		return epg_data
 
@@ -313,14 +289,56 @@ class lib_joyn(object):
 			return account_info
 
 	def get_account_state(self):
+
 		if self.get_auth_token().get('has_account', False) is not False:
 			return self.get_account_info().get('me', {}).get('state', 'R_A')
 		return False
 
 	def get_account_subscription_config(self, subscription_type):
+
 		if self.get_auth_token().get('has_account', False) is not False:
 			return self.get_account_info().get('me', {}).get('subscriptionConfig', {}).get(subscription_type, False)
 		return False
+
+	def check_license(self, asset_data, respect_setting=True):
+
+		license_types = asset_data.get('licenseTypes', [])
+		markings = asset_data.get('markings', [])
+		xbmc_helper.log_debug(
+		        compat._format('check_license: {} types {} markings {}', asset_data.get('title', ''), license_types, markings))
+
+		if respect_setting is True and xbmc_helper.get_bool_setting('always_show_premium') is True:
+			return True
+
+		if len(license_types) > 0:
+			for license_type in license_types:
+				if license_type in CONST['LICENSE_TYPES']['FREE'].keys():
+					if len(markings) > 0:
+						found_all_markings = True
+						for marking in markings:
+							if not marking in CONST['LICENSE_TYPES']['FREE'][license_type]['MARKING_TYPES']:
+								found_all_markings = False
+								break
+
+						if found_all_markings is True:
+							return True
+					else:
+						return True
+				elif license_type in CONST['LICENSE_TYPES']['PAID'].keys():
+					if self.get_account_subscription_config(CONST['LICENSE_TYPES']['PAID'][license_type]['SUBSCRIPTION_TYPE']) is True:
+						if len(markings) > 0:
+							found_all_markings = True
+							for marking in markings:
+								if not marking in CONST['LICENSE_TYPES']['PAID'][license_type]['MARKING_TYPES']:
+									found_all_markings = False
+
+							if found_all_markings is True:
+								return True
+						else:
+							return True
+			return False
+		else:
+			return True
 
 	def get_uepg_data(self, pluginurl):
 
@@ -389,38 +407,37 @@ class lib_joyn(object):
 
 		return uEPG_data
 
-	def get_graphql_response(self, operation, variables={}, retry_count=0, force_refresh_auth=False):
+	def get_graphql_response(self, operation, variables={}, retry_count=0, force_refresh_auth=False, force_cache=False):
 
 		xbmc_helper.log_debug(compat._format('get_graphql_response: Operation: {}', operation))
-		for required_var in CONST['GRAPHQL'][operation]['REQUIRED_VARIABLES']:
-			if required_var not in variables.keys():
-				if required_var in CONST['GRAPHQL']['STATIC_VARIABLES'].keys():
-					variables.update({required_var: CONST['GRAPHQL']['STATIC_VARIABLES'][required_var]})
-				else:
-					xbmc_helper.log_error(
-					        compat._format('Not all required variables set for operation {} required var {} set vars{}', operation,
-					                       required_var, variables))
-					exit(0)
+
+		if isinstance(CONST['GRAPHQL'][operation].get('REQUIRED_VARIABLES', None), list):
+			for required_var in CONST['GRAPHQL'][operation]['REQUIRED_VARIABLES']:
+				if required_var not in variables.keys():
+					if required_var in CONST['GRAPHQL']['STATIC_VARIABLES'].keys():
+						variables.update({required_var: CONST['GRAPHQL']['STATIC_VARIABLES'][required_var]})
+					else:
+						xbmc_helper.log_error(
+						        compat._format('Not all required variables set for operation {} required var {} set vars{}', operation,
+						                       required_var, variables))
+						exit(0)
 
 		if force_refresh_auth is True:
 			self.get_auth_token(force_refresh=True)
 
-		if CONST['GRAPHQL'][operation].get('BOOKMARKS', False) is True  and self.get_auth_token().get('has_account', False) is False:
+		request_url = CONST['GRAPHQL']['API_URL']
+
+		if CONST['GRAPHQL'][operation].get('BOOKMARKS', False) is True and self.get_auth_token().get('has_account', False) is False:
 			query = CONST['GRAPHQL'][operation]['QUERY'].replace('isBookmarked ', '')
 		else:
 			query = CONST['GRAPHQL'][operation]['QUERY']
 
 		params = {
 		        'query':
-		        compat._format('{} {} {}', 'query' if CONST['GRAPHQL'][operation].get('IS_MUTATION', False) is False else 'mutation',
-		                       CONST['GRAPHQL'][operation]['OPERATION'], query),
-		        'extensions': {
-		                'persistedQuery': {
-		                        'version': 1,
-		                },
-		        },
-		        'operationName':
-		        CONST['GRAPHQL'][operation]['OPERATION'],
+		        compat._format(
+		                '{} {} {}', 'query' if CONST['GRAPHQL'][operation].get('IS_MUTATION', False) is False else 'mutation', ''
+		                if CONST['GRAPHQL'][operation].get('OPERATION', None) is None else CONST['GRAPHQL'][operation]['OPERATION'],
+		                query)
 		}
 
 		if len(variables.keys()) != 0:
@@ -429,22 +446,27 @@ class lib_joyn(object):
 			else:
 				params.update({'variables': variables})
 
-		params['extensions']['persistedQuery'].update({'sha256Hash': sha256(params['query'].encode('utf-8')).hexdigest()})
+		if CONST['GRAPHQL'][operation].get('OPERATION', None) is not None:
+			params.update({
+			        'operationName': CONST['GRAPHQL'][operation].get('OPERATION'),
+			        'extensions': {
+			                'persistedQuery': {
+			                        'version': 1,
+			                        'sha256Hash': sha256(params['query'].encode('utf-8')).hexdigest(),
+			                },
+			        }
+			})
 
-		if CONST['GRAPHQL'][operation].get('IS_MUTATION', False) is False:
-			params.update({'extensions': dumps(params['extensions'])})
+			if CONST['GRAPHQL'][operation].get('IS_MUTATION', False) is False:
+				params.update({'extensions': dumps(params['extensions'])})
 
 		headers = copy(self.config['GRAPHQL_HEADERS'])
 
 		account_state = False
-		if operation != 'ACCOUNT' and self.get_auth_token().get('has_account', False) is not False:
+		if operation != 'ACCOUNT' and operation != 'USER_PROFILE' and self.get_auth_token().get('has_account', False) is not False:
 			account_state = self.get_account_state()
 			if account_state is not False:
 				headers.append(('Joyn-User-State', account_state))
-			if self.get_account_subscription_config('hasActivePlus') is True:
-				params.update({'enable_plus': 'true'})
-			else:
-				params.update({'enable_plus': 'false'})
 
 		if CONST['GRAPHQL'][operation].get('AUTH', False) is True:
 			auth_token_data = self.get_auth_token()
@@ -453,7 +475,7 @@ class lib_joyn(object):
 			else:
 				xbmc_helper.log_error("Failed to get auth_token; continue unauthorized")
 
-			if operation != 'ACCOUNT' and account_state is False:
+			if operation != 'ACCOUNT' and operation != 'USER_PROFILE' and account_state is False:
 				joyn_user_id = self.get_client_ids().get('anon_device_id', None)
 				if joyn_user_id is not None:
 					headers.append(('Joyn-User-Id', joyn_user_id))
@@ -461,22 +483,23 @@ class lib_joyn(object):
 					xbmc_helper.log_notice("Failed to get joyn_user_id; continue without")
 
 		api_response = {}
+		no_cache = False if force_cache is True else CONST['GRAPHQL'][operation].get('NO_CACHE', False)
 
 		try:
 			if CONST['GRAPHQL'][operation].get('IS_MUTATION', False) is False:
 
-				api_response = request_helper.get_json_response(url=CONST['GRAPHQL']['API_URL'],
+				api_response = request_helper.get_json_response(url=request_url,
 				                                                config=self.config,
 				                                                params=params,
 				                                                headers=headers,
-				                                                no_cache=CONST['GRAPHQL'][operation].get('NO_CACHE', False),
+				                                                no_cache=no_cache,
 				                                                return_json_errors=['INVALID_JWT'])
 			else:
-				api_response = request_helper.post_json(url=CONST['GRAPHQL']['API_URL'],
+				api_response = request_helper.post_json(url=request_url,
 				                                        config=self.config,
 				                                        data=params,
 				                                        additional_headers=headers,
-				                                        no_cache=CONST['GRAPHQL'][operation].get('NO_CACHE', False),
+				                                        no_cache=no_cache,
 				                                        return_json_errors=['INVALID_JWT'])
 
 			if isinstance(api_response, dict) and 'json_errors' in api_response.keys():
@@ -509,13 +532,12 @@ class lib_joyn(object):
 
 		client_id_data = xbmc_helper.get_json_data('client_ids')
 		if client_id_data is None or client_id_data.get('client_name', 'android') not in CONST['CLIENT_NAMES']:
-			from uuid import uuid4
-			xbmc_helper.log_debug("Creating new client_data")
 			client_id_data = {
-			        'anon_device_id': str(uuid4()),
-			        'client_id': str(uuid4()),
+			        'anon_device_id': lib_joyn.get_device_uuid(random=True),
+			        'client_id': lib_joyn.get_device_uuid(prefix='JOYNCLIENTID'),
 			        'client_name': self.config.get('CLIENT_NAME', 'android'),
 			}
+			xbmc_helper.log_debug(compat._format('Created new client_id_data: {}', client_id_data))
 			xbmc_helper.set_json_data('client_ids', client_id_data)
 
 		if username is not None and password is not None:
@@ -599,15 +621,10 @@ class lib_joyn(object):
 						# ask to re-login
 						if self.auth_token_data.get('has_account', False) is True:
 							pass
-							xbmc_helper.log_debug("ssk to re-login")
-							from xbmcaddon import Addon
-							from xbmc import executebuiltin
-							executebuiltin(
-							        compat._format('RunPlugin(plugin://{}{})',
-							                       Addon().getAddonInfo('id'), '?mode=login&dont_check_account=true'))
+							xbmc_helper.log_debug("ask to re-login")
 							xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), xbmc_helper.translation('ACCOUNT')),
 							                         xbmc_helper.translation('MSG_RERESH_AUTH_FAILED_RELOG'))
-							exit(0)
+							return self.login(dont_check_account=True)
 						else:
 							if is_retry is False:
 								pass
@@ -641,10 +658,116 @@ class lib_joyn(object):
 			                       no_cache=True,
 			                       additional_headers=[('Authorization',
 			                                            compat._format('Bearer {}', self.auth_token_data.get('access_token')))])
+			xbmc_helper.del_data('auth_data')
 
 			return self.get_auth_token(reset_anon=True)
 
 		return self.auth_token_data
+
+	def login(self, username=None, dont_check_account=False, failed=False, no_account_dialog=False):
+
+		from xbmc import executebuiltin
+		from xbmcgui import Dialog, INPUT_ALPHANUM, ALPHANUM_HIDE_INPUT
+
+		autologin = False
+		password = None
+
+		if dont_check_account is False and self.get_auth_token().get('has_account', False) is True:
+			if no_account_dialog is False:
+				executebuiltin('ActivateWindow(busydialognocancel)')
+				account_info = self.get_account_info(True)
+				xbmc_helper.dialog(
+				        msg=compat._format(xbmc_helper.translation('LOGGED_IN_LABEL'),
+				                           account_info.get('me', {}).get('profile', {}).get('email', '')),
+				        msg_line2=compat._format(
+				                xbmc_helper.translation('ACCOUNT_INFO_LABEL'),
+				                xbmc_helper.translation('NO_LABEL')
+				                if self.get_account_subscription_config('hasActivePlus') is False else xbmc_helper.translation('YES_LABEL'),
+				                xbmc_helper.translation('NO_LABEL')
+				                if self.get_account_subscription_config('hasActiveHD') is False else xbmc_helper.translation('YES_LABEL')))
+				return executebuiltin('Dialog.Close(busydialognocancel)')
+			else:
+				self.get_account_info(True)
+				return
+
+		elif failed is False and xbmc_helper.get_bool_setting('save_encrypted_auth_data') is True:
+			auth_data = lib_joyn.get_auth_data()
+			if isinstance(auth_data, dict) and 'username' in auth_data.keys() and 'password' in auth_data.keys():
+				xbmc_helper.log_debug('Successfully received decrypted auth data')
+				username = auth_data.get('username')
+				password = auth_data.get('password')
+				autologin = True
+
+		if username is None:
+			executebuiltin('Dialog.Close(all, true)')
+			_username = Dialog().input(compat._unicode(xbmc_helper.translation('USERNAME_LABEL')), type=INPUT_ALPHANUM)
+			if len(_username) > 0:
+				from re import match as re_match
+				if re_match(r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", _username) is not None:
+					username = _username
+				else:
+					xbmc_helper.notification('Login', xbmc_helper.translation('MSG_INVALID_EMAIL'), self.default_icon)
+			else:
+				return xbmc_helper.dialog_action(msg=compat._unicode(xbmc_helper.translation('LOGIN_FAILED_LABEL')),
+				                                 yes_label_translation='RETRY',
+				                                 cancel_label_translation='CONTINUE_ANONYMOUS',
+				                                 ok_addon_parameters='mode=login&failed=true',
+				                                 cancel_addon_parameters='mode=logout&dont_check_account=true')
+
+			if username is None:
+				return self.login(dont_check_account=dont_check_account, failed=failed, no_account_dialog=no_account_dialog)
+		if password is None:
+			executebuiltin('Dialog.Close(all, true)')
+			_password = Dialog().input(compat._unicode(xbmc_helper.translation('PASSWORD_LABEL')),
+			                           type=INPUT_ALPHANUM,
+			                           option=ALPHANUM_HIDE_INPUT)
+
+			if len(_password) >= 6:
+				password = _password
+			else:
+				xbmc_helper.notification('Login', xbmc_helper.translation('MSG_INVALID_PASSWORD'), self.default_icon)
+				return self.login(username=username,
+				                  dont_check_account=dont_check_account,
+				                  failed=failed,
+				                  no_account_dialog=no_account_dialog)
+
+		if username is not None and password is not None:
+			auth_token = self.get_auth_token(username=username, password=password)
+			if auth_token is False or auth_token.get('has_account', False) is False:
+				return xbmc_helper.dialog_action(msg=compat._unicode(xbmc_helper.translation('LOGIN_FAILED_LABEL')),
+				                                 yes_label_translation='RETRY',
+				                                 cancel_label_translation='CONTINUE_ANONYMOUS',
+				                                 ok_addon_parameters='mode=login&failed=true',
+				                                 cancel_addon_parameters='mode=logout&dont_check_account=true')
+			else:
+				if xbmc_helper.get_bool_setting('save_encrypted_auth_data') is True:
+					lib_joyn.save_auth_data(username, password)
+				self.login(no_account_dialog=False if autologin is False else True)
+				executebuiltin("Container.Refresh")
+
+	def logout(self, dont_check_account=False):
+
+		from xbmc import executebuiltin
+
+		if dont_check_account is True:
+			self.get_auth_token(reset_anon=True)
+
+			if self.get_auth_token().get('has_account', False) is False:
+				xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_OK_LABEL')))
+				executebuiltin("Container.Refresh")
+			else:
+				xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_NOK_LABEL')))
+
+		elif self.get_auth_token().get('has_account', False) is True:
+			xbmc_helper.log_debug('LOGOUT')
+			self.get_auth_token(logout=True)
+			if self.get_auth_token().get('has_account', False) is False:
+				xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_OK_LABEL')))
+				executebuiltin("Container.Refresh")
+			else:
+				xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('LOGOUT_NOK_LABEL')))
+		else:
+			xbmc_helper.dialog(compat._unicode(xbmc_helper.translation('NOT_LOGGED_IN_LABEL')))
 
 	def add_user_agent_http_header(self, uri):
 
@@ -673,6 +796,11 @@ class lib_joyn(object):
 		if title_type_id is not None and 'title' in metadata['infoLabels'].keys():
 			metadata['infoLabels'].update(
 			        {'title': compat._format(xbmc_helper.translation('TITLE_LABEL'), metadata['infoLabels'].get('title', ''))})
+
+		if xbmc_helper.get_bool_setting('highlight_premium') is True and isinstance(data.get('markings', None),
+		                                                                            list) and 'PREMIUM' in data['markings']:
+			metadata['infoLabels'].update(
+			        {'title': compat._format(xbmc_helper.translation('PLUS_HIGHLIGHT_LABEL'), metadata['infoLabels'].get('title', ''))})
 
 		if data.get('isBookmarked', None) is not None:
 			if data.get('isBookmarked', False) is True:
@@ -894,7 +1022,8 @@ class lib_joyn(object):
 			try:
 				ip_api_response = request_helper.get_json_response(url=compat._format(CONST['IP_API_URL'],
 				                                                                      xbmc_helper.translation('LANG_CODE')),
-				                                                   config=config, silent=True)
+				                                                   config=config,
+				                                                   silent=True)
 
 			except Exception as e:
 				xbmc_helper.log_debug(compat._format('ip-api request failed - {}', e))
@@ -1267,3 +1396,93 @@ class lib_joyn(object):
 			i += 4
 
 		return result
+
+	@staticmethod
+	def get_device_uuid(prefix='', random=False, return_bytes=False):
+
+		from uuid import uuid5, getnode, NAMESPACE_DNS
+		if random is True:
+			from random import getrandbits
+			prefix = compat._format('{}{:x}', prefix, getrandbits(128))
+
+		xbmc_helper.log_debug(compat._format('get_device_uuid - prefix: {}', prefix))
+
+		_uuid = uuid5(NAMESPACE_DNS, compat._encode(compat._format('{}{:x}', str(prefix), getnode())))
+		xbmc_helper.log_debug(compat._format('get_device_uuid - uuid: {}', _uuid))
+
+		if return_bytes is True:
+			return _uuid.bytes
+		else:
+			return compat._format('{}', _uuid)
+
+	@staticmethod
+	def encrypt_des(key, data):
+
+		try:
+			from pyDes import triple_des, CBC, PAD_PKCS5
+			from base64 import b64encode
+
+			try:
+				return b64encode(triple_des(key, CBC, "\0\0\0\0\0\0\0\0", padmode=PAD_PKCS5).encrypt(data))
+			except Exception as e:
+				xbmc_helper.log_notice(compat._format('DATA ENCRYPTION FAILED - {}', e))
+				pass
+				return False
+
+		except ImportError as ie:
+			xbmc_helper.log_notice(compat._format('Could not import pydes: {}', ie))
+			pass
+			return False
+
+	@staticmethod
+	def decrypt_des(key, encrypted_data):
+
+		try:
+			from pyDes import triple_des, CBC, PAD_PKCS5
+			from base64 import b64decode
+
+			try:
+				return triple_des(key, CBC, "\0\0\0\0\0\0\0\0", padmode=PAD_PKCS5).decrypt(b64decode(encrypted_data))
+			except Exception as e:
+				xbmc_helper.log_notice(compat._format('DATA DECRYPTION FAILED - {}', e))
+				pass
+				return False
+
+		except ImportError as ie:
+			xbmc_helper.log_notice(compat._format('Could not import pydes: {}', ie))
+			pass
+			return False
+
+	@staticmethod
+	def save_auth_data(username, password):
+
+		auth_data = dumps({'username': username, 'password': password})
+		encrypted_auth_data = lib_joyn.encrypt_des(key=lib_joyn.get_device_uuid(prefix='JOYNAUTHDATA', return_bytes=True),
+		                                           data=auth_data)
+		if encrypted_auth_data is not False:
+			xbmc_helper.set_data('auth_data', encrypted_auth_data)
+			return True
+		else:
+			xbmc_helper.log_notice('Failed to save encrypted auth data')
+			return False
+
+	@staticmethod
+	def get_auth_data():
+
+		encrypted_auth_data = xbmc_helper.get_data('auth_data')
+
+		if encrypted_auth_data is not None:
+			decrypted_auth_data = lib_joyn.decrypt_des(key=lib_joyn.get_device_uuid(prefix='JOYNAUTHDATA', return_bytes=True),
+			                                           encrypted_data=encrypted_auth_data)
+			if decrypted_auth_data is not False:
+				try:
+					return loads(decrypted_auth_data)
+				except Exception as e:
+					xbmc_helper.log_notice(compat._format('Could not load json data from decrypted auth_data - {}', e))
+			else:
+				xbmc_helper.log_notice('Could not decrypt auth_data')
+
+		else:
+			xbmc_helper.log_notice('Could not read auth_data')
+
+		return False

@@ -2,7 +2,6 @@
 
 from os import path, remove
 from datetime import datetime, timedelta
-from platform import system
 from io import open as io_open
 from .const import CONST
 from . import xbmc_helper as xbmc_helper
@@ -16,8 +15,15 @@ if compat.PY2:
 elif compat.PY3:
 	from json import loads, dumps
 
+try:
+	from cpickle import dump as pickle_dump, load as pickle_load
+	xbmc_helper.log_debug('Using cPickle')
+except ImportError:
+	from pickle import dump as pickle_dump, load as pickle_load
+	xbmc_helper.log_debug('Using Pickle')
 
-def _get(cache_key, file_name, override_expire_secs=None):
+
+def _get(cache_key, file_name, override_expire_secs=None, pickle=False):
 
 	expire_datetime = None
 	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
@@ -39,9 +45,12 @@ def _get(cache_key, file_name, override_expire_secs=None):
 
 		if filemtime is None or filectime > filemtime:
 			filemtime = filectime
-
-		with io_open(file=cache_path, mode='r', encoding='utf-8') as cache_infile:
-			cache_data.update({'data': cache_infile.read()})
+		if pickle is False:
+			with io_open(file=cache_path, mode='r', encoding='utf-8') as cache_infile:
+				cache_data.update({'data': cache_infile.read()})
+		else:
+			with io_open(file=cache_path, mode='rb') as cache_infile:
+				cache_data.update({'data': pickle_load(cache_infile)})
 
 		if expire_datetime is None or filemtime >= expire_datetime:
 			cache_data.update({'is_expired': False})
@@ -49,11 +58,15 @@ def _get(cache_key, file_name, override_expire_secs=None):
 	return cache_data
 
 
-def _set(cache_key, file_name, data):
+def _set(cache_key, file_name, data, pickle=False):
 
 	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
-	with io_open(file=cache_path, mode='w', encoding='utf-8') as cache_outfile:
-		cache_outfile.write(compat._unicode(data))
+	if pickle is False:
+		with io_open(file=cache_path, mode='w', encoding='utf-8') as cache_outfile:
+			cache_outfile.write(compat._unicode(data))
+	else:
+		with io_open(file=cache_path, mode='wb') as cache_outfile:
+			pickle_dump(data, cache_outfile, protocol=0)
 
 
 def _remove(cache_key, file_name):
@@ -90,3 +103,11 @@ def set_json(cache_key, data):
 	except ValueError:
 		xbmc_helper.log_error('Could not encode json from cache: ' + cache_key)
 		pass
+
+
+def get_pickle(cache_key):
+	return _get(cache_key, CONST['CACHE'][cache_key]['key'] + '.pickle', pickle=True)
+
+
+def set_pickle(cache_key, data):
+	return _set(cache_key, CONST['CACHE'][cache_key]['key'] + '.pickle', data, pickle=True)

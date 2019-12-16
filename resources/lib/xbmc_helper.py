@@ -199,9 +199,9 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 	if getInfoLabel('Container.FolderPath') == old_pluginurl and old_postion.isdigit():
 		from xbmcgui import Window, getCurrentWindowId, getCurrentWindowDialogId
 
-		# wait untl all Dialogs are closed; 10099 => WINDOW_DIALOG_POINTER => smallest dialog_id; max 1000 msecs
+		# wait untl all Dialogs are closed; 10099 => WINDOW_DIALOG_POINTER => smallest dialog_id; max 500 msecs
 		dialog_wait_counter = 0
-		while dialog_wait_counter <= 200 and getCurrentWindowDialogId() >= 10099:
+		while dialog_wait_counter <= 100 and getCurrentWindowDialogId() >= 10099:
 			xbmc_sleep(5)
 			dialog_wait_counter += 1
 		log_debug(compat._format('waited {} msecs for all dialogs to be closed', (dialog_wait_counter * 5)))
@@ -218,9 +218,9 @@ def set_folder(list_items, pluginurl, pluginhandle, pluginquery, folder_type, ti
 		executebuiltin(cmd)
 		log_debug(compat._format('set current pos executebuiltin({})', cmd))
 
-		#wait for the correct postion to be applied; max 1000 msecs
+		#wait for the correct postion to be applied; max 500 msecs
 		postion_wait_counter = 0
-		while postion_wait_counter <= 200 and getInfoLabel('Container.CurrentItem') != old_postion:
+		while postion_wait_counter <= 100 and getInfoLabel('Container.CurrentItem') != old_postion:
 			xbmc_sleep(5)
 			postion_wait_counter += 1
 
@@ -279,6 +279,7 @@ def wait_for_container(pluginurl, pluginquery, sleep_msecs=5, cycles=1000):
 	        compat._format('wait_for_container pluginurl: msecs waited: {} pluginurls do match {} final folder path {}',
 	                       (counter * sleep_msecs), (folder_path == pluginpath), folder_path))
 
+
 def log_error(content):
 
 	_log(content, LOGERROR)
@@ -299,7 +300,7 @@ def log_debug(content):
 
 def _log(msg, level=LOGNOTICE):
 
-	log(compat._format('[{}] {}', get_addon_version(), msg), level)
+	log(compat._encode(compat._format('[{}] {}', get_addon_version(), msg)), level)
 
 
 def translation(id):
@@ -334,6 +335,15 @@ def set_data(filename, data, dir_type='DATA_DIR'):
 
 	with io_open(file=data_file_path, mode='w', encoding='utf-8') as data_outfile:
 		data_outfile.write(compat._unicode(data))
+
+	return data_file_path
+
+
+def del_data(filename, dir_type='DATA_DIR'):
+
+	data_file_path = get_file_path(CONST[dir_type], filename)
+	if os.path.exists(data_file_path):
+		delete(data_file_path)
 
 
 def get_json_data(filename, dir_type='DATA_DIR'):

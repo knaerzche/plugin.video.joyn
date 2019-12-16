@@ -211,7 +211,35 @@ msgctxt "#30352"
 msgid "Account"
 msgstr "Konto"
 
-# empty strings from id 30353 to 30500
+msgctxt "#30353"
+msgid "Show Plus+ contents without subscription"
+msgstr "Plus+-Inhalte auch ohne Abo anzeigen"
+
+msgctxt "#30354"
+msgid "Highlight Plus+ content"
+msgstr "Plus+-Inhalte hervorheben"
+
+msgctxt "#30355"
+msgid "Show categories on main menu"
+msgstr "Rubriken im Hauptmenu anzeigen"
+
+msgctxt "#30356"
+msgid "Save username/password encrypted"
+msgstr "Benutzernamen/Passwort verschlüsselt speichern"
+
+msgctxt "#30357"
+msgid "Try to fixup VOD streams"
+msgstr "Versuchen VOD-Streams zu reparieren"
+
+msgctxt "#30358"
+msgid "Try to fixup live streams"
+msgstr "Versuchen Live-Streams zu reparieren"
+
+msgctxt "#30359"
+msgid "Try to force local manifest"
+msgstr "Versuchen lokales Manifest zu erzwingen"
+
+# empty strings from id 30360 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -539,3 +567,15 @@ msgstr "FSK Pin"
 msgctxt "#30690"
 msgid "The given MPP pin is invalid - please enter the correct one"
 msgstr "Der eingegebene FSK Pin ist ungültig - bitte den korrekten eingeben"
+
+msgctxt "#30691"
+msgid "[COLOR blue]{:s}[/COLOR]"
+msgstr "[COLOR blue]{:s}[/COLOR]"
+
+msgctxt "#30692"
+msgid "Invalid password (length)"
+msgstr "Ungültiges Password (Länge)"
+
+msgctxt "#30693"
+msgid "No information available"
+msgstr "Keine Informationen  verfügbar"

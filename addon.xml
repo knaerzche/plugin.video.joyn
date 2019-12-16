@@ -4,8 +4,9 @@
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
 		<import addon="script.module.inputstreamhelper" version="0.3.5"/>
-		<import addon="script.module.uepg" version="1.0.5"/>
+		<import addon="script.module.uepg" version="1.0.5" optional="true"/>
 		<import addon="script.module.simplejson" version="3.3.0" optional="true"/>
+		<import addon="script.module.pydes" version="2.0.1" optional="true"/>
 	</requires>
 	<extension point="xbmc.python.pluginsource" library="default.py">
 		<provides>video</provides>
@@ -16,7 +17,7 @@
 		<description lang="en_GB">Watch VOD content und Live TV provided by Joyn</description>
 		<description lang="de_DE">Video On Demand und Live TV von Joyn</description>
 		<disclaimer lang="en_GB">The use of this addon may violate the terms and conditions of Joyn GmbH - especially, but not exclusively, if it is used outside of Germany.</disclaimer>
-		<disclaimer lang="'de_DE">Die Nutzung dieses Addon verstösst eventuell gegen die AGB der Joyn GmbH - insbesondere, aber nicht ausschliesslich, wenn es außerhalb von Deutschland verwendet wird</disclaimer>
+		<disclaimer lang="de_DE">Die Nutzung dieses Addon verstösst eventuell gegen die AGB der Joyn GmbH - insbesondere, aber nicht ausschliesslich, wenn es außerhalb von Deutschland verwendet wird</disclaimer>
 		<language></language>
 		<platform>all</platform>
 		<license>GNU GENERAL PUBLIC LICENSE. Version 2, June 1991</license>

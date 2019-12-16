@@ -21,6 +21,8 @@
 		<setting type="sep"/>
 		<setting label="30137" type="action" id="logout" action="RunPlugin(plugin://plugin.video.joyn/?mode=logout)" option="close"/>
 		<setting type="sep"/>
+		<setting label="30356" type="bool" id="save_encrypted_auth_data" default="false" enable="System.HasAddon(script.module.pydes)"/>
+		<setting type="sep"/>
 		<setting label="30689" type="number" id="mpaa_pin"/>
 	</category>
 	<category label="30001">
@@ -28,12 +30,17 @@
 		<setting type="sep"/>
 		<setting label="30128" type="slider" id="max_recommendations" default="3" range="0,1,20" option="int"/>
 		<setting type="sep"/>
+		<setting label="30355" type="bool" id="show_categories_in_main_menu" default="false"/>
+		<setting type="sep"/>
 		<setting label="30129" type="bool" id="show_episodes_immediately" default="false"/>
 		<setting type="sep"/>
 		<setting label="30110" type="bool" id="dont_show_watchlist_in_lastseen" default="false"/>
 		<setting type="sep"/>
 		<setting label="30111" type="select" id="season_order" lvalues="30123|30125|30126" default="2"/>
 		<setting label="30112" type="select" id="episode_order" lvalues="30123|30114|30113" default="2"/>
+		<setting type="sep"/>
+		<setting label="30353" type="bool" id="always_show_premium" default="false"/>
+		<setting label="30354" type="bool" id="highlight_premium" default="false"/>
 		<setting type="sep"/>
 		<setting label="30351" type="lsep"/>
 		<setting label="30122" type="bool" id="enable_viewmodes" default="true"/>
@@ -64,6 +71,10 @@
 		<setting label="30140" type="bool" id="debug_requests" default="false"/>
 		<setting type="sep"/>
 		<setting label="30135" type="select" id="joyn_platform" values="android|web|ios" default="web"/>
+		<setting type="sep"/>
+		<setting label="30357" type="bool" id="fixup_vod" default="true"/>
+		<setting label="30358" type="bool" id="fixup_live" default="true"/>
+		<setting label="30359" type="bool" id="force_local_manifest" default="false"/>
 		<setting type="sep"/>
 		<setting label="30101" type="bool" id="checkdrmcert" default="false"/>
 		<setting type="sep"/>
