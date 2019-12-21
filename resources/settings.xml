@@ -24,8 +24,8 @@
 		<setting type="sep"/>
 		<setting label="30689" type="number" id="mpaa_pin"/>
 		<setting type="sep"/>
-		<setting label="30360"  type="range" id="start_set_resume_pos_secs" default="300" range="60,10,3000" option="int"/>
-		<setting label="30361"  type="range" id="del_resume_pos_secs" default="60" range="0,10,600" option="int"/>
+		<setting label="30360"  type="slider" id="start_set_resume_pos_secs" default="300" range="60,10,3000" option="int"/>
+		<setting label="30361"  type="slider" id="del_resume_pos_secs" default="60" range="0,10,600" option="int"/>
 	</category>
 	<category label="30001">
 		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int"/>
@@ -85,7 +85,7 @@
 		<setting label="30138" type="bool" id="force_clean_all_files" default="false"/>
 		<setting type="sep"/>
 		<setting label="30141" type="bool" id="fix_livestream_audio_sync" default="true"/>
-		<setting label="30142" type="range" id="livestream_total_length" enable="eq(-1,true)" range="60,1,1200"  default="882" option="int" subsetting="true"/>
-		<setting label="30143" type="range" id="livestream_offset" enable="eq(-2,true)"  range="5,1,60" default="12"  optione="int" subsetting="true"/>
+		<setting label="30142" type="slider" id="livestream_total_length" enable="eq(-1,true)" range="60,1,1200"  default="882" option="int" subsetting="true"/>
+		<setting label="30143" type="slider" id="livestream_offset" enable="eq(-2,true)"  range="12,1,60" default="13"  optione="int" subsetting="true"/>
 	</category>
 </settings>

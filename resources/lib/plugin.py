@@ -970,10 +970,17 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 				list_item.setProperty(compat._format('{}.manifest_update_parameter', CONST['INPUTSTREAM_ADDON']), 'full')
 
 				if xbmc_helper.get_bool_setting('fix_livestream_audio_sync') is True:
-					live_stream_length = float(xbmc_helper.get_int_setting('livestream_total_length'))
-					live_stream_resume_pos = live_stream_length - float(xbmc_helper.get_int_setting('livestream_offset'))
-					list_item.setProperty('TotalTime', str(live_stream_length))
-					list_item.setProperty('ResumeTime', str(live_stream_resume_pos))
+					mpd_timeshift_buffer = parser.get_timeshift_buffer_secs()
+					if mpd_timeshift_buffer is not None:
+						xbmc_helper.log_debug(compat._format('Got timeshiftbuffer from mpd: {}', mpd_timeshift_buffer))
+						live_stream_length = mpd_timeshift_buffer
+					else:
+						live_stream_length = xbmc_helper.get_int_setting('livestream_total_length')
+
+					live_stream_resume_pos = live_stream_length - xbmc_helper.get_int_setting('livestream_offset')
+
+					list_item.setProperty('TotalTime', str(float(live_stream_length)))
+					list_item.setProperty('ResumeTime', str(float(live_stream_resume_pos)))
 					xbmc_helper.log_debug(
 					        compat._format('Tried fixing livestream audio sync issue - total time: {} - resume pos {}', live_stream_length,
 					                       live_stream_resume_pos))

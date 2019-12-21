@@ -115,6 +115,15 @@ class mpd_parser(object):
 			return element.attrib.get(attribute_name, None)
 		return None
 
+	def get_timeshift_buffer_secs(self):
+		timeshift_buffer = mpd_parser.get_attrib(self.mpd_tree, 'timeShiftBufferDepth')
+		if timeshift_buffer is not None:
+			from re import match as re_match
+			matches = re_match(r'PT(\d+)S', timeshift_buffer)
+			if matches is not None and len(matches.groups()) == 1:
+				return int(matches.group(1))
+		return None
+
 	def set_local_path(self):
 
 		#check mpdtype

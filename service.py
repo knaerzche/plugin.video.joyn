@@ -63,7 +63,7 @@ class service_monitor(xbmc_Monitor):
 					self.last_tracked_position = int(pos)
 
 			except Exception as e:
-				xbmc_helper.log_debug('Exception when trying to set last_tracked_position: {}', e)
+				xbmc_helper.log_debug(compat._format('Exception when trying to set last_tracked_position: {}', e))
 				pass
 
 	def reset_tracking(self):
