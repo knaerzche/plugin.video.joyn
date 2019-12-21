@@ -70,3 +70,12 @@ v2.2.2
 fixed: re-set container-focus fails on some systems
 refix access to ip-api.com fails
 add usage disclaimer
+v2.3.0
+add api-based resume postions
+partly fixed live stream audio sync issue
+add save username/password option
+add option to show categories in main menu
+add ask-for-login dialog on first addon start
+show content based on current subscription
+add option to hightlight premium content
+rework some stuff

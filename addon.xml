@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<addon id="plugin.video.joyn" name="Joyn" version="2.2.2" provider-name="knaerzche">
+<addon id="plugin.video.joyn" name="Joyn" version="2.3.0" provider-name="knaerzche">
 	<requires>
 		<import addon="xbmc.python" version="2.25.0"/>
 		<import addon="inputstream.adaptive" version="2.2.21"/>
@@ -35,17 +35,15 @@
 			<screenshot>resources/media/screenshot03.jpg</screenshot>
 		</assets>
 		<news>
-v2.2.2
-[fix] re-set container-focus fails on some systems
-[fix] refix access to ip-api.com fails
-[new] add usage disclaimer
-v2.2.1
-[fix] re-set container-focus after 'refresh'
-v2.2.0
-[new] implement sign-in
-[new} implement joyn bookmarks
-[new] implement 'Plus+'
-[new] implement MPAA-Pin setting
+v2.3.0
+add api-based resume postions
+partly fixed live stream audio sync issue
+add save username/password option
+add option to show categories in main menu
+add ask-for-login dialog on first addon start
+show content based on current subscription
+add option to hightlight premium content
+rework some stuff
 
 		</news>
 	</extension>
