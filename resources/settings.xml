@@ -14,7 +14,6 @@
 		<setting label="30109" type="action" id="uepg_settings"
 			action="RunPlugin(plugin://plugin.video.joyn/?mode=open_foreign_settings&amp;foreign_addon_id=script.module.uepg)"
 			enable="System.HasAddon(script.module.uepg)" option="close"/>
-
 	</category>
 	<category label="30352">
 		<setting label="30136" type="action" id="login" action="RunPlugin(plugin://plugin.video.joyn/?mode=login)" option="close"/>
@@ -24,6 +23,9 @@
 		<setting label="30356" type="bool" id="save_encrypted_auth_data" default="false" enable="System.HasAddon(script.module.pydes)"/>
 		<setting type="sep"/>
 		<setting label="30689" type="number" id="mpaa_pin"/>
+		<setting type="sep"/>
+		<setting label="30360"  type="range" id="start_set_resume_pos_secs" default="300" range="60,10,3000" option="int"/>
+		<setting label="30361"  type="range" id="del_resume_pos_secs" default="60" range="0,10,600" option="int"/>
 	</category>
 	<category label="30001">
 		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int"/>
@@ -81,5 +83,9 @@
 		<setting label="30130" type="bool" id="force_playready" default="false" enable="System.Platform.Android"/>
 		<setting type="sep"/>
 		<setting label="30138" type="bool" id="force_clean_all_files" default="false"/>
+		<setting type="sep"/>
+		<setting label="30141" type="bool" id="fix_livestream_audio_sync" default="true"/>
+		<setting label="30142" type="range" id="livestream_total_length" enable="eq(-1,true)" range="60,1,1200"  default="882" option="int" subsetting="true"/>
+		<setting label="30143" type="range" id="livestream_offset" enable="eq(-2,true)"  range="5,1,60" default="12"  optione="int" subsetting="true"/>
 	</category>
 </settings>

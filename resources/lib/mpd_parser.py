@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from . import request_helper as request_helper
-from . import xbmc_helper as xbmc_helper
-from . import compat
 from hashlib import sha512
 import xml.etree.ElementTree as ET
 from io import BytesIO
+from time import time
+from . import request_helper as request_helper
+from . import xbmc_helper as xbmc_helper
+from . import compat
 
 if compat.PY2:
 	from urlparse import urlparse
@@ -35,7 +36,7 @@ class mpd_parser(object):
 		else:
 			self.mpd_url = url
 
-		mpd_in_mem_file = BytesIO(bytes(_mpd_contents))
+		mpd_in_mem_file = BytesIO(compat._bytes(_mpd_contents))
 
 		if mpd_in_mem_file:
 			namespaces = dict([node for _, node in self.elementtree.iterparse(mpd_in_mem_file, events=['start-ns'])])
@@ -159,7 +160,7 @@ class mpd_parser(object):
 						_base_url_node.text = _base_url_node_text
 
 			self.mpd_filepath = xbmc_helper.set_data(filename=compat._format('{}.mpd.tmp',
-			                                                                 sha512(self.mpd_url.encode('utf-8')).hexdigest()),
+			                                                                 sha512(str(time()).encode('utf-8')).hexdigest()),
 			                                         data=self.elementtree.tostring(self.mpd_tree),
 			                                         dir_type='TEMP_DIR')
 			xbmc_helper.log_debug(compat._format('Wrote local mpd file: {}', self.mpd_filepath))

@@ -9,6 +9,7 @@ from time import time
 from copy import copy, deepcopy
 from codecs import encode
 from xbmc import getCondVisibility, sleep as xbmc_sleep
+from .external.singleton import Singleton
 from .const import CONST
 from . import compat as compat
 from . import request_helper as request_helper
@@ -30,11 +31,12 @@ elif compat.PY3:
 	from json import loads, dumps
 
 
-class lib_joyn(object):
-	def __init__(self, default_icon):
-
-		self.config = lib_joyn.get_config(default_icon)
-		self.default_icon = default_icon
+class lib_joyn(Singleton):
+	def __init__(self):
+		from xbmcaddon import Addon
+		xbmc_helper.log_debug('libjoyn init')
+		self.default_icon = Addon().getAddonInfo('icon')
+		self.config = lib_joyn.get_config()
 		self.auth_token_data = None
 		self.account_info = None
 		self.landingpage = None
@@ -432,6 +434,8 @@ class lib_joyn(object):
 		else:
 			query = CONST['GRAPHQL'][operation]['QUERY']
 
+		xbmc_helper.log_debug('QUERY: ' + query)
+
 		params = {
 		        'query':
 		        compat._format(
@@ -549,7 +553,14 @@ class lib_joyn(object):
 
 		return client_id_data
 
-	def get_auth_token(self, username=None, password=None, reset_anon=False, is_retry=False, logout=False, force_refresh=False):
+	def get_auth_token(self,
+	                   username=None,
+	                   password=None,
+	                   reset_anon=False,
+	                   is_retry=False,
+	                   logout=False,
+	                   force_refresh=False,
+	                   force_reload_cache=False):
 
 		if username is not None and password is not None:
 			try:
@@ -580,7 +591,7 @@ class lib_joyn(object):
 				return False
 
 		elif reset_anon is False:
-			if self.auth_token_data is None:
+			if self.auth_token_data is None or force_reload_cache is True:
 				self.auth_token_data = xbmc_helper.get_json_data('auth_tokens')
 
 		if reset_anon is True or self.auth_token_data is None:
@@ -824,8 +835,21 @@ class lib_joyn(object):
 								for art_def_img_map_key, art_def_img_map_profile in art_def_img.items():
 									metadata['art'].update({art_def_img_map_key: compat._format('{}/{}', image['url'], art_def_img_map_profile)})
 
+		age_rating = None
 		if 'ageRating' in data.keys() and data['ageRating'] is not None and 'minAge' in data['ageRating'].keys():
-			metadata['infoLabels'].update({'mpaa': compat._format(xbmc_helper.translation('MIN_AGE'), str(data['ageRating']['minAge']))})
+			age_rating = data['ageRating']['minAge']
+		elif isinstance(data.get('series', None), dict) and isinstance(data.get('series').get(
+		        'ageRating', None), dict) and data.get('series').get('ageRating').get('minAge', None) is not None:
+			age_rating = data.get('series').get('ageRating').get('minAge')
+		elif isinstance(data.get('season', None), dict) and isinstance(data.get('season').get(
+		        'ageRating', None), dict) and data.get('season').get('ageRating').get('minAge', None) is not None:
+			age_rating = data.get('season').get('ageRating').get('minAge')
+		elif isinstance(data.get('compilation', None), dict) and isinstance(data.get('compilation').get(
+		        'ageRating', None), dict) and data.get('compilation').get('ageRating').get('minAge', None) is not None:
+			age_rating = data.get('compilation').get('ageRating').get('minAge')
+
+		if age_rating is not None:
+			metadata['infoLabels'].update({'mpaa': compat._format(xbmc_helper.translation('MIN_AGE'), str(age_rating))})
 
 		if 'genres' in data.keys() and isinstance(data['genres'], list):
 			metadata['infoLabels'].update({'genre': []})
@@ -834,8 +858,18 @@ class lib_joyn(object):
 				if 'name' in genre.keys():
 					metadata['infoLabels']['genre'].append(genre['name'])
 
+		copyrights = None
 		if 'copyrights' in data.keys() and data.get('copyrights', None) is not None:
-			metadata['infoLabels'].update({'Studio': data.get('copyrights')})
+			copyrights = data.get('copyrights', None)
+		elif isinstance(data.get('series', None), dict) and data.get('series').get('copyrights', None) is not None:
+			copyrights = data.get('series').get('copyrights')
+		elif isinstance(data.get('season', None), dict) and data.get('season').get('copyrights', None) is not None:
+			copyrights = data.get('season').get('copyrights')
+		elif isinstance(data.get('compilation', None), dict) and data.get('compilation').get('copyrights', None) is not None:
+			copyrights = data.get('compilation').get('copyrights')
+
+		if copyrights is not None:
+			metadata['infoLabels'].update({'Studio': copyrights})
 
 		if query_type == 'EPISODE':
 			if 'endsAt' in data.keys() and data['endsAt'] is not None and data['endsAt'] < 9999999999:
@@ -887,6 +921,12 @@ class lib_joyn(object):
 			        'sortseason': data['season']['number'],
 			})
 
+		if data.get('tagline', None) is not None:
+			metadata['infoLabels'].update({'tagline': data.get('tagline')})
+
+		if isinstance(data.get('resumePosition', {}).get('position'), int) and data.get('resumePosition').get('position') > 0:
+			metadata.update({'resume_pos': str(float(data.get('resumePosition').get('position')))})
+
 		return metadata
 
 	@staticmethod
@@ -927,7 +967,7 @@ class lib_joyn(object):
 		return epg_metadata
 
 	@staticmethod
-	def get_config(default_icon):
+	def get_config():
 
 		recreate_config = True
 		config = {}

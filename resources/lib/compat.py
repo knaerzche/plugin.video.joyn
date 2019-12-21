@@ -36,6 +36,14 @@ def _unichr(char):
 		return chr(char)
 
 
+def _bytes(_str, encoding='utf-8'):
+	if isinstance(_str, str) or isinstance(_str, unicode):
+		if PY3:
+			return bytes(_str, encoding)
+		return bytes(_str)
+	return _str
+
+
 def _uname_list():
 
 	if PY3:

@@ -198,7 +198,19 @@ msgctxt "#30140"
 msgid "Debug requests"
 msgstr ""
 
-#empty strings from id 30141 to 30229
+msgctxt "#30141"
+msgid "Try fixing audio sync issue in live streams"
+msgstr ""
+
+msgctxt "#30142"
+msgid "Total length of a livestream (in seconds)"
+msgstr ""
+
+msgctxt "#30143"
+msgid "Livestream offset (in seconds)"
+msgstr ""
+
+#empty strings from id 30144 to 30229
 # SETTINGS-TITLES
 
 #empty strings from id 30230 to 30350
@@ -227,7 +239,27 @@ msgctxt "#30356"
 msgid "Save username/password encrypted"
 msgstr ""
 
-# empty strings from id 30357 to 30500
+msgctxt "#30357"
+msgid "Try to fixup VOD stream manifests"
+msgstr ""
+
+msgctxt "#30358"
+msgid "Try to fixup live streams manifests"
+msgstr ""
+
+msgctxt "#30359"
+msgid "Try to force local manifest"
+msgstr ""
+
+msgctxt "#30360"
+msgid "Postion in stream (in seconds) where to start save resume postion"
+msgstr ""
+
+msgctxt "#30361"
+msgid "Seconds from end of the stream, where resume postion should be resetted"
+msgstr ""
+
+# empty strings from id 30362 to 30500
 # WARNING/INFORMATION-MESSAGES-OK
 
 msgctxt "#30501"
@@ -317,19 +349,7 @@ msgctxt "#30535"
 msgid "Authorization could not be done - check log for errors"
 msgstr ""
 
-msgctxt "#30357"
-msgid "Try to fixup VOD streams"
-msgstr ""
-
-msgctxt "#30358"
-msgid "Try to fixup live streams"
-msgstr ""
-
-msgctxt "#30359"
-msgid "Try to force local manifest"
-msgstr ""
-
-# empty strings from id 30360 to 30500
+# empty strings from id 30362 to 30500
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"
@@ -578,4 +598,8 @@ msgstr ""
 
 msgctxt "#30693"
 msgid "No information available"
+msgstr ""
+
+msgctxt "#30694"
+msgid "If have an Joyn-Account you can sign-in now"
 msgstr ""
