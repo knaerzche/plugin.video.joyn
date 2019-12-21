@@ -224,7 +224,6 @@ def show_lastseen(max_lastseen_count):
 						break
 
 	lastseen = get_lastseen()
-
 	if len(lastseen) > 0:
 		for lastseen_item in lastseen:
 			if len(list_items) < max_lastseen_count:
@@ -260,8 +259,8 @@ def show_lastseen(max_lastseen_count):
 
 						compilation_ids.append(lastseen_item['compilation_id'])
 
-				else:
-					break
+			else:
+				break
 
 	return list_items
 
