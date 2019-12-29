@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 from io import BytesIO
 from time import time
 from . import request_helper as request_helper
-from . import xbmc_helper as xbmc_helper
+from .xbmc_helper import xbmc_helper as xbmc_helper
 from . import compat
 
 if compat.PY2:
@@ -31,7 +31,7 @@ class mpd_parser(object):
 
 		final_url, _mpd_contents = request_helper.get_url(url=url, config=config, no_cache=True, return_final_url=True)
 		if final_url != url:
-			xbmc_helper.log_notice(compat._format('MPD: acutal URL does not match original URL - setting new url {}', final_url))
+			xbmc_helper().log_debug('MPD: acutal URL does not match original URL - setting new url {}', final_url)
 			self.mpd_url = final_url
 		else:
 			self.mpd_url = url
@@ -92,7 +92,7 @@ class mpd_parser(object):
 			else:
 				return self.mpd_tree.find(query)
 		except Exception as e:
-			xbmc_helper.log(compat._format('Could not query mpd - query: {} - Ex: {}', query, e))
+			xbmc_helper().log('Could not query mpd - query: {} - Ex: {}', query, e)
 			pass
 
 		return None
@@ -124,26 +124,26 @@ class mpd_parser(object):
 				return int(matches.group(1))
 		return None
 
-	def set_local_path(self):
+	def set_local_path(self, video_id):
 
 		#check mpdtype
 		mpd_type = mpd_parser.get_attrib(self.mpd_tree, 'type')
 
 		if mpd_type is not None and mpd_type == 'dynamic':
-			xbmc_helper.log_debug(compat._format('MPD-Type is dynamic and therefore cannot be saved locally'))
+			xbmc_helper().log_debug('MPD-Type is dynamic and therefore cannot be saved locally')
 			return
 
 		#check if mpd has an location tag
 		location = self.query('Location')
 		if location is not None:
-			xbmc_helper.log_debug(compat._format('MPD has a location-tag and therefore cannot be saved locally: {}', location.text))
+			xbmc_helper().log_debug('MPD has a location-tag and therefore cannot be saved locally: {}', location.text)
 			return
 
 		cur_toplevel_baseurl = self.get_toplevel_base_url()
-		xbmc_helper.log_debug(compat._format('add_toplevel_base_url: {}', cur_toplevel_baseurl))
+		xbmc_helper().log_debug('add_toplevel_base_url: {}', cur_toplevel_baseurl)
 		if self.mpd_url.startswith('http'):
 			parsed_mpd_url = urlparse(self.mpd_url)
-			xbmc_helper.log_debug(compat._format('add_toplevel_base_url -parsed  {}', parsed_mpd_url))
+			xbmc_helper().log_debug('add_toplevel_base_url -parsed  {}', parsed_mpd_url)
 			new_base_url = compat._format('{}://{}{}/', parsed_mpd_url.scheme, parsed_mpd_url.netloc,
 			                              '/'.join(parsed_mpd_url.path.split('/')[:-1]))
 
@@ -156,22 +156,23 @@ class mpd_parser(object):
 				all_base_urls = self.query(['BaseURL'], find_all=True, anywhere=True)
 				for _base_url_node in all_base_urls:
 					_base_url_node_text = _base_url_node.text
-					xbmc_helper.log_debug(compat._format('found baseurl: {}', _base_url_node_text))
+					xbmc_helper().log_debug('found baseurl: {}', _base_url_node_text)
 					# absoulute BaseURL
 					if _base_url_node_text.startswith('/'):
 						_base_url_node_text = compat._format('{}://{}{}', parsed_mpd_url.scheme, parsed_mpd_url.netloc, _base_url_node_text)
-						xbmc_helper.log_debug(compat._format('Replace it with: {}', _base_url_node_text))
+						xbmc_helper().log_debug('Replace it with: {}', _base_url_node_text)
 						_base_url_node.text = _base_url_node_text
 					# relative BaseURL
 					elif not _base_url_node_text.startswith('http'):
 						_base_url_node_text = compat._format('{}{}', new_base_url, _base_url_node_text)
-						xbmc_helper.log_debug(compat._format('Replace it with: {}', _base_url_node_text))
+						xbmc_helper().log_debug('Replace it with: {}', _base_url_node_text)
 						_base_url_node.text = _base_url_node_text
 
-			self.mpd_filepath = xbmc_helper.set_data(filename=compat._format('{}.mpd.tmp',
-			                                                                 sha512(str(time()).encode('utf-8')).hexdigest()),
-			                                         data=self.elementtree.tostring(self.mpd_tree),
-			                                         dir_type='TEMP_DIR')
-			xbmc_helper.log_debug(compat._format('Wrote local mpd file: {}', self.mpd_filepath))
+			self.mpd_filepath = xbmc_helper().set_data(filename=compat._format('{}_{}.mpd.tmp',
+			                                                                   sha512(str(time()).encode('utf-8')).hexdigest(),
+			                                                                   str(video_id)),
+			                                           data=self.elementtree.tostring(self.mpd_tree),
+			                                           dir_type='TEMP_DIR')
+			xbmc_helper().log_debug('Wrote local mpd file: {}', self.mpd_filepath)
 
 		return

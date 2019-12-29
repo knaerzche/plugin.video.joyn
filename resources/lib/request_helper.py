@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from base64 import urlsafe_b64encode
 from io import BytesIO
 from gzip import GzipFile
 from sys import exit
@@ -8,7 +7,7 @@ from time import time
 from hashlib import sha512
 from datetime import datetime, timedelta
 from copy import deepcopy
-from . import xbmc_helper as xbmc_helper
+from .xbmc_helper import xbmc_helper as xbmc_helper
 from . import cache as cache
 from . import compat as compat
 
@@ -43,11 +42,10 @@ def get_url(url,
 
 	final_url = url
 
-	if xbmc_helper.get_bool_setting('debug_requests') is True:
-		xbmc_helper.log_debug(
-		        compat._format('get_url - url: {} headers {} query {} post {} no_cache {} silent {} request_hash {} json_errors {}',
-		                       url, additional_headers, additional_query_string, post_data, no_cache, fail_silent, request_hash,
-		                       return_json_errors))
+	if xbmc_helper().get_bool_setting('debug_requests') is True:
+		xbmc_helper().log_debug('get_url - url: {} headers {} query {} post {} no_cache {} silent {} request_hash {} json_errors {}',
+		                        url, additional_headers, additional_query_string, post_data, no_cache, fail_silent, request_hash,
+		                        return_json_errors)
 
 	if no_cache is True:
 		etags_data = None
@@ -75,13 +73,14 @@ def get_url(url,
 			_url = compat._format('{}{}{}', url, '?' if url.find('?') == -1 else '&', urlencode(additional_query_string))
 			url = _url
 
-		if xbmc_helper.get_bool_setting('use_https_proxy') is True and xbmc_helper.get_text_setting(
-		        'https_proxy_host') != '' and xbmc_helper.get_int_setting('https_proxy_port') != 0:
+		if xbmc_helper().get_bool_setting('use_https_proxy') is True and xbmc_helper().get_text_setting(
+		        'https_proxy_host') != '' and xbmc_helper().get_int_setting('https_proxy_port') != 0:
 
-			proxy_uri = compat._format('{}:{}', xbmc_helper.get_text_setting('https_proxy_host'),
-			                           xbmc_helper.get_text_setting('https_proxy_port'))
+			proxy_uri = compat._format('{}:{}',
+			                           xbmc_helper().get_text_setting('https_proxy_host'),
+			                           xbmc_helper().get_text_setting('https_proxy_port'))
 
-			xbmc_helper.log_debug(compat._format('Using proxy uri {}', proxy_uri))
+			xbmc_helper().log_debug('Using proxy uri {}', proxy_uri)
 			prxy_handler = ProxyHandler({
 			        'http': proxy_uri,
 			        'https': proxy_uri,
@@ -130,13 +129,13 @@ def get_url(url,
 						return_errors.append(error['code'])
 						has_decoded_error = True
 
-				xbmc_helper.log_debug(compat._format('return_json_errors {}', return_errors))
+				xbmc_helper().log_debug('return_json_errors {}', return_errors)
 
 				if len(return_errors) > 0:
 					response_content = dumps({'json_errors': return_errors})
 
 				elif has_decoded_error is True:
-					xbmc_helper.notification(
+					xbmc_helper().notification(
 					        'Error',
 					        err_str,
 					)
@@ -146,14 +145,13 @@ def get_url(url,
 				raise http_error
 
 	except Exception as e:
-		xbmc_helper.log_error(
-		        compat._format('Failed to load url: {} headers {} post_data {} - Exception: {}', url, headers, post_data, e))
+		xbmc_helper().log_error('Failed to load url: {} headers {} post_data {} - Exception: {}', url, headers, post_data, e)
 
 		if fail_silent is True:
 			pass
 		else:
-			xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'URL Access'),
-			                         compat._format(xbmc_helper.translation('MSG_NO_ACCESS_TO_URL'), str(url)))
+			xbmc_helper().notification(compat._format(xbmc_helper().translation('ERROR'), 'URL Access'),
+			                           compat._format(xbmc_helper().translation('MSG_NO_ACCESS_TO_URL'), str(url)))
 			exit(0)
 
 	if return_final_url:
@@ -199,8 +197,8 @@ def get_json_response(url, config, headers=[], params=None, post_data=None, sile
 
 	except ValueError:
 		if silent is False:
-			xbmc_helper.notification(compat._format(xbmc_helper.translation('ERROR'), 'Decoding'),
-			                         xbmc_helper.translation('MSG_ERR_TRY_AGAIN'))
+			xbmc_helper().notification(compat._format(xbmc_helper().translation('ERROR'), 'Decoding'),
+			                           xbmc_helper().translation('MSG_ERR_TRY_AGAIN'))
 			pass
 		else:
 			raise
@@ -218,6 +216,8 @@ def get_header_string(headers):
 
 
 def base64_encode_urlsafe(string):
+
+	from base64 import urlsafe_b64encode
 
 	if compat.PY2:
 		encoded = urlsafe_b64encode(string)
@@ -257,14 +257,14 @@ def set_etags_data(request_hash, etag, data):
 def purge_etags_cache(ttl):
 
 	etags_ttl = datetime.now() - timedelta(seconds=ttl)
-	xbmc_helper.log_debug(compat._format('Removing etags older than: {}', etags_ttl))
+	xbmc_helper().log_debug('Removing etags older than: {}', etags_ttl)
 
 	etags_data = cache.get_json('ETAGS').get('data')
 	if etags_data is not None:
 		_etags_data_cpy = deepcopy(etags_data)
 		for request_hash, etag_data in etags_data.items():
-			if xbmc_helper.timestamp_to_datetime(etags_data.get(request_hash, {}).get('access', 0)) <= etags_ttl:
-				xbmc_helper.log_debug(compat._format('Removing etags hash: {}', request_hash))
+			if xbmc_helper().timestamp_to_datetime(etags_data.get(request_hash, {}).get('access', 0)) <= etags_ttl:
+				xbmc_helper().log_debug('Removing etags hash: {}', request_hash)
 				cache._remove('ETAGS', request_hash + '.etag')
 				del _etags_data_cpy[request_hash]
 

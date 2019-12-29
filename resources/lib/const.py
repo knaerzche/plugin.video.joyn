@@ -13,10 +13,10 @@ CONST = {
         'AUTH_LOGIN'  : '/login',
         'AUTH_LOGOUT'  : '/logout',
         'CLIENT_NAMES'  : ['web', 'ios', 'android'],
-
+        'EDGE_UA': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134',
         'PSF_VAR_DEFS'  : {
      'SECRET' : {
-       'INDEX'  : 1194,
+       'INDEX'  : 1196,
        'VAL_BEFORE' : 'vas',
        'VAL_AFTER' : '@oasis/vas-sdk',
        'FALLBACK' : '5C7838365C7864665C786638265C783064595C783935245C7865395C7838323F5C7866333D3B5C78386635',

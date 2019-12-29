@@ -3,8 +3,9 @@
 from os import path, remove
 from datetime import datetime, timedelta
 from io import open as io_open
+from pickle import dump as pickle_dump, load as pickle_load
 from .const import CONST
-from . import xbmc_helper as xbmc_helper
+from .xbmc_helper import xbmc_helper as xbmc_helper
 from . import compat as compat
 
 if compat.PY2:
@@ -15,18 +16,11 @@ if compat.PY2:
 elif compat.PY3:
 	from json import loads, dumps
 
-try:
-	from cpickle import dump as pickle_dump, load as pickle_load
-	xbmc_helper.log_debug('Using cPickle')
-except ImportError:
-	from pickle import dump as pickle_dump, load as pickle_load
-	xbmc_helper.log_debug('Using Pickle')
-
 
 def _get(cache_key, file_name, override_expire_secs=None, pickle=False):
 
 	expire_datetime = None
-	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
+	cache_path = xbmc_helper().get_file_path(CONST['CACHE_DIR'], file_name)
 
 	if (override_expire_secs is not None):
 		expire_datetime = datetime.now() - timedelta(seconds=override_expire_secs)
@@ -60,7 +54,7 @@ def _get(cache_key, file_name, override_expire_secs=None, pickle=False):
 
 def _set(cache_key, file_name, data, pickle=False):
 
-	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
+	cache_path = xbmc_helper().get_file_path(CONST['CACHE_DIR'], file_name)
 	if pickle is False:
 		with io_open(file=cache_path, mode='w', encoding='utf-8') as cache_outfile:
 			cache_outfile.write(compat._unicode(data))
@@ -71,7 +65,7 @@ def _set(cache_key, file_name, data, pickle=False):
 
 def _remove(cache_key, file_name):
 
-	cache_path = xbmc_helper.get_file_path(CONST['CACHE_DIR'], file_name)
+	cache_path = xbmc_helper().get_file_path(CONST['CACHE_DIR'], file_name)
 	if path.exists(cache_path) and path.isfile(cache_path):
 		remove(cache_path)
 		return True
@@ -90,7 +84,7 @@ def get_json(cache_key, override_expire_secs=None):
 		try:
 			cache_data.update({'data': loads(cache_data['data'])})
 		except ValueError:
-			xbmc_helper.log_error('Could decode as json from cache: ' + cache_key)
+			xbmc_helper().log_error('Could decode as json from cache: {}', cache_key)
 			pass
 
 	return cache_data
@@ -101,7 +95,7 @@ def set_json(cache_key, data):
 	try:
 		_set(cache_key, CONST['CACHE'][cache_key]['key'] + '.json', dumps(data))
 	except ValueError:
-		xbmc_helper.log_error('Could not encode json from cache: ' + cache_key)
+		xbmc_helper().log_error('Could not encode json from cache: {}', cache_key)
 		pass
 
 
