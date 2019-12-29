@@ -33,7 +33,7 @@ msgstr ""
 
 msgctxt "#30003"
 msgid "Advanced"
-msgstr "Erweitert"
+msgstr ""
 
 #empty strings from id 30004 to 30100
 # SETTINGS-BUTTONS
@@ -349,7 +349,7 @@ msgctxt "#30535"
 msgid "Authorization could not be done - check log for errors"
 msgstr ""
 
-# empty strings from id 30362 to 30500
+#empty strings from id 30536 to 30600
 # PLUGIN-MAIN and SIDEMENU
 
 msgctxt "#30601"

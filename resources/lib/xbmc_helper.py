@@ -38,6 +38,9 @@ class xbmc_helper(Singleton):
 		else:
 			self.kodi_debug = False
 
+	def __del__(self):
+		self.addon = None
+
 	def get_addon(self):
 
 		if self.addon is None:
@@ -91,7 +94,6 @@ class xbmc_helper(Singleton):
 
 			rpc_res = loads(executeJSONRPC(dumps(rpc_cmd)))
 
-			self.log_debug('rpc_cmd: {} - res: {}', rpc_cmd, rpc_res)
 			if not isinstance(rpc_res, dict) or 'error' in rpc_res.keys() or 'result' not in rpc_res.keys():
 				raise ValueError(compat._format('JSONRPC Command failed - result is: {}', rpc_res))
 
