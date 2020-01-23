@@ -92,3 +92,5 @@ make sure only playback for this addon is tracked in service.py
 fix relogin issue, when decrypting username/password fails
 fix language files
 make sure addon is used on kodi >= 18
+v2.3.1.1
+Hotfix: Website changed again

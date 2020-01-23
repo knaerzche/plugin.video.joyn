@@ -23,6 +23,10 @@ CONST = {
          },
       },
 
+      'MAIN_JS_CONFIGS': {
+        'PLAYERCONFIG_URL': 'https://playerconfig.*?.json',
+        'API_GW_API_KEY': '"x-api-key":"(.*?)"}',
+      },
 
         'COUNTRIES'  : {
       'DE' : {

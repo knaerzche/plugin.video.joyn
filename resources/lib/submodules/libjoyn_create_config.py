@@ -136,30 +136,26 @@ def create_config(cached_config, addon_version):
 		xbmc_helper().log_debug('Using local main.js')
 		main_js = xbmc_helper().get_file_contents(xbmc_helper().get_resource_filepath('main.js', 'external'))
 
-	for key in config['CONFIG']:
-		find_str = key + ':"'
-		start = main_js.find(find_str)
-		length = main_js[start:].find('",')
-		config['CONFIG'][key] = main_js[(start + len(find_str)):(start + length)]
-
-	for essential_config_item_key, essential_config_item in config['CONFIG'].items():
-		if essential_config_item is None or essential_config_item is '':
+	for main_js_config_key, main_js_config_regex in CONST['MAIN_JS_CONFIGS'].items():
+		matches = findall(main_js_config_regex, main_js)
+		if len(matches) == 1:
+			config[main_js_config_key] = matches[0]
+		else:
+			xbmc_helper().log_error('Could not find required config in main.js - key {}, result {}', main_js_config_key, matches)
 			use_outdated_cached_config = True
-			xbmc_helper().log_error('Could not extract configuration value from js: KEY{} JS source {} ', essential_config_item_key,
-			                        main_js_src)
 			break
 
 	if use_outdated_cached_config is False:
-		config['GRAPHQL_HEADERS'] = [('x-api-key', config['CONFIG']['API_GW_API_KEY']),
+		config['GRAPHQL_HEADERS'] = [('x-api-key', config['API_GW_API_KEY']),
 		                             ('joyn-platform', xbmc_helper().get_text_setting('joyn_platform'))]
 
 		config['CLIENT_NAME'] = xbmc_helper().get_text_setting('joyn_platform')
 
 	if use_outdated_cached_config is False:
-		config['PLAYER_CONFIG'] = request_helper.get_json_response(url=config['CONFIG']['PLAYERCONFIG_URL'], config=config)
+		config['PLAYER_CONFIG'] = request_helper.get_json_response(url=config['PLAYERCONFIG_URL'], config=config)
 		if config['PLAYER_CONFIG'] is None:
 			use_outdated_cached_config = True
-			xbmc_helper().log_error('Could not load player config from url {}', config['CONFIG']['SevenTV_player_config_url'])
+			xbmc_helper().log_error('Could not load player config from url {}', config['PLAYERCONFIG_URL'])
 
 	if use_outdated_cached_config is False:
 		config['PSF_CONFIG'] = request_helper.get_json_response(url=CONST['PSF_CONFIG_URL'], config=config)
