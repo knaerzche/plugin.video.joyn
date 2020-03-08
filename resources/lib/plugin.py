@@ -271,7 +271,7 @@ def index():
 	                      mode='search',
 	                      is_folder=False))
 
-	if compat.PY2 is True and getCondVisibility('System.HasAddon(script.module.uepg)'):
+	if compat.PY2 is True:
 		list_items.append(
 		        get_dir_entry(metadata={
 		                'infoLabels': {
@@ -892,9 +892,13 @@ def run(_pluginurl, _pluginhandle, _pluginquery, addon):
 				drop_favorites(favorite_item=loads(params['favorite_item']), default_icon=default_icon, fav_type=params['fav_type'])
 
 			elif mode == 'epg':
-				executebuiltin('ActivateWindow(busydialognocancel)')
-				executebuiltin(compat._format('RunScript(script.module.uepg,{})', get_uepg_params()))
-				executebuiltin('Dialog.Close(busydialognocancel)')
+				from xbmc import getCondVisibility
+				if not getCondVisibility('System.HasAddon(script.module.uepg)'):
+					executebuiltin(compat._format('InstallAddon({})', 'script.module.uepg'), True)
+				else:
+					executebuiltin('ActivateWindow(busydialognocancel)')
+					executebuiltin(compat._format('RunScript(script.module.uepg,{})', get_uepg_params()))
+					executebuiltin('Dialog.Close(busydialognocancel)')
 
 			elif mode == 'show_joyn_bookmarks':
 				from .submodules.plugin_favorites import show_joyn_bookmarks
