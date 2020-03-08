@@ -401,8 +401,8 @@ CONST = {
         'productionCountries productionYear subtype tagline languages { code title } } } fragment EpgFragment on EpgEntry { __typename id '\
         'startDate endDate images { __typename type url accentColor } title secondaryTitle livestream { __typename id brand { __typename id '\
         'logo { __typename url accentColor } title } } } fragment CompilationCoverFragment on Compilation { __typename id title isBookmarked '\
-        'description ageRating { description label minAge ratingSystem } copyright copyrights markings images { url type __typename } genres { '\
-        'id name title type } numberOfItems languages { code title } }',
+        'description ageRating { description label minAge ratingSystem } copyright copyrights licenseTypes markings images { url type '\
+        '__typename } genres { id name title type } numberOfItems languages { code title } }',
 
        'OPERATION' : 'SingleBlockQuery',
        'REQUIRED_VARIABLES' : ['blockId', 'offset', 'first'],
@@ -431,8 +431,8 @@ CONST = {
         'description ageRating { description label minAge ratingSystem } copyright copyrights markings images { url type __typename } '\
         'licenseTypes genres { id name title type } isBingeable numberOfSeasons productionCompanies productionCountries productionYear subtype '\
         'tagline languages { code title } } } fragment CompilationCoverFragment on Compilation { __typename id title isBookmarked description '\
-        'ageRating { description label minAge ratingSystem } copyright copyrights markings images { url type __typename } genres { id name '\
-        'title type } numberOfItems languages { code title } }',
+        'ageRating { description label minAge ratingSystem } copyright copyrights licenseTypes markings images { url type __typename } genres { '\
+        'id name title type } numberOfItems languages { code title } }',
 
         'OPERATTON': 'ChannelPageQuery',
        'REQUIRED_VARIABLES': ['path', 'offset', 'first'],
@@ -475,11 +475,11 @@ CONST = {
        'QUERY': '($id: ID!, $offset: Int!, $first: Int!) { compilation(id: $id) { __typename compilationItems(first: $first, offset: $offset) { '\
         '__typename ... on CompilationItem { ...CompilationItemCoverFragment } } } } fragment CompilationItemCoverFragment on CompilationItem { '\
         '__typename id ageRating { description label minAge ratingSystem } description endsAt genres { id name title type } images { __typename '\
-        'type url } markings resumePosition { position } title tracking { adfree agofCode brand duration externalAssetId genres parentAssetId '\
-        'primaryAirdateBrand promamsId trackingId url visibilityStart webExclusive } video { __typename id licenses { deviceRestrictions { '\
-        'deviceClasses maximumResolution } endDate geoRestrictions protectionLevel publishingChannels source startDate type } duration markers '\
-        '{ end source start type } } compilation { id images { __typename type url } ageRating { description label minAge ratingSystem } copyright '\
-        '} }',
+        'type url } markings licenseTypes resumePosition { position } title tracking { adfree agofCode brand duration externalAssetId genres '\
+        'parentAssetId primaryAirdateBrand promamsId trackingId url visibilityStart webExclusive } video { __typename id licenses { '\
+        'deviceRestrictions { deviceClasses maximumResolution } endDate geoRestrictions protectionLevel publishingChannels source startDate '\
+        'type } duration markers { end source start type } } compilation { id images { __typename type url } ageRating { description label '\
+        'minAge ratingSystem } copyright } }',
        'OPERATION' : 'GetCompilationItemsQuery',
        'REQUIRED_VARIABLES' : ['id', 'first', 'offset'],
        'BOOKMARKS': True,
@@ -488,7 +488,7 @@ CONST = {
 
    'COMPILATION': {
        'QUERY': '($id: ID!) { compilation(id: $id) { __typename id description images { __typename id type url } genres { __typename name type } title '\
-        'ageRating { __typename description minAge ratingSystem } copyrights numberOfItems markings isBookmarked } }',
+        'ageRating { __typename description minAge ratingSystem } copyrights numberOfItems licenseTypes markings isBookmarked } }',
        'REQUIRED_VARIABLES' : ['id'],
         'OPERATION' : 'GetCompilationDetailsQuery',
         'BOOKMARKS': True,
