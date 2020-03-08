@@ -46,7 +46,8 @@ def get_list_items(response_items,
                    subtype_merges=[],
                    override_fanart='',
                    additional_metadata={},
-                   force_resume_pos=False):
+                   force_resume_pos=False,
+                   check_license_type=True):
 
 	from .submodules.libjoyn_video import get_video_client_data
 
@@ -54,7 +55,8 @@ def get_list_items(response_items,
 
 	for response_item in response_items:
 
-		if isinstance(response_item.get('licenseTypes', None), list) and lib_joyn().check_license(response_item) is False:
+		if check_license_type is True and isinstance(response_item.get('licenseTypes', None),
+		                                             list) and lib_joyn().check_license(response_item) is False:
 			continue
 
 		if force_resume_pos is True and (not isinstance(response_item.get('resumePosition', {}).get('position'), int)
@@ -360,7 +362,10 @@ def seasons(tv_show_id, title):
 
 	from .submodules.plugin_favorites import get_favorite_entry
 	list_items = []
-	seasons = lib_joyn().get_graphql_response('SEASONS', {'seriesId': tv_show_id})
+	seasons = lib_joyn().get_graphql_response('SEASONS', {
+	        'seriesId': tv_show_id,
+	        'seasonLicenseFilter': lib_joyn().get_license_filter()
+	})
 
 	if seasons is not None and seasons.get('series', None) is not None:
 		tvshow_metadata = lib_joyn().get_metadata(seasons['series'], 'TVSHOW')
@@ -411,7 +416,10 @@ def season_episodes(season_id, title):
 
 	from .submodules.plugin_favorites import get_favorite_entry
 	list_items = []
-	episodes = lib_joyn().get_graphql_response('EPISODES', {'seasonId': season_id})
+	episodes = lib_joyn().get_graphql_response('EPISODES', {
+	        'seasonId': season_id,
+	        'episodeLicenseFilter': lib_joyn().get_license_filter()
+	})
 	override_fanart = default_fanart
 	if episodes is not None and episodes.get('season', None) is not None and isinstance(
 	        episodes.get('season').get('episodes', None), list) and len(episodes.get('season').get('episodes')) > 0:
@@ -422,7 +430,7 @@ def season_episodes(season_id, title):
 			if 'fanart' in tvshow_meta['art']:
 				override_fanart = tvshow_meta['art']['fanart']
 
-		list_items = get_list_items(episodes.get('season').get('episodes'), override_fanart=override_fanart)
+		list_items = get_list_items(episodes.get('season').get('episodes'), override_fanart=override_fanart, check_license_type=False)
 
 	if len(list_items) == 0:
 		from xbmcplugin import endOfDirectory

@@ -148,6 +148,14 @@ class lib_joyn(Singleton):
 			return self.get_account_info().get('me', {}).get('subscriptionConfig', {}).get(subscription_type, False)
 		return False
 
+	def get_license_filter(self, default='ALL'):
+
+		if xbmc_helper().get_bool_setting('always_show_premium') is not True:
+			for license_filter_cond, license_filter_value in CONST['LICENSE_FILTER'].items():
+				if self.get_account_subscription_config(license_filter_cond) is False:
+					return license_filter_value
+		return default
+
 	def check_license(self, asset_data, respect_setting=True):
 
 		license_types = asset_data.get('licenseTypes', [])

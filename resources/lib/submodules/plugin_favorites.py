@@ -175,7 +175,11 @@ def show_favorites(title, pluginurl, pluginhandle, pluginquery, default_fanart, 
 			add_meta = {}
 
 		if favorite_item.get('season_id', None) is not None:
-			season_data = lib_joyn().get_graphql_response('EPISODES', {'seasonId': favorite_item['season_id'], 'first': 1})
+			season_data = lib_joyn().get_graphql_response('EPISODES', {
+			        'seasonId': favorite_item['season_id'],
+			        'first': 1,
+			        'episodeLicenseFilter': lib_joyn().get_license_filter()
+			})
 			if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(
 			        season_data['season']['episodes']) > 0:
 				season_metadata = lib_joyn().get_metadata(season_data['season']['episodes'][0]['series'], 'TVSHOW')
