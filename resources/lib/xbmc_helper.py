@@ -130,10 +130,6 @@ class xbmc_helper(Singleton):
 
 		return self.addon_version
 
-	def open_foreign_addon_settings(self, foreign_addon_id):
-		from xbmcaddon import Addon
-		Addon(foreign_addon_id).openSettings()
-
 	def notification(self, msg, description, icon=NOTIFICATION_ERROR):
 		if icon == NOTIFICATION_ERROR:
 			time = 10000

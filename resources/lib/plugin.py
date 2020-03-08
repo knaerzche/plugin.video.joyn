@@ -827,9 +827,6 @@ def run(_pluginurl, _pluginhandle, _pluginquery, addon):
 		if mode == 'clear_cache':
 			clear_cache()
 
-		elif mode == 'open_foreign_settings' and 'foreign_addon_id' in param_keys:
-			xbmc_helper().open_foreign_addon_settings(params['foreign_addon_id'])
-
 		else:
 
 			stream_type = params.get('stream_type', 'VOD')
