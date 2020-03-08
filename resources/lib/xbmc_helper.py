@@ -213,8 +213,8 @@ class xbmc_helper(Singleton):
 		if 'sort' in folder_defs.keys():
 			self.set_folder_sort(folder_defs['sort'])
 
-		# reset the postion to the last known, if pluginurls matching -> likely to be a 'refresh'
-		if getInfoLabel('Container.FolderPath') == old_pluginurl and old_postion.isdigit():
+		# reset the postion to the last "known" if it is gt 1, if pluginurls matching -> likely to be a 'refresh'
+		if getInfoLabel('Container.FolderPath') == old_pluginurl and old_postion.isdigit() and int(old_postion) > 1:
 			from xbmcgui import Window, getCurrentWindowId, getCurrentWindowDialogId
 
 			# wait untl all Dialogs are closed; 10099 => WINDOW_DIALOG_POINTER => smallest dialog_id; max 500 msecs
@@ -226,11 +226,7 @@ class xbmc_helper(Singleton):
 
 			self.log_debug('FolderPath old pos {} ', old_postion)
 			focus_id = Window(getCurrentWindowId()).getFocusId()
-			# different skins/viewtypes counting differently ?!?!
-			if str(getSkinDir()).startswith('skin.estuary') and focus_id in [53, 55, 50]:
-				set_postion = str(int(old_postion) + 1)
-			else:
-				set_postion = old_postion
+			set_postion = old_postion
 
 			cmd = compat._format('Control.SetFocus({},{})', focus_id, set_postion)
 			executebuiltin(cmd)
