@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from xbmc import Monitor as xbmc_Monitor, Player as xbmc_Player, getInfoLabel
+from xbmc import Monitor as xbmc_Monitor, Player as xbmc_Player, getInfoLabel, getCondVisibility
 from resources.lib.xbmc_helper import xbmc_helper
 from resources.lib.lib_joyn import lib_joyn
 
@@ -23,11 +23,13 @@ class service_monitor(xbmc_Monitor):
 		if method == 'Player.OnPlay':
 			from xbmcgui import Window, getCurrentWindowId
 			window_id = getCurrentWindowId()
-			asset_id = Window(window_id).getProperty('joyn_video_id')
-			if getInfoLabel('Container.FolderPath').startswith(self.addon_path) and asset_id is not None and len(asset_id) != 0:
-				self.asset_id = asset_id
+
+			if getInfoLabel('Container.FolderPath').startswith(self.addon_path):
 				self.start_tracking = True
-				xbmc_helper().log_debug('Start tracking - asset : {}', asset_id)
+				asset_id = Window(window_id).getProperty('joyn_video_id')
+				if asset_id is not None and len(asset_id) != 0:
+					self.asset_id = asset_id
+					xbmc_helper().log_debug('Track asset : {}', asset_id)
 			else:
 				self.reset_tracking()
 			Window(window_id).clearProperty('joyn_video_id')
@@ -49,7 +51,10 @@ class service_monitor(xbmc_Monitor):
 					pass
 
 			# delete local mpd file - if exists
-			if self.last_played_file is not None and self.last_played_file.startswith('/'):
+			xbmc_helper().log_debug('last played file: {}', self.last_played_file)
+			if self.start_tracking is True and self.last_played_file is not None and (self.last_played_file.startswith('/') or (
+			        (getCondVisibility(' System.Platform.Windows') or getCondVisibility('System.Platform.UWP'))
+			        and self.last_played_file[1:3] == ':/')):
 				filename = self.last_played_file.split('/')[-1]
 				xbmc_helper().log_debug('Delete local mpd file: {}', self.last_played_file)
 				xbmc_helper().del_data(filename, 'TEMP_DIR')
@@ -73,9 +78,9 @@ class service_monitor(xbmc_Monitor):
 
 	def reset_tracking(self):
 		self.start_tracking = False
+		self.last_played_file = None
 		self.asset_id = None
 		self.last_tracked_position = None
-		self.last_played_file = None
 		self.duration = None
 
 
@@ -94,7 +99,8 @@ xbmc_helper().log_notice('Monitor started')
 
 while not servicemonitor.abortRequested():
 	servicemonitor.track_position()
-	servicemonitor.waitForAbort(2)
+	if servicemonitor.waitForAbort(2):
+		break
 
 service_monitor = None
 xbmc_helper().log_notice('Monitor stopped')
