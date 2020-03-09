@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
+from distutils.version import LooseVersion
 from io import open as io_open
 from datetime import datetime, timedelta
 from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, \
@@ -31,12 +32,31 @@ class xbmc_helper(Singleton):
 		self.prop_cache = {}
 		self.addon_params = None
 		self.android_properties = {}
+		self.xbmc_python_version = None
+		self.xbmc_version = None
 
 		debug_rpc_res = self.json_rpc(method='Settings.GetSettingValue', params={'setting': 'debug.showloginfo'})
 		if debug_rpc_res is not None and debug_rpc_res.get('value', False) is True:
 			self.kodi_debug = True
 		else:
 			self.kodi_debug = False
+
+		try:
+			from xbmcaddon import Addon
+			_xbmc_python_version = Addon('xbmc.python').getAddonInfo('version')
+			self.log_debug('Detected xbmc.python version {}', _xbmc_python_version)
+			self.xbmc_python_version = LooseVersion(_xbmc_python_version)
+		except Exception as e:
+			self.log_notice('Could not detect xbmc.python version: {}', e)
+			pass
+
+		try:
+			_xbmc_version = getInfoLabel('System.BuildVersion')
+			self.log_debug('Detected xbmc version: {}', _xbmc_version)
+			self.xbmc_version = LooseVersion(_xbmc_version)
+		except Exception as e:
+			self.log_notice('Could not detect xbmc version version: {}', e)
+			pass
 
 	def __del__(self):
 		self.addon = None
