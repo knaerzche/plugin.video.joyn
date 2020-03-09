@@ -603,3 +603,11 @@ msgstr "Keine Informationen  verfügbar"
 msgctxt "#30694"
 msgid "If have an Joyn-Account you can sign-in now"
 msgstr "Jetzt mit Joyn-Konto anmelden?"
+
+msgctxt "#30695"
+msgid "ascending"
+msgstr "aufsteigend"
+
+msgctxt "#30696"
+msgid "descending"
+msgstr "absteigend"

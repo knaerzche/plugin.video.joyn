@@ -260,10 +260,10 @@ class xbmc_helper(Singleton):
 			executebuiltin(compat._format('Container.SetSortMethod({:s})', str(folder_sort_def['order_type'])))
 
 			if (order == CONST['SETTING_VALS']['SORT_ORDER_DESC'] and
-			    (getInfoLabel('Container.SortOrder').lower() == 'ascending'
+			    (getInfoLabel('Container.SortOrder').lower() == self.translation('ASCENDING_LABEL')
 			     or str(getCondVisibility('Container.SortDirection(ascending)')) == '1')) or (
 			             order == CONST['SETTING_VALS']['SORT_ORDER_ASC'] and
-			             (getInfoLabel('Container.SortOrder').lower() == 'descending'
+			             (getInfoLabel('Container.SortOrder').lower() == self.translation('DESCENDING_LABEL')
 			              or str(getCondVisibility('Container.SortDirection(descending)')) == '1')):
 				self.log_debug('Toggle sort')
 				executebuiltin('Container.SetSortDirection')

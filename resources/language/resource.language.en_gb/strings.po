@@ -603,3 +603,11 @@ msgstr ""
 msgctxt "#30694"
 msgid "If have an Joyn-Account you can sign-in now"
 msgstr ""
+
+msgctxt "#30695"
+msgid "ascending"
+msgstr ""
+
+msgctxt "#30696"
+msgid "descending"
+msgstr ""
