@@ -382,6 +382,7 @@ class xbmc_helper(Singleton):
 					from subprocess import check_output
 					prop_output = check_output(['/system/bin/getprop']).splitlines()
 					for prop in prop_output:
+						prop = compat._decode(prop)
 						prop_k_v = prop.split(']: [')
 						if len(prop_k_v) == 2 and prop_k_v[0].startswith('[') and prop_k_v[1].endswith(']'):
 							self.android_properties.update({prop_k_v[0][1:]: prop_k_v[1][:-1]})
@@ -401,7 +402,8 @@ class xbmc_helper(Singleton):
 					from subprocess import check_output
 					prop_output = check_output(['/system/bin/getprop', key]).splitlines()
 					if len(prop_output) == 1 and len(prop_output) != 0:
-						self.android_properties.update({key: prop_output[0]})
-						return prop_output[0]
+						prop = compat._decode(prop_output[0])
+						self.android_properties.update({key: prop})
+						return prop
 				except Exception as e:
 					self.log_error('Getting android property {} with exception: {}', key, e)

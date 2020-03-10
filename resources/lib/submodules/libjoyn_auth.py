@@ -208,7 +208,7 @@ def get_node_value():
 				machine_id_res = check_output(['/bin/cat', '/etc/machine-id']).splitlines()
 				if isinstance(machine_id_res, list) and len(machine_id_res) == 1:
 					xbmc_helper().log_debug('Got linux machine-id')
-					return machine_id_res[0]
+					return compat._decode(machine_id_res[0])
 
 			except Exception as e:
 				xbmc_helper().log_debug('Failed to get machine_id: {}', e)
@@ -220,12 +220,13 @@ def get_node_value():
 			else:
 				exec_prefix = ''
 
-			interfaces = check_output(['{}/bin/ls'.format(exec_prefix), '/sys/class/net/']).splitlines()
+			interfaces = check_output([compat._format('{}/bin/ls', exec_prefix), '/sys/class/net/']).splitlines()
 			for interface in interfaces:
+				interface = compat._decode(interface)
 				address_res = check_output(['{}/bin/cat'.format(exec_prefix),
 				                            compat._format('/sys/class/net/{}/address', interface)]).splitlines()
 				if isinstance(address_res, list) and len(address_res) == 1:
-					node = address_res[0].replace(':', '').lower()
+					node = compat._decode(address_res[0]).replace(':', '').lower()
 					if len(node) == 12 and node != ('0' * 12):
 						xbmc_helper().log_debug('Got macaddr from sysfs')
 						return node
