@@ -94,3 +94,8 @@ fix language files
 make sure addon is used on kodi >= 18
 v2.3.1.1
 Hotfix: Website changed again
+v2.3.1.2
+fix license based display for tvshows, season, epsiodes
+add license based display for complation/-items
+make installation of script.module.uepg optional / on demand
+minor other bugfixes
