@@ -67,8 +67,14 @@ def _remove(cache_key, file_name):
 
 	cache_path = xbmc_helper().get_file_path(CONST['CACHE_DIR'], file_name)
 	if path.exists(cache_path) and path.isfile(cache_path):
-		remove(cache_path)
-		return True
+
+		try:
+			remove(cache_path)
+			return True
+		except Exception as e:
+			xbmc_helper().log_error("Removing file {} from cache failed with exception: {}", cache_path, e)
+			pass
+
 	return False
 
 
