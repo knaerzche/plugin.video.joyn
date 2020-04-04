@@ -164,7 +164,7 @@ class xbmc_helper(Singleton):
 		else:
 			header = self.get_addon().getAddonInfo('name')
 
-		ret = Dialog().ok(header, msg, msg_line2, msg_line3)
+		ret = Dialog().ok(header, xbmc_helper.dialog_msg(msg, msg_line2, msg_line3))
 
 		if open_settings_on_ok is True and ret is 1:
 			self.get_addon().openSettings()
@@ -187,9 +187,7 @@ class xbmc_helper(Singleton):
 			header = self.get_addon().getAddonInfo('name')
 
 		dialog_res = Dialog().yesno(header,
-		                            msg,
-		                            msg_line2,
-		                            msg_line3,
+		                            xbmc_helper.dialog_msg(msg, msg_line2, msg_line3),
 		                            nolabel=self.translation(cancel_label_translation),
 		                            yeslabel=self.translation(yes_label_translation))
 		if dialog_res:
@@ -203,6 +201,16 @@ class xbmc_helper(Singleton):
 
 	def dialog_id(self, id):
 		return self.dialog(self.translation(id))
+
+	@staticmethod
+	def dialog_msg(msg, msg_line2=None, msg_line3=None):
+		_msg = msg
+		if msg_line2 is not None:
+			_msg = compat._format('{}[CR]{}', _msg, msg_line2)
+		if msg_line3 is not None:
+			_msg = compat._format('{}[CR]{}', _msg, msg_line3)
+
+		return _msg
 
 	def set_folder(self, list_items, pluginurl, pluginhandle, pluginquery, folder_type, title=None):
 
