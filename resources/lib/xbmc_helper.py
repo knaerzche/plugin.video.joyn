@@ -364,11 +364,16 @@ class xbmc_helper(Singleton):
 
 	def timestamp_to_datetime(self, timestamp, is_utc=False):
 		try:
+
 			if is_utc is True:
-				return datetime.utcfromtimestamp(0) + timedelta(seconds=int(timestamp))
+				dt = datetime.utcfromtimestamp(0) + timedelta(seconds=int(timestamp))
 			else:
-				return datetime.fromtimestamp(0) + timedelta(seconds=int(timestamp))
+				dt = datetime.fromtimestamp(0) + timedelta(seconds=int(timestamp))
+
+			return dt - timedelta(hours=datetime.timetuple(dt).tm_isdst)
+
 		except Exception as e:
+
 			self.log_notice('Could not convert timestamp {} to datetime - Exception: {}', timestamp, e)
 			pass
 

@@ -180,7 +180,13 @@ def post_json(url,
 	                         return_json_errors=return_json_errors)
 
 
-def get_json_response(url, config, headers=[], params=None, post_data=None, silent=False, no_cache=False,
+def get_json_response(url,
+                      config,
+                      headers=[],
+                      params=None,
+                      post_data=None,
+                      silent=False,
+                      no_cache=False,
                       return_json_errors=[]):
 
 	try:
