@@ -631,7 +631,7 @@ class lib_joyn(Singleton):
 
 		if query_type == 'EPISODE':
 			if 'endsAt' in data.keys() and data['endsAt'] is not None and data['endsAt'] < 9999999999:
-				endsAt = xbmc_helper().timestamp_to_datetime(data['endsAt'], True)
+				endsAt = xbmc_helper().timestamp_to_datetime(data['endsAt'])
 				if endsAt is not False:
 					metadata['infoLabels'].update({
 					        'plot':
@@ -658,7 +658,7 @@ class lib_joyn(Singleton):
 					metadata['art'].update({'clearlogo': compilation_meta['art']['clearlogo']})
 
 		if 'airdate' in data.keys() and data['airdate'] is not None:
-			broadcast_datetime = xbmc_helper().timestamp_to_datetime(data['airdate'], True)
+			broadcast_datetime = xbmc_helper().timestamp_to_datetime(data['airdate'])
 			if broadcast_datetime is not False:
 				broadcast_date = broadcast_datetime.strftime('%Y-%m-%d')
 				metadata['infoLabels'].update({

@@ -126,14 +126,14 @@ class mpd_parser(object):
 
 	def set_local_path(self, video_id):
 
-		#check mpdtype
+		# check mpdtype
 		mpd_type = mpd_parser.get_attrib(self.mpd_tree, 'type')
 
 		if mpd_type is not None and mpd_type == 'dynamic':
 			xbmc_helper().log_debug('MPD-Type is dynamic and therefore cannot be saved locally')
 			return
 
-		#check if mpd has an location tag
+		# check if mpd has an location tag
 		location = self.query('Location')
 		if location is not None:
 			xbmc_helper().log_debug('MPD has a location-tag and therefore cannot be saved locally: {}', location.text)
@@ -147,7 +147,7 @@ class mpd_parser(object):
 			new_base_url = compat._format('{}://{}{}/', parsed_mpd_url.scheme, parsed_mpd_url.netloc,
 			                              '/'.join(parsed_mpd_url.path.split('/')[:-1]))
 
-			#no toplevel BaseURL exists - add a new one
+			# no toplevel BaseURL exists - add a new one
 			if cur_toplevel_baseurl is None:
 				base_url_node = self.elementtree.Element(compat._format('{}{}', self.mpd_tree_ns, 'BaseURL'))
 				base_url_node.text = new_base_url
