@@ -178,18 +178,6 @@ def get_list_items(response_items,
 
 def index():
 
-	if not xbmc_helper().addon_enabled(CONST['INPUTSTREAM_ADDON']):
-		xbmc_helper().dialog_id('MSG_INPUSTREAM_NOT_ENABLED')
-		exit(0)
-
-	from inputstreamhelper import Helper
-	is_helper = Helper('mpd', drm='com.widevine.alpha')
-	if not is_helper.check_inputstream():
-		xbmc_helper().dialog_id('MSG_WIDEVINE_NOT_FOUND')
-		exit(0)
-
-	from xbmc import getCondVisibility
-
 	request_helper.purge_etags_cache(ttl=CONST['ETAGS_TTL'])
 	from .submodules.plugin_lastseen import show_lastseen
 	list_items = show_lastseen(xbmc_helper().get_int_setting('max_lastseen'), default_fanart)
@@ -572,6 +560,16 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 	succeeded = False
 	list_item = ListItem()
 
+	if not xbmc_helper().addon_enabled(CONST['INPUTSTREAM_ADDON']):
+		xbmc_helper().dialog_id('MSG_INPUSTREAM_NOT_ENABLED')
+		exit(0)
+
+	if not getCondVisibility('System.Platform.Android'):
+		from inputstreamhelper import Helper
+		is_helper = Helper('mpd', drm='com.widevine.alpha')
+		if not is_helper.check_inputstream():
+			xbmc_helper().dialog_id('MSG_WIDEVINE_NOT_FOUND')
+			exit(0)
 	try:
 		from .submodules.libjoyn_video import get_video_data
 		video_data = get_video_data(video_id, loads(client_data), stream_type, season_id, compilation_id)
@@ -580,6 +578,7 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 
 		parser = video_data.get('parser', None)
 		if parser is not None:
+
 			list_item.setProperty('inputstreamaddon', CONST['INPUTSTREAM_ADDON'])
 			# DASH
 			if isinstance(parser, mpd_parser):
@@ -601,6 +600,7 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 				if license_key is not None:
 					if drm.lower() == 'widevine':
 						xbmc_helper().log_notice('Using Widevine as DRM')
+
 						list_item.setProperty(compat._format('{}.license_type', CONST['INPUTSTREAM_ADDON']), 'com.widevine.alpha')
 						list_item.setProperty(
 						        compat._format('{}.license_key', CONST['INPUTSTREAM_ADDON']),
