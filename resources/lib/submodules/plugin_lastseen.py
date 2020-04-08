@@ -90,10 +90,9 @@ def show_lastseen(max_lastseen_count, default_fanart):
 					        {'seasonId': lastseen_item['season_id']}) is True:
 						continue
 
-					season_data = lib_joyn().get_graphql_response('EPISODES', {
+					season_data = lib_joyn().get_graphql_response('EPISODES_NOLICENSEFILTER', {
 					        'seasonId': lastseen_item['season_id'],
 					        'first': 1,
-					        'episodeLicenseFilter': lib_joyn().get_license_filter()
 					})
 					if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(
 					        season_data['season']['episodes']) > 0 and lastseen_item['season_id'] not in season_ids:

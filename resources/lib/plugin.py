@@ -362,9 +362,9 @@ def seasons(tv_show_id, title):
 
 	from .submodules.plugin_favorites import get_favorite_entry
 	list_items = []
-	seasons = lib_joyn().get_graphql_response('SEASONS', {
+
+	seasons = lib_joyn().get_graphql_response('SEASONS_NOLICENSEFILTER', {
 	        'seriesId': tv_show_id,
-	        'seasonLicenseFilter': lib_joyn().get_license_filter()
 	})
 
 	if seasons is not None and seasons.get('series', None) is not None:
@@ -378,6 +378,9 @@ def seasons(tv_show_id, title):
 				season_number = season['number']
 			else:
 				season_number = counter
+
+			if isinstance(season.get('licenseTypes', None), list) and lib_joyn().check_license(season) is False:
+				continue
 
 			if xbmc_helper().get_bool_setting('show_episodes_immediately') and len(seasons['series']['seasons']) == 1:
 				return season_episodes(
@@ -416,9 +419,9 @@ def season_episodes(season_id, title):
 
 	from .submodules.plugin_favorites import get_favorite_entry
 	list_items = []
-	episodes = lib_joyn().get_graphql_response('EPISODES', {
+
+	episodes = lib_joyn().get_graphql_response('EPISODES_NOLICENSEFILTER', {
 	        'seasonId': season_id,
-	        'episodeLicenseFilter': lib_joyn().get_license_filter()
 	})
 	override_fanart = default_fanart
 	if episodes is not None and episodes.get('season', None) is not None and isinstance(
@@ -430,7 +433,7 @@ def season_episodes(season_id, title):
 			if 'fanart' in tvshow_meta['art']:
 				override_fanart = tvshow_meta['art']['fanart']
 
-		list_items = get_list_items(episodes.get('season').get('episodes'), override_fanart=override_fanart, check_license_type=False)
+		list_items = get_list_items(episodes.get('season').get('episodes'), override_fanart=override_fanart, check_license_type=True)
 
 	if len(list_items) == 0:
 		from xbmcplugin import endOfDirectory
