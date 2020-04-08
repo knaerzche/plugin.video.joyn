@@ -682,7 +682,7 @@ class lib_joyn(Singleton):
 		if data.get('tagline', None) is not None:
 			metadata['infoLabels'].update({'tagline': data.get('tagline')})
 
-		if isinstance(data.get('resumePosition', {}).get('position'), int) and data.get('resumePosition').get('position') > 0:
+		if data.get('resumePosition', None) is not None and data.get('resumePosition').get('position', 0) > 0:
 			metadata.update({'resume_pos': str(float(data.get('resumePosition').get('position')))})
 
 		return metadata
