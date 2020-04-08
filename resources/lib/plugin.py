@@ -746,7 +746,7 @@ def get_dir_entry(mode,
 
 	list_item.setArt(metadata['art'])
 
-	if mode == 'play_video' and video_id is not '' and client_data is not '':
+	if mode == 'play_video' and video_id != '' and client_data != '':
 		list_item.setProperty('IsPlayable', 'True')
 
 		if 'resume_pos' in metadata.keys() and 'duration' in metadata['infoLabels'].keys():
@@ -758,11 +758,11 @@ def get_dir_entry(mode,
 	if metadata.get('is_bookmarked', None) is not None and lib_joyn().get_auth_token().get('has_account', False) is True:
 		asset_id = None
 
-		if mode == 'season' and tv_show_id is not '':
+		if mode == 'season' and tv_show_id != '':
 			asset_id = tv_show_id
-		elif mode == 'play_video' and movie_id is not '':
+		elif mode == 'play_video' and movie_id != '':
 			asset_id = movie_id
-		elif mode == 'compilation_items' and compilation_id is not '':
+		elif mode == 'compilation_items' and compilation_id != '':
 			asset_id = compilation_id
 
 		if asset_id is not None:

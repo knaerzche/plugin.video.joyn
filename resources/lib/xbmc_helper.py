@@ -166,7 +166,7 @@ class xbmc_helper(Singleton):
 
 		ret = Dialog().ok(header, xbmc_helper.dialog_msg(msg, msg_line2, msg_line3))
 
-		if open_settings_on_ok is True and ret is 1:
+		if open_settings_on_ok is True and ret == 1:
 			self.get_addon().openSettings()
 
 		return ret
@@ -289,7 +289,7 @@ class xbmc_helper(Singleton):
 
 			self.log_debug('Viewmode :{}:{}:{}:{}', setting_id, setting_val, viewmode, skin_name)
 
-			if viewmode is not '0':
+			if viewmode != '0':
 				executebuiltin(compat._format('Container.SetViewMode({})', viewmode))
 				self.wait_for_infolabel('Container.Viewmode', setting_val)
 

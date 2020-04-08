@@ -56,7 +56,7 @@ def create_config(cached_config, addon_version):
 		config['IS_ANDROID'] = True
 
 	# linux on arm uses widevine from chromeos
-	elif os_uname[0] == 'Linux' and os_uname[4].lower().find('arm') is not -1:
+	elif os_uname[0] == 'Linux' and os_uname[4].lower().find('arm') != -1:
 		config['USER_AGENT'] = compat._format(
 		        'Mozilla/5.0 (X11; CrOS {}) 12105.100.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.144 Safari/537.36',
 		        os_uname[4])
@@ -71,7 +71,7 @@ def create_config(cached_config, addon_version):
 		config['USER_AGENT'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
 
 	html_content = request_helper.get_url(CONST['BASE_URL'], config)
-	if html_content is None or html_content is '':
+	if html_content is None or html_content == '':
 		xbmc_helper().notification(compat._format(xbmc_helper().translation('ERROR'), 'Url access'),
 		                           compat._format(xbmc_helper().translation('MSG_NO_ACCESS_TO_URL'), CONST['BASE_URL']))
 		exit(0)
@@ -93,7 +93,7 @@ def create_config(cached_config, addon_version):
 		}
 	config.update({'actual_country': ip_api_response.get('countryCode', 'DE')})
 
-	if county_setting is '' or county_setting is '0':
+	if county_setting == '' or county_setting == '0':
 		xbmc_helper().log_debug('IP API Response is: {}', ip_api_response)
 		if config.get('actual_country', 'DE') in CONST['COUNTRIES'].keys():
 			config.update({'country': config.get('actual_country', 'DE')})
@@ -127,7 +127,7 @@ def create_config(cached_config, addon_version):
 
 	main_js_src = None
 	for match in findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
-		if match.find('/main') is not -1:
+		if match.find('/main') != -1:
 			main_js_src = CONST['BASE_URL'] + match
 			main_js = request_helper.get_url(main_js_src, config)
 			break

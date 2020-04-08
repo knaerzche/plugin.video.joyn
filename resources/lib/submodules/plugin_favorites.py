@@ -251,7 +251,7 @@ def add_joyn_bookmark(asset_id, default_icon):
 	executebuiltin("Container.Refresh")
 	return xbmc_helper().notification(
 	        xbmc_helper().translation('JOYN_BOOKMARKS'),
-	        xbmc_helper().translation('MSG_JOYN_BOOKMARK_ADD_SUCC' if add_joyn_bookmark_res.get('setBookmark', '') is not '' else
+	        xbmc_helper().translation('MSG_JOYN_BOOKMARK_ADD_SUCC' if add_joyn_bookmark_res.get('setBookmark', '') != '' else
 	                                  'MSG_JOYN_BOOKMARK_ADD_FAIL'), default_icon)
 
 
