@@ -4,7 +4,6 @@ CONST = {
         'BASE_URL'   : 'https://www.joyn.de',
         'PSF_CONFIG_URL' : 'https://psf.player.v0.maxdome.cloud/config/psf.json',
         'PSF_URL'  : 'https://psf.player.v0.maxdome.cloud/dist/playback-source-fetcher.min.js',
-        'ANON_ENTITLEMENT_URL' : 'entitlement-token/anonymous',
         'ENTITLEMENT_URL' : 'entitlement-token',
         'IP_API_URL'  : 'http://ip-api.com/json?lang={:s}&fields=status,country,countryCode',
         'AUTH_URL'  : 'https://auth.joyn.de/auth',
@@ -14,6 +13,8 @@ CONST = {
         'AUTH_LOGOUT'  : '/logout',
         'CLIENT_NAMES'  : ['web', 'ios', 'android'],
         'EDGE_UA': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134',
+        'JOYN_CLIENT_VERSION': '2.3.5',
+        'MAX_VIDEO_TRIES': 5,
         'PSF_VAR_DEFS'  : {
      'SECRET' : {
        'INDEX'  : 1196,
@@ -274,7 +275,7 @@ CONST = {
 
         'GRAPHQL' : {
 
-   'API_URL'  : 'https://api.joyn.de/graphql?enable_plus=true',
+   'API_URL'  : 'https://api.joyn.de/graphql',
 
    'REQUIRED_HEADERS' : ['x-api-key', 'joyn-platform'],
 

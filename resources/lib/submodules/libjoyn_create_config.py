@@ -147,7 +147,7 @@ def create_config(cached_config, addon_version):
 
 	if use_outdated_cached_config is False:
 		config['GRAPHQL_HEADERS'] = [('x-api-key', config['API_GW_API_KEY']),
-		                             ('joyn-platform', xbmc_helper().get_text_setting('joyn_platform'))]
+		                             ('Joyn-Platform', xbmc_helper().get_text_setting('joyn_platform'))]
 
 		config['CLIENT_NAME'] = xbmc_helper().get_text_setting('joyn_platform')
 

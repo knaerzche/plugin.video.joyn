@@ -322,19 +322,7 @@ class lib_joyn(Singleton):
 			if account_state is not False:
 				headers.append(('Joyn-User-State', account_state))
 
-		if CONST['GRAPHQL'][operation].get('AUTH', False) is True:
-			auth_token_data = self.get_auth_token()
-			if auth_token_data.get('access_token', None) is not None:
-				headers.append(('Authorization', compat._format('Bearer {}', auth_token_data.get('access_token'))))
-			else:
-				xbmc_helper().log_error('Failed to get auth_token; continue unauthorized')
-
-			if operation != 'ACCOUNT' and operation != 'USER_PROFILE' and account_state is False:
-				joyn_user_id = self.get_client_ids().get('anon_device_id', None)
-				if joyn_user_id is not None:
-					headers.append(('Joyn-User-Id', joyn_user_id))
-				else:
-					xbmc_helper().log_notice("Failed to get joyn_user_id; continue without")
+		headers.append(('Authorization', self.get_access_token()))
 
 		api_response = {}
 		no_cache = False if force_cache is True else CONST['GRAPHQL'][operation].get('NO_CACHE', False)
@@ -528,13 +516,20 @@ class lib_joyn(Singleton):
 			                       config=self.config,
 			                       post_data='',
 			                       no_cache=True,
-			                       additional_headers=[('Authorization',
-			                                            compat._format('Bearer {}', self.auth_token_data.get('access_token')))])
+			                       additional_headers=[('Authorization', self.get_access_token())])
 			xbmc_helper().del_data('auth_data')
 
 			return self.get_auth_token(reset_anon=True)
 
 		return self.auth_token_data
+
+	def get_access_token(self):
+		_auth_token = self.get_auth_token()
+		if _auth_token is not None:
+			return compat._format('{} {}', _auth_token.get('token_type'), _auth_token.get('access_token'))
+		else:
+			xbmc_helper().log_notice("Failed to get auth token")
+			return None
 
 	def add_user_agent_http_header(self, uri):
 

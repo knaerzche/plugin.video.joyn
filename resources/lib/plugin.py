@@ -552,11 +552,11 @@ def category(block_id, title, viewtype='TV_SHOWS'):
 	xbmc_helper().set_folder(list_items, pluginurl, pluginhandle, pluginquery, viewtype, title)
 
 
-def play_video(video_id, client_data, stream_type, season_id=None, compilation_id=None):
+def play_video(video_id, client_data, stream_type, season_id=None, compilation_id=None, retries=0):
 
 	from .mpd_parser import mpd_parser as mpd_parser
 	from xbmc import getCondVisibility
-	xbmc_helper().log_debug('play_video: video_id {}', video_id)
+	xbmc_helper().log_debug('play_video: video_id {} - try no: {}', video_id, retries)
 	succeeded = False
 	list_item = ListItem()
 
@@ -669,9 +669,15 @@ def play_video(video_id, client_data, stream_type, season_id=None, compilation_i
 			raise ValueError(compat._format('Could not get parser: {}', parser))
 
 	except Exception as e:
-		xbmc_helper().log_error('Getting videostream / manifest failed with Exception: {}', e)
-		xbmc_helper().notification(compat._format(xbmc_helper().translation('ERROR'), 'Video-Stream'),
-		                           xbmc_helper().translation('MSG_ERROR_NO_VIDEOSTEAM'))
+		if retries < CONST.get('MAX_VIDEO_TRIES'):
+			xbmc_helper().log_notice('Getting videostream / manifest failed with Exception: {} - current try {} of {}', e, retries,
+			                         CONST.get('MAX_VIDEO_TRIES'))
+			play_video(video_id, client_data, stream_type, season_id=season_id, compilation_id=compilation_id, retries=(retries + 1))
+		else:
+			succeeded = False
+			xbmc_helper().log_error('Getting videostream / manifest failed with Exception: {}', e)
+			xbmc_helper().notification(compat._format(xbmc_helper().translation('ERROR'), 'Video-Stream'),
+			                           xbmc_helper().translation('MSG_ERROR_NO_VIDEOSTEAM'))
 		pass
 
 	if succeeded is True and stream_type == 'VOD':
