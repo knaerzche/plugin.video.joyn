@@ -35,6 +35,9 @@
 			<screenshot>resources/media/screenshot03.jpg</screenshot>
 		</assets>
 		<news>
+v2.3.1.5
+implement API changes
+try to get manifest up to 5 times, if it fails
 v2.3.1.4
 Revert using api based license filter
 check is* stuff just before video starts

@@ -123,32 +123,23 @@ def get_entitlement_data(video_id, stream_type, pin_required=False, invalid_pin=
 	entitlement_request_headers = [('x-api-key', lib_joyn().config['PSF_CONFIG']['default'][stream_type.lower()]['apiGatewayKey'])]
 	auth_token_data = lib_joyn().get_auth_token()
 
-	if auth_token_data.get('has_account', False) is not False and auth_token_data.get('access_token', None) is not None:
-		entitlement_request_headers.append(('Authorization', compat._format('Bearer {}', auth_token_data.get('access_token'))))
-		entitlement_response = post_json(url=compat._format(
-		        '{}{}',
-		        lib_joyn().config['PSF_CONFIG']['default'][stream_type.lower()]['entitlementBaseUrl'], CONST['ENTITLEMENT_URL']),
-		                                 config=lib_joyn().config,
-		                                 data=entitlement_request_data,
-		                                 additional_headers=entitlement_request_headers,
-		                                 no_cache=True,
-		                                 return_json_errors=['ENT_PINRequired', 'ENT_PINInvalid'])
+	entitlement_request_headers.append(('Authorization', lib_joyn().get_access_token()))
+	entitlement_response = post_json(url=compat._format(
+	        '{}{}',
+	        lib_joyn().config['PSF_CONFIG']['default'][stream_type.lower()]['entitlementBaseUrl'], CONST['ENTITLEMENT_URL']),
+	                                 config=lib_joyn().config,
+	                                 data=entitlement_request_data,
+	                                 additional_headers=entitlement_request_headers,
+	                                 no_cache=True,
+	                                 return_json_errors=['ENT_PINRequired', 'ENT_PINInvalid'])
 
-		if isinstance(entitlement_response, dict) and 'json_errors' in entitlement_response:
-			if 'ENT_PINInvalid' in entitlement_response['json_errors']:
-				return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=True, invalid_pin=True)
-			elif 'ENT_PINRequired' in entitlement_response['json_errors']:
-				return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=True)
+	if isinstance(entitlement_response, dict) and 'json_errors' in entitlement_response:
+		if 'ENT_PINInvalid' in entitlement_response['json_errors']:
+			return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=True, invalid_pin=True)
+		elif 'ENT_PINRequired' in entitlement_response['json_errors']:
+			return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=True)
 
-		return entitlement_response
-	else:
-		return post_json(url=compat._format('{}{}',
-		                                    lib_joyn().config['PSF_CONFIG']['default'][stream_type.lower()]['entitlementBaseUrl'],
-		                                    CONST['ANON_ENTITLEMENT_URL']),
-		                 config=lib_joyn().config,
-		                 data=entitlement_request_data,
-		                 additional_headers=entitlement_request_headers,
-		                 no_cache=True)
+	return entitlement_response
 
 
 def get_video_data(video_id, client_data, stream_type, season_id=None, compilation_id=None):
@@ -186,7 +177,8 @@ def get_video_data(video_id, client_data, stream_type, season_id=None, compilati
 		                               params=video_data_params,
 		                               headers=video_data_headers,
 		                               post_data='false',
-		                               no_cache=True)
+		                               no_cache=True,
+		                               silent=True)
 
 		if isinstance(video_data, dict) and video_data.get('streamingFormat',
 		                                                   '') == 'dash' and video_data.get('videoUrl', None) is not None:
