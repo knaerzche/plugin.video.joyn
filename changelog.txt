@@ -109,3 +109,5 @@ minor fixes
 v2.3.1.5
 implement API changes
 try to get manifest up to 5 times, if it fails
+v2.3.1.6
+add support for another error response format
