@@ -43,7 +43,7 @@ def get_url(url,
 	final_url = url
 
 	if xbmc_helper().get_bool_setting('debug_requests') is True:
-		xbmc_helper().log_debug('get_url - url: {} headers {} query {} post {} no_cache {} silent {} request_hash {} json_errors {}',
+		xbmc_helper().log_debug('get_url - url: {} headers {} query {} post {} no_cache {} silent {} request_hash {} return_json_errors {}',
 		                        url, additional_headers, additional_query_string, post_data, no_cache, fail_silent, request_hash,
 		                        return_json_errors)
 
@@ -115,19 +115,26 @@ def get_url(url,
 				else:
 					error_body = compat._decode(http_error.read())
 
-				has_decoded_error = False
+				xbmc_helper().log_debug('HTTP ERROR: {}', error_body)
 				json_errors = loads(error_body)
+				xbmc_helper().log_debug('JSON ERRORS: {}', json_errors)
+
+				has_decoded_error = False
 				if isinstance(json_errors, dict) and 'errors' not in json_errors.keys() and 'code' in json_errors.keys():
 					json_errors = {'errors': [json_errors]}
+				elif isinstance(json_errors, list) and len(json_errors) == 1 and isinstance(json_errors[0], dict):
+					json_errors = {'errors': json_errors}
 				err_str = str(http_error.code)
 				return_errors = []
-				for error in json_errors.get('errors', []):
-					if 'msg' in error.keys():
-						err_str += '|' + str(error['msg'])
-						has_decoded_error = True
-					if 'code' in error.keys() and error['code'] in return_json_errors:
-						return_errors.append(error['code'])
-						has_decoded_error = True
+
+				if isinstance(json_errors, dict):
+					for error in json_errors.get('errors', []):
+						if 'msg' in error.keys():
+							err_str += '|' + str(error['msg'])
+							has_decoded_error = True
+						if 'code' in error.keys() and error['code'] in return_json_errors:
+							return_errors.append(error['code'])
+							has_decoded_error = True
 
 				xbmc_helper().log_debug('return_json_errors {}', return_errors)
 
@@ -141,7 +148,7 @@ def get_url(url,
 					)
 					exit(0)
 
-			except ValueError:
+			except Exception:
 				raise http_error
 
 	except Exception as e:
