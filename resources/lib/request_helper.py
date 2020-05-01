@@ -130,7 +130,7 @@ def get_url(url,
 				if isinstance(json_errors, dict):
 					for error in json_errors.get('errors', []):
 						if 'msg' in error.keys():
-							err_str += '|' + str(error['msg'])
+							err_str = compat._format('{}|{}', err_str, error.get('msg'))
 							has_decoded_error = True
 						if 'code' in error.keys() and error['code'] in return_json_errors:
 							return_errors.append(error['code'])
