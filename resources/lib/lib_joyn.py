@@ -523,8 +523,8 @@ class lib_joyn(Singleton):
 
 		return self.auth_token_data
 
-	def get_access_token(self):
-		_auth_token = self.get_auth_token()
+	def get_access_token(self, force_refresh=False):
+		_auth_token = self.get_auth_token(force_refresh=force_refresh)
 		if _auth_token is not None:
 			return compat._format('{} {}', _auth_token.get('token_type'), _auth_token.get('access_token'))
 		else:
