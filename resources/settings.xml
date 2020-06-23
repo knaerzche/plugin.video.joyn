@@ -1,91 +1,707 @@
-<settings>
-	<category label="30000">
-		<setting label="30105" type="select" id="country" lvalues="30106|30107" default="0"/>
-		<setting type="sep"/>
-		<setting label="30104" type="action" id="clear_cache" action="RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)" option="close"/>
-		<setting type="sep"/>
-		<setting label="30127" type="bool" id="disable_foldercache" default="false"/>
-		<setting type="sep"/>
-		<setting label="30102" type="slider" id="configcachedays" default="5" range="0,1,30" option="int"/>
-		<setting type="sep"/>
-		<setting label="30108" type="action" id="inputstream_adaptive_settings"
-			action="Addon.OpenSettings(inputstream.adaptive)"
-			enable="System.HasAddon(inputstream.adaptive)" option="close"/>
-		<setting label="30109" type="action" id="uepg_settings"
-			action="Addon.OpenSettings(script.module.uepg)"
-			enable="System.HasAddon(script.module.uepg)" option="close"/>
-	</category>
-	<category label="30352">
-		<setting label="30136" type="action" id="login" action="RunPlugin(plugin://plugin.video.joyn/?mode=login)" option="close"/>
-		<setting type="sep"/>
-		<setting label="30137" type="action" id="logout" action="RunPlugin(plugin://plugin.video.joyn/?mode=logout)" option="close"/>
-		<setting type="sep"/>
-		<setting label="30356" type="bool" id="save_encrypted_auth_data" default="false" enable="System.HasAddon(script.module.pydes)"/>
-		<setting type="sep"/>
-		<setting label="30689" type="number" id="mpaa_pin"/>
-		<setting type="sep"/>
-		<setting label="30360"  type="slider" id="start_set_resume_pos_secs" default="300" range="60,10,3000" option="int"/>
-		<setting label="30361"  type="slider" id="del_resume_pos_secs" default="60" range="0,10,600" option="int"/>
-	</category>
-	<category label="30001">
-		<setting label="30103" type="slider" id="max_lastseen" default="3" range="0,1,20" option="int"/>
-		<setting type="sep"/>
-		<setting label="30128" type="slider" id="max_recommendations" default="3" range="0,1,20" option="int"/>
-		<setting type="sep"/>
-		<setting label="30355" type="bool" id="show_categories_in_main_menu" default="false"/>
-		<setting type="sep"/>
-		<setting label="30129" type="bool" id="show_episodes_immediately" default="false"/>
-		<setting type="sep"/>
-		<setting label="30110" type="bool" id="dont_show_watchlist_in_lastseen" default="false"/>
-		<setting type="sep"/>
-		<setting label="30111" type="select" id="season_order" lvalues="30123|30125|30126" default="2"/>
-		<setting label="30112" type="select" id="episode_order" lvalues="30123|30114|30113" default="2"/>
-		<setting type="sep"/>
-		<setting label="30353" type="bool" id="always_show_premium" default="false"/>
-		<setting label="30354" type="bool" id="highlight_premium" default="false"/>
-		<setting type="sep"/>
-		<setting label="30351" type="lsep"/>
-		<setting label="30122" type="bool" id="enable_viewmodes" default="true"/>
-		<setting label="30115" type="select" id="categories_view" values="Standard|IconWall|WideList|Custom" default="IconWall" enable="eq(-1,true)"/>
-		<setting label="30124" type="number" id="categories_view_custom" visible="eq(-2,true) + eq(-1,3)" enable="eq(-1,3)" subsetting="true"/>
-		<setting label="30121" type="select" id="category_view" values="Standard|List|Poster|Shift|InfoWall|WideList|Wall|Banner|Fanart|Custom" default="Shift"  enable="eq(-3,true)"/>
-		<setting label="30124" type="number" id="category_view_custom" visible="eq(-4,true) + eq(-1,9)" enable="eq(-1,9)" subsetting="true"/>
-		<setting label="30116" type="select" id="tvshow_view" values="Standard|List|Poster|Shift|InfoWall|WideList|Wall|Banner|Fanart|Custom" default="Shift" enable="eq(-5,true)"/>
-		<setting label="30124" type="number" id="tvshow_view_custom" visible="eq(-6,true) + eq(-1,9)" enable="eq(-1,9)" subsetting="true"/>
-		<setting label="30117" type="select" id="season_view" values="Standard|List|Poster|Shift|InfoWall|WideList|Wall|Banner|Fanart|Custom" default="Shift" enable="eq(-7,true)"/>
-		<setting label="30124" type="number" id="season_view_custom" visible="eq(-8,true) + eq(-1,9)" enable="eq(-1,9)" subsetting="true"/>
-		<setting label="30118" type="select" id="episode_view" values="Standard|WideList|Wall|InfoWall|Custom" default="InfoWall" enable="eq(-9,true)"/>
-		<setting label="30124" type="number" id="episode_view_custom" visible="eq(-10,true) + eq(-1,4)" enable="eq(-1,4)" subsetting="true"/>
-		<setting label="30119" type="select" id="livetv_view" values="Standard|WideList|Wall|Shift|InfoWall|Custom" default="WideList" enable="eq(-11,true)"/>
-		<setting label="30124" type="number" id="livetv_view_custom" visible="eq(-12,true) + eq(-1,5)" enable="eq(-1,5)" subsetting="true"/>
-		<setting label="30120" type="select" id="watchlist_view" values="Standard|WideList|Wall|Shift|InfoWall|Custom" default="Shift" enable="eq(-13,true)"/>
-		<setting label="30124" type="number" id="watchlist_view_custom" visible="eq(-14,true) + eq(-1,5)" enable="eq(-1,5)" subsetting="true"/>
-	</category>
-	<category label="30002">
-		<setting label="30131" type="bool" id="dont_verify_ssl_certificates" default="false"/>
-		<setting type="sep"/>
-		<setting label="30132" type="bool" id="use_https_proxy" default="false"/>
-		<setting label="30133" type="text" id="https_proxy_host" enable="eq(-1,true)" subsetting="true"/>
-		<setting label="30134" type="number" id="https_proxy_port" enable="eq(-2,true)" subsetting="true"/>
-	</category>
-	<category label="30003">
-		<setting label="30139" type="bool" id="debug_mode" default="false"/>
-		<setting label="30140" type="bool" id="debug_requests" default="false"/>
-		<setting type="sep"/>
-		<setting label="30135" type="select" id="joyn_platform" values="android|web|ios" default="web"/>
-		<setting type="sep"/>
-		<setting label="30357" type="bool" id="fixup_vod" default="true"/>
-		<setting label="30358" type="bool" id="fixup_live" default="true"/>
-		<setting label="30359" type="bool" id="force_local_manifest" default="false"/>
-		<setting type="sep"/>
-		<setting label="30101" type="bool" id="checkdrmcert" default="false"/>
-		<setting type="sep"/>
-		<setting label="30130" type="bool" id="force_playready" default="false" enable="System.Platform.Android"/>
-		<setting type="sep"/>
-		<setting label="30138" type="bool" id="force_clean_all_files" default="false"/>
-		<setting type="sep"/>
-		<setting label="30141" type="bool" id="fix_livestream_audio_sync" default="true"/>
-		<setting label="30142" type="slider" id="livestream_total_length" enable="eq(-1,true)" range="60,1,1200"  default="882" option="int" subsetting="true"/>
-		<setting label="30143" type="slider" id="livestream_offset" enable="eq(-2,true)"  range="12,1,60" default="14"  optione="int" subsetting="true"/>
-	</category>
+<?xml version="1.0" ?>
+<settings version="1">
+	<section id="plugin.video.joyn">
+		<category id="general" label="30000" help="">
+			<group id="1">
+				<setting id="country" type="integer" label="30105" help="">
+					<level>0</level>
+					<default>0</default>
+					<constraints>
+						<options>
+							<option label="30106">0</option>
+							<option label="30107">1</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30105</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="2">
+				<setting id="clear_cache" type="action" label="30104" help="">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.joyn/?mode=clear_cache)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+			<group id="3">
+				<setting id="disable_foldercache" type="boolean" label="30127" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="4">
+				<setting id="configcachedays" type="integer" label="30102" help="">
+					<level>0</level>
+					<default>5</default>
+					<constraints>
+						<minimum>0</minimum>
+						<step>1</step>
+						<maximum>30</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+			</group>
+			<group id="5">
+				<setting id="inputstream_adaptive_settings" type="action" label="30108" help="">
+					<level>0</level>
+					<data>Addon.OpenSettings(inputstream.adaptive)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition on="property" name="InfoBool">System.HasAddon(inputstream.adaptive)</condition>
+						</dependency>
+					</dependencies>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+				<setting id="uepg_settings" type="action" label="30109" help="">
+					<level>0</level>
+					<data>Addon.OpenSettings(script.module.uepg)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition on="property" name="InfoBool">System.HasAddon(script.module.uepg)</condition>
+						</dependency>
+					</dependencies>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="account" label="30352" help="">
+			<group id="1">
+				<setting id="login" type="action" label="30136" help="">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.joyn/?mode=login)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+			<group id="2">
+				<setting id="logout" type="action" label="30137" help="">
+					<level>0</level>
+					<data>RunPlugin(plugin://plugin.video.joyn/?mode=logout)</data>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<control type="button" format="action">
+						<close>true</close>
+					</control>
+				</setting>
+			</group>
+			<group id="3">
+				<setting id="save_encrypted_auth_data" type="boolean" label="30356" help="">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition on="property" name="InfoBool">System.HasAddon(script.module.pydes)</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="4">
+				<setting id="mpaa_pin" type="integer" label="30689" help="">
+					<level>0</level>
+					<default>0</default>
+					<control type="edit" format="integer">
+						<heading>30689</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="5">
+				<setting id="start_set_resume_pos_secs" type="integer" label="30360" help="">
+					<level>0</level>
+					<default>300</default>
+					<constraints>
+						<minimum>60</minimum>
+						<step>10</step>
+						<maximum>3000</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+				<setting id="del_resume_pos_secs" type="integer" label="30361" help="">
+					<level>0</level>
+					<default>60</default>
+					<constraints>
+						<minimum>0</minimum>
+						<step>10</step>
+						<maximum>600</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="view" label="30001" help="">
+			<group id="1">
+				<setting id="max_lastseen" type="integer" label="30103" help="">
+					<level>0</level>
+					<default>3</default>
+					<constraints>
+						<minimum>0</minimum>
+						<step>1</step>
+						<maximum>20</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+			</group>
+			<group id="2">
+				<setting id="max_recommendations" type="integer" label="30128" help="">
+					<level>0</level>
+					<default>3</default>
+					<constraints>
+						<minimum>0</minimum>
+						<step>1</step>
+						<maximum>20</maximum>
+					</constraints>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+			</group>
+			<group id="3">
+				<setting id="show_categories_in_main_menu" type="boolean" label="30355" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="4">
+				<setting id="show_episodes_immediately" type="boolean" label="30129" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="5">
+				<setting id="dont_show_watchlist_in_lastseen" type="boolean" label="30110" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="6">
+				<setting id="season_order" type="integer" label="30111" help="">
+					<level>0</level>
+					<default>2</default>
+					<constraints>
+						<options>
+							<option label="30123">0</option>
+							<option label="30125">1</option>
+							<option label="30126">2</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30111</heading>
+					</control>
+				</setting>
+				<setting id="episode_order" type="integer" label="30112" help="">
+					<level>0</level>
+					<default>2</default>
+					<constraints>
+						<options>
+							<option label="30123">0</option>
+							<option label="30114">1</option>
+							<option label="30113">2</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30112</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="7">
+				<setting id="always_show_premium" type="boolean" label="30353" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="highlight_premium" type="boolean" label="30354" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="8"/>
+			<group id="9" label="30351">
+				<setting id="enable_viewmodes" type="boolean" label="30122" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="categories_view" type="string" label="30115" help="">
+					<level>0</level>
+					<default>IconWall</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>IconWall</option>
+							<option>WideList</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30115</heading>
+					</control>
+				</setting>
+				<setting id="categories_view_custom" type="integer" label="30124" help="" parent="categories_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="categories_view">3</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,3)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="category_view" type="string" label="30121" help="">
+					<level>0</level>
+					<default>Shift</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>List</option>
+							<option>Poster</option>
+							<option>Shift</option>
+							<option>InfoWall</option>
+							<option>WideList</option>
+							<option>Wall</option>
+							<option>Banner</option>
+							<option>Fanart</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30121</heading>
+					</control>
+				</setting>
+				<setting id="category_view_custom" type="integer" label="30124" help="" parent="category_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="category_view">9</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,9)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="tvshow_view" type="string" label="30116" help="">
+					<level>0</level>
+					<default>Shift</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>List</option>
+							<option>Poster</option>
+							<option>Shift</option>
+							<option>InfoWall</option>
+							<option>WideList</option>
+							<option>Wall</option>
+							<option>Banner</option>
+							<option>Fanart</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30116</heading>
+					</control>
+				</setting>
+				<setting id="tvshow_view_custom" type="integer" label="30124" help="" parent="tvshow_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="tvshow_view">9</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,9)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="season_view" type="string" label="30117" help="">
+					<level>0</level>
+					<default>Shift</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>List</option>
+							<option>Poster</option>
+							<option>Shift</option>
+							<option>InfoWall</option>
+							<option>WideList</option>
+							<option>Wall</option>
+							<option>Banner</option>
+							<option>Fanart</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30117</heading>
+					</control>
+				</setting>
+				<setting id="season_view_custom" type="integer" label="30124" help="" parent="season_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="season_view">9</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,9)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="episode_view" type="string" label="30118" help="">
+					<level>0</level>
+					<default>InfoWall</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>WideList</option>
+							<option>Wall</option>
+							<option>InfoWall</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30118</heading>
+					</control>
+				</setting>
+				<setting id="episode_view_custom" type="integer" label="30124" help="" parent="episode_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="episode_view">4</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,4)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="livetv_view" type="string" label="30119" help="">
+					<level>0</level>
+					<default>WideList</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>WideList</option>
+							<option>Wall</option>
+							<option>Shift</option>
+							<option>InfoWall</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30119</heading>
+					</control>
+				</setting>
+				<setting id="livetv_view_custom" type="integer" label="30124" help="" parent="livetv_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="livetv_view">5</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,5)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+				<setting id="watchlist_view" type="string" label="30120" help="">
+					<level>0</level>
+					<default>Shift</default>
+					<constraints>
+						<options>
+							<option>Standard</option>
+							<option>WideList</option>
+							<option>Wall</option>
+							<option>Shift</option>
+							<option>InfoWall</option>
+							<option>Custom</option>
+						</options>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="enable_viewmodes">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="list" format="string">
+						<heading>30120</heading>
+					</control>
+				</setting>
+				<setting id="watchlist_view_custom" type="integer" label="30124" help="" parent="watchlist_view">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="watchlist_view">5</condition>
+						</dependency>
+						<dependency type="visible">
+							<and>
+								<condition operator="is" setting="enable_viewmodes">true</condition>
+								<condition on="property" name="InfoBool"> eq(-1,5)</condition>
+							</and>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30124</heading>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="connection" label="30002" help="">
+			<group id="1">
+				<setting id="dont_verify_ssl_certificates" type="boolean" label="30131" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="2">
+				<setting id="use_https_proxy" type="boolean" label="30132" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="https_proxy_host" type="string" label="30133" help="" parent="use_https_proxy">
+					<level>0</level>
+					<default/>
+					<constraints>
+						<allowempty>true</allowempty>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="use_https_proxy">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="string">
+						<heading>30133</heading>
+					</control>
+				</setting>
+				<setting id="https_proxy_port" type="integer" label="30134" help="" parent="https_proxy_host">
+					<level>0</level>
+					<default>0</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="use_https_proxy">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="edit" format="integer">
+						<heading>30134</heading>
+					</control>
+				</setting>
+			</group>
+		</category>
+		<category id="advanced" label="30003" help="">
+			<group id="1">
+				<setting id="debug_mode" type="boolean" label="30139" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="debug_requests" type="boolean" label="30140" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="2">
+				<setting id="joyn_platform" type="string" label="30135" help="">
+					<level>0</level>
+					<default>web</default>
+					<constraints>
+						<options>
+							<option>android</option>
+							<option>web</option>
+							<option>ios</option>
+						</options>
+					</constraints>
+					<control type="list" format="string">
+						<heading>30135</heading>
+					</control>
+				</setting>
+			</group>
+			<group id="3">
+				<setting id="fixup_vod" type="boolean" label="30357" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="fixup_live" type="boolean" label="30358" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="force_local_manifest" type="boolean" label="30359" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="4">
+				<setting id="checkdrmcert" type="boolean" label="30101" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="5">
+				<setting id="force_playready" type="boolean" label="30130" help="">
+					<level>0</level>
+					<default>false</default>
+					<dependencies>
+						<dependency type="enable">
+							<condition on="property" name="InfoBool">System.Platform.Android</condition>
+						</dependency>
+					</dependencies>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="6">
+				<setting id="force_clean_all_files" type="boolean" label="30138" help="">
+					<level>0</level>
+					<default>false</default>
+					<control type="toggle"/>
+				</setting>
+			</group>
+			<group id="7">
+				<setting id="fix_livestream_audio_sync" type="boolean" label="30141" help="">
+					<level>0</level>
+					<default>true</default>
+					<control type="toggle"/>
+				</setting>
+				<setting id="livestream_total_length" type="integer" label="30142" help="" parent="fix_livestream_audio_sync">
+					<level>0</level>
+					<default>882</default>
+					<constraints>
+						<minimum>60</minimum>
+						<step>1</step>
+						<maximum>1200</maximum>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="fix_livestream_audio_sync">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+				<setting id="livestream_offset" type="integer" label="30143" help="" parent="livestream_total_length">
+					<level>0</level>
+					<default>14</default>
+					<constraints>
+						<minimum>12</minimum>
+						<step>1</step>
+						<maximum>60</maximum>
+					</constraints>
+					<dependencies>
+						<dependency type="enable">
+							<condition operator="is" setting="fix_livestream_audio_sync">true</condition>
+						</dependency>
+					</dependencies>
+					<control type="slider" format="integer">
+						<popup>false</popup>
+					</control>
+				</setting>
+			</group>
+		</category>
+	</section>
 </settings>
