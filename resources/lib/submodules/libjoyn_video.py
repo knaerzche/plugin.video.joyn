@@ -94,7 +94,7 @@ def get_mpd_parser(url, stream_type='VOD', video_id=None):
 	return mpdparser
 
 
-def get_entitlement_data(video_id, stream_type, pin_required=False, invalid_pin=False):
+def get_entitlement_data(video_id, stream_type, pin_required=False, invalid_pin=False, force_refresh_token=False):
 
 	from ..request_helper import post_json
 
@@ -121,9 +121,8 @@ def get_entitlement_data(video_id, stream_type, pin_required=False, invalid_pin=
 				return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=pin_required, invalid_pin=True)
 
 	entitlement_request_headers = [('x-api-key', lib_joyn().config['PSF_CONFIG']['default'][stream_type.lower()]['apiGatewayKey'])]
-	auth_token_data = lib_joyn().get_auth_token()
 
-	entitlement_request_headers.append(('Authorization', lib_joyn().get_access_token()))
+	entitlement_request_headers.append(('Authorization', lib_joyn().get_access_token(force_refresh=force_refresh_token)))
 	entitlement_response = post_json(url=compat._format(
 	        '{}{}',
 	        lib_joyn().config['PSF_CONFIG']['default'][stream_type.lower()]['entitlementBaseUrl'], CONST['ENTITLEMENT_URL']),
@@ -131,13 +130,26 @@ def get_entitlement_data(video_id, stream_type, pin_required=False, invalid_pin=
 	                                 data=entitlement_request_data,
 	                                 additional_headers=entitlement_request_headers,
 	                                 no_cache=True,
-	                                 return_json_errors=['ENT_PINRequired', 'ENT_PINInvalid'])
+	                                 return_json_errors=['ENT_PINRequired', 'ENT_PINInvalid', 'INVALID_JWT'])
 
 	if isinstance(entitlement_response, dict) and 'json_errors' in entitlement_response:
 		if 'ENT_PINInvalid' in entitlement_response['json_errors']:
-			return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=True, invalid_pin=True)
+			return get_entitlement_data(video_id=video_id,
+			                            stream_type=stream_type,
+			                            pin_required=True,
+			                            invalid_pin=True,
+			                            force_refresh_token=('INVALID_JWT' in entitlement_response['json_errors']))
 		elif 'ENT_PINRequired' in entitlement_response['json_errors']:
-			return get_entitlement_data(video_id=video_id, stream_type=stream_type, pin_required=True)
+			return get_entitlement_data(video_id=video_id,
+			                            stream_type=stream_type,
+			                            pin_required=True,
+			                            force_refresh_token=('INVALID_JWT' in entitlement_response['json_errors']))
+		elif 'INVALID_JWT' in entitlement_response['json_errors']:
+			return get_entitlement_data(video_id=video_id,
+			                            stream_type=stream_type,
+			                            pin_required=pin_required,
+			                            invalid_pin=invalid_pin,
+			                            force_refresh_token=True)
 
 	return entitlement_response
 
