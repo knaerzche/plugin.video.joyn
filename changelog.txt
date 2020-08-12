@@ -116,3 +116,6 @@ fix decoding issue in PY2
 v2.3.1.8
 allow videos to be played without prior api request
 matrix property name change inputstreamaddon -> inputstream
+v2.3.1.9
+implement 7pass sso login
+cosmetics
