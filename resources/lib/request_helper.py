@@ -13,7 +13,8 @@ from . import compat as compat
 
 if compat.PY2:
 	from urllib import quote, urlencode
-	from urllib2 import Request, urlopen, HTTPError, ProxyHandler, build_opener, install_opener
+	from urllib2 import Request, urlopen, HTTPError, ProxyHandler, build_opener, install_opener, HTTPCookieProcessor
+	from cookielib import MozillaCookieJar, LoadError
 	try:
 		from simplejson import loads, dumps
 	except ImportError:
@@ -21,8 +22,9 @@ if compat.PY2:
 
 elif compat.PY3:
 	from urllib.parse import quote, urlencode
-	from urllib.request import Request, urlopen, ProxyHandler, build_opener, install_opener
+	from urllib.request import Request, urlopen, ProxyHandler, build_opener, install_opener, HTTPCookieProcessor
 	from urllib.error import HTTPError
+	from http.cookiejar import MozillaCookieJar, LoadError
 	from json import loads, dumps
 
 
@@ -34,7 +36,8 @@ def get_url(url,
             fail_silent=False,
             no_cache=False,
             return_json_errors=[],
-            return_final_url=False):
+            return_final_url=False,
+            cookie_file=None):
 
 	response_content = ''
 	request_hash = sha512(
@@ -44,8 +47,9 @@ def get_url(url,
 
 	if xbmc_helper().get_bool_setting('debug_requests') is True:
 		xbmc_helper().log_debug(
-		        'get_url - url: {} headers {} query {} post {} no_cache {} silent {} request_hash {} return_json_errors {}', url,
-		        additional_headers, additional_query_string, post_data, no_cache, fail_silent, request_hash, return_json_errors)
+		        'get_url - url: {} headers {} query {} post {} no_cache {} silent {} request_hash {} return_json_errors {}, cookie_file',
+		        url, additional_headers, additional_query_string, post_data, no_cache, fail_silent, request_hash, return_json_errors,
+		        cookie_file)
 
 	if no_cache is True:
 		etags_data = None
@@ -72,6 +76,19 @@ def get_url(url,
 		if additional_query_string is not None:
 			_url = compat._format('{}{}{}', url, '?' if url.find('?') == -1 else '&', urlencode(additional_query_string))
 			url = _url
+		if isinstance(post_data, dict):
+			post_data = urlencode(post_data)
+
+		cookie_processor = None
+		cookie_jar = None
+		if cookie_file is not None:
+			cookie_jar = MozillaCookieJar(cookie_file)
+			try:
+				cookie_jar.load()
+			except LoadError:
+				xbmc_helper().log_debug('Failed to load from cookiefile {} with error {} - new session?', cookie_file, LoadError.strerror)
+				pass
+			cookie_processor = HTTPCookieProcessor(cookie_jar)
 
 		if xbmc_helper().get_bool_setting('use_https_proxy') is True and xbmc_helper().get_text_setting(
 		        'https_proxy_host') != '' and xbmc_helper().get_int_setting('https_proxy_port') != 0:
@@ -85,7 +102,13 @@ def get_url(url,
 			        'http': proxy_uri,
 			        'https': proxy_uri,
 			})
-			install_opener(build_opener(prxy_handler))
+			if cookie_processor is None:
+				install_opener(build_opener(prxy_handler))
+			else:
+				install_opener(build_opener(prxy_handler, cookie_processor))
+
+		elif cookie_processor is not None:
+			install_opener(build_opener(cookie_processor))
 
 		if post_data is not None:
 			request = Request(url, data=post_data.encode('utf-8'), headers=headers)
@@ -98,6 +121,9 @@ def get_url(url,
 			response_content = compat._decode(GzipFile(fileobj=BytesIO(response.read())).read())
 		else:
 			response_content = compat._decode(response.read())
+
+		if cookie_jar is not None:
+			cookie_jar.save()
 
 		final_url = response.geturl()
 		_etag = response.info().get('etag', None)

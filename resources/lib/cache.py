@@ -79,12 +79,12 @@ def _remove(cache_key, file_name):
 
 
 def remove_json(cache_key):
-	_remove(cache_key, CONST['CACHE'][cache_key]['key'] + '.json')
+	_remove(cache_key, compat._format('{}.json', CONST.get('CACHE').get(cache_key).get('key')))
 
 
 def get_json(cache_key, override_expire_secs=None):
 
-	cache_data = _get(cache_key, CONST['CACHE'][cache_key]['key'] + '.json')
+	cache_data = _get(cache_key, compat._format('{}.json', CONST.get('CACHE').get(cache_key).get('key')), override_expire_secs)
 
 	if cache_data['data'] is not None:
 		try:
@@ -99,15 +99,19 @@ def get_json(cache_key, override_expire_secs=None):
 def set_json(cache_key, data):
 
 	try:
-		_set(cache_key, CONST['CACHE'][cache_key]['key'] + '.json', dumps(data))
+		_set(cache_key, compat._format('{}.json', CONST.get('CACHE').get(cache_key).get('key')), dumps(data))
 	except ValueError:
 		xbmc_helper().log_error('Could not encode json from cache: {}', cache_key)
 		pass
 
 
-def get_pickle(cache_key):
-	return _get(cache_key, CONST['CACHE'][cache_key]['key'] + '.pickle', pickle=True)
+def get_pickle(cache_key, override_expire_secs=None):
+	return _get(cache_key,
+	            compat._format('{}.pickle',
+	                           CONST.get('CACHE').get(cache_key).get('key')),
+	            override_expire_secs=override_expire_secs,
+	            pickle=True)
 
 
 def set_pickle(cache_key, data):
-	return _set(cache_key, CONST['CACHE'][cache_key]['key'] + '.pickle', data, pickle=True)
+	return _set(cache_key, compat._format('{}.pickle', CONST.get('CACHE').get(cache_key).get('key')), data, pickle=True)

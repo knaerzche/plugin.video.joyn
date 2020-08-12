@@ -59,16 +59,18 @@ class mpd_parser(object):
 
 	def set_content_protection_props(self):
 
-		res_widevine = self.query(
-		        'ContentProtection[@schemeIdUri="urn:uuid:' + self.cp_urn_playready + '"]', anywhere=True,
-		        find_all=True) or self.query('ContentProtection[@schemeIdUri="urn:uuid:' + self.cp_urn_playready.lower() + '"]',
-		                                     anywhere=True,
-		                                     find_all=True)
-		res_playready = self.query(
-		        'ContentProtection[@schemeIdUri="urn:uuid:' + self.cp_urn_playready + '"]', anywhere=True,
-		        find_all=True) or self.query('ContentProtection[@schemeIdUri="urn:uuid:' + self.cp_urn_playready.lower() + '"]',
-		                                     anywhere=True,
-		                                     find_all=True)
+		res_widevine = self.query(compat._format('ContentProtection[@schemeIdUri="urn:uuid:{}"]', self.cp_urn_widevine),
+		                          anywhere=True,
+		                          find_all=True) or self.query(compat._format('ContentProtection[@schemeIdUri="urn:uuid:{}"]',
+		                                                                      self.cp_urn_widevine.lower()),
+		                                                       anywhere=True,
+		                                                       find_all=True)
+		res_playready = self.query(compat._format('ContentProtection[@schemeIdUri="urn:uuid:{}"]', self.cp_urn_playready),
+		                           anywhere=True,
+		                           find_all=True) or self.query(compat._format('ContentProtection[@schemeIdUri="urn:uuid:{}"]',
+		                                                                       self.cp_urn_playready.lower()),
+		                                                        anywhere=True,
+		                                                        find_all=True)
 		if isinstance(res_widevine, list) and len(res_widevine) > 0:
 			self.supports_widevine = True
 		if isinstance(res_playready, list) and len(res_playready) > 0:
@@ -76,15 +78,16 @@ class mpd_parser(object):
 
 	def query(self, query_path, find_all=False, anywhere=False):
 
-		if isinstance(query_path, str):
+		if not isinstance(query_path, list):
 			query_path = [query_path]
 
 		query = '.'
+
 		if anywhere is True and len(query_path) > 0:
 			query += '/'
 
 		for query_param in query_path:
-			query += '/' + self.mpd_tree_ns + query_param
+			query = compat._format('{}/{}{}', query, self.mpd_tree_ns, query_param)
 
 		try:
 			if find_all is True:
@@ -92,7 +95,7 @@ class mpd_parser(object):
 			else:
 				return self.mpd_tree.find(query)
 		except Exception as e:
-			xbmc_helper().log('Could not query mpd - query: {} - Ex: {}', query, e)
+			xbmc_helper().log_notice('Could not query mpd - query: {} - Ex: {}', query, e)
 			pass
 
 		return None

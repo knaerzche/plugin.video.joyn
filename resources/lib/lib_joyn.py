@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from hashlib import sha256
+from hashlib import sha256, sha512
 from sys import exit
 from datetime import datetime
 from time import time
@@ -16,12 +16,13 @@ from .xbmc_helper import xbmc_helper
 if compat.PY2:
 	from urllib import urlencode
 	from HTMLParser import HTMLParser
+	from urlparse import urlparse, parse_qs
 	try:
 		from simplejson import dumps
 	except ImportError:
 		from json import dumps
 elif compat.PY3:
-	from urllib.parse import urlencode
+	from urllib.parse import urlencode, urlparse, parse_qs
 	from html.parser import HTMLParser
 	from json import dumps
 
@@ -379,7 +380,7 @@ class lib_joyn(Singleton):
 			client_id_data = {
 			        'anon_device_id': get_device_uuid(),
 			        'client_id': get_device_uuid(prefix='JOYNCLIENTID'),
-			        'client_name': self.config.get('CLIENT_NAME', 'android'),
+			        'client_name': self.config.get('CLIENT_NAME', 'web'),
 			}
 			xbmc_helper().log_debug('Created new client_id_data: {}', client_id_data)
 			xbmc_helper().set_json_data('client_ids', client_id_data)
@@ -400,15 +401,132 @@ class lib_joyn(Singleton):
 	                   is_retry=False,
 	                   logout=False,
 	                   force_refresh=False,
-	                   force_reload_cache=False):
+	                   force_reload_cache=False,
+	                   do_legacy_login=False):
 
 		if username is not None and password is not None:
 			try:
-				auth_token_data = request_helper.post_json(url=CONST['AUTH_URL'] + CONST['AUTH_LOGIN'],
-				                                           config=self.config,
-				                                           data=self.get_client_ids(username, password),
-				                                           no_cache=True,
-				                                           return_json_errors='UNAUTHORIZED')
+				client_ids = self.get_client_ids(username, password)
+
+				if do_legacy_login is False and xbmc_helper().get_bool_setting('force_legacy_login') is False:
+					sso_resp = request_helper.get_json_response(url=CONST.get('SSO_AUTH_URL'),
+					                                            config=self.config,
+					                                            params={
+					                                                    'client_id': client_ids.get('client_id'),
+					                                                    'client_name': client_ids.get('client_name'),
+					                                            },
+					                                            no_cache=True)
+					if isinstance(sso_resp, dict) and 'web-login' in sso_resp.keys() and sso_resp.get('web-login').startswith(
+					        'http') and 'redeem-token' in sso_resp.keys() and sso_resp.get('redeem-token').startswith('http'):
+						web_login_query_dict = parse_qs(urlparse(sso_resp.get('web-login')).query)
+
+						if 'client_id' not in web_login_query_dict.keys():
+							return self.get_auth_token(username=username,
+							                           password=password,
+							                           reset_anon=reset_anon,
+							                           is_retry=is_retry,
+							                           logout=logout,
+							                           force_refresh=force_refresh,
+							                           force_reload_cache=force_reload_cache,
+							                           do_legacy_login=True)
+
+						cookie_file = xbmc_helper().set_data(filename=compat._format('{}.cookie.tmp',
+						                                                             sha512(str(time()).encode('utf-8')).hexdigest()),
+						                                     data='',
+						                                     dir_type='TEMP_DIR')
+						xbmc_helper().log_debug("Created empty cookie file: {}", cookie_file)
+						login_url, login_response = request_helper.get_url(url=sso_resp.get('web-login'),
+						                                                   config=self.config,
+						                                                   additional_query_string={
+						                                                           'redirect_uri': CONST.get('OAUTH_URL'),
+						                                                           'state': '%2F',
+						                                                   },
+						                                                   cookie_file=cookie_file,
+						                                                   return_final_url=True)
+						csrf_param = None
+						csrf_token = None
+						from re import findall
+
+						for match in findall('<meta name="csrf-(param|token)" content="(.*)" />', login_response):
+							if match[0] == 'param':
+								csrf_param = match[1]
+							elif match[0] == 'token':
+								csrf_token = match[1]
+
+						if csrf_param is None or csrf_token is None:
+							xbmc_helper().log_debug('Failed to find csrf meta tags - trying with hidden field as fallback')
+							for match in findall(' <input type="hidden" name="_csrf_(.*)" value=(.*) />', login_response):
+								csrf_param = compat._format('_csrf_{}', match[0])
+								csrf_token = match[1]
+
+						if csrf_param is not None and csrf_token is not None:
+
+							login_params = {csrf_param: csrf_token, 'account[email]': username, 'password': password}
+
+							login_res_url, login_res_response = request_helper.get_url(url=login_url,
+							                                                           config=self.config,
+							                                                           post_data=login_params,
+							                                                           cookie_file=cookie_file,
+							                                                           return_final_url=True,
+							                                                           no_cache=True)
+
+							xbmc_helper().del_data(cookie_file, 'TEMP_DIR')
+
+							# login failed
+							if login_res_url == login_url:
+								xbmc_helper().log_notice('Login failed - url: {}', login_res_url)
+								return False
+
+							login_res_parsed = urlparse(login_res_url)
+							login_res_query_dict = parse_qs(login_res_parsed.query)
+							xbmc_helper().log_debug("LOGIN RESULT: {} {}", login_res_parsed, login_res_query_dict)
+							token_req_params = {
+							        'code': login_res_query_dict.get('code')[0],
+							        'client_id': web_login_query_dict.get('client_id')[0],
+							        'redirect_uri': compat._format('{}://{}{}', login_res_parsed.scheme, login_res_parsed.netloc,
+							                                       login_res_parsed.path),
+							        'tracking_id': client_ids.get('client_id'),
+							        'tracking_name': client_ids.get('client_name')
+							}
+
+							auth_token_data = request_helper.post_json(url=sso_resp.get('redeem-token'),
+							                                           config=self.config,
+							                                           data=token_req_params,
+							                                           no_cache=True,
+							                                           return_json_errors='UNAUTHORIZED')
+
+						else:
+							xbmc_helper().log_error("Could not find required csrf login parameters - response was: {} - retrying with legacy login",
+							                        login_response)
+							xbmc_helper().del_data(cookie_file, 'TEMP_DIR')
+							return self.get_auth_token(username=username,
+							                           password=password,
+							                           reset_anon=reset_anon,
+							                           is_retry=is_retry,
+							                           logout=logout,
+							                           force_refresh=force_refresh,
+							                           force_reload_cache=force_reload_cache,
+							                           do_legacy_login=True)
+					else:
+						xbmc_helper().log_error('Failed to retrieve required sso auth parameters - response was: {} - retrying with legacy login',
+						                        sso_resp)
+						return self.get_auth_token(username=username,
+						                           password=password,
+						                           reset_anon=reset_anon,
+						                           is_retry=is_retry,
+						                           logout=logout,
+						                           force_refresh=force_refresh,
+						                           force_reload_cache=force_reload_cache,
+						                           do_legacy_login=True)
+
+				else:
+					xbmc_helper().log_notice('Using legacy login')
+
+					auth_token_data = request_helper.post_json(url=compat._format('{}{}', CONST.get('AUTH_URL'), CONST.get('AUTH_LOGIN')),
+					                                           config=self.config,
+					                                           data=client_ids,
+					                                           no_cache=True,
+					                                           return_json_errors='UNAUTHORIZED')
 
 				if isinstance(auth_token_data, dict) and 'json_errors' in auth_token_data.keys():
 					if 'UNAUTHORIZED' in auth_token_data['json_errors']:
@@ -422,6 +540,7 @@ class lib_joyn(Singleton):
 				})
 
 				xbmc_helper().set_json_data('auth_tokens', auth_token_data)
+
 				self.auth_token_data = auth_token_data
 				cache.remove_json('EPG')
 				self.landingpage = None
@@ -438,7 +557,7 @@ class lib_joyn(Singleton):
 		if reset_anon is True or self.auth_token_data is None:
 			xbmc_helper().log_debug("Creating new auth_token_data")
 
-			auth_token_data = request_helper.post_json(url=CONST['AUTH_URL'] + CONST['AUTH_ANON'],
+			auth_token_data = request_helper.post_json(url=compat._format('{}{}', CONST.get('AUTH_URL'), CONST.get('AUTH_ANON')),
 			                                           config=self.config,
 			                                           data=self.get_client_ids(),
 			                                           no_cache=True)
@@ -463,7 +582,8 @@ class lib_joyn(Singleton):
 			}
 
 			try:
-				refresh_auth_token_data = request_helper.post_json(url=CONST['AUTH_URL'] + CONST['AUTH_REFRESH'],
+				refresh_auth_token_data = request_helper.post_json(url=compat._format('{}{}', CONST.get('AUTH_URL'),
+				                                                                      CONST.get('AUTH_REFRESH')),
 				                                                   config=self.config,
 				                                                   data=refresh_auth_token_req_data,
 				                                                   no_cache=True,
@@ -512,7 +632,7 @@ class lib_joyn(Singleton):
 		if logout is True and self.auth_token_data.get('has_account', False) is True and self.auth_token_data.get(
 		        'access_token', None) is not None:
 
-			request_helper.get_url(url=CONST['AUTH_URL'] + CONST['AUTH_LOGOUT'],
+			request_helper.get_url(url=compat._format('{}{}', CONST.get('AUTH_URL'), CONST.get('AUTH_LOGOUT')),
 			                       config=self.config,
 			                       post_data='',
 			                       no_cache=True,
@@ -630,7 +750,8 @@ class lib_joyn(Singleton):
 				if endsAt is not False:
 					metadata['infoLabels'].update({
 					        'plot':
-					        compat._format(xbmc_helper().translation('VIDEO_AVAILABLE'), endsAt) + metadata['infoLabels'].get('plot', '')
+					        compat._format('{}{}', compat._format(xbmc_helper().translation('VIDEO_AVAILABLE'), endsAt),
+					                       metadata['infoLabels'].get('plot', ''))
 					})
 
 			if 'number' in data.keys() and data['number'] is not None:

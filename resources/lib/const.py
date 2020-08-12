@@ -11,6 +11,8 @@ CONST = {
         'AUTH_REFRESH'  : '/refresh',
         'AUTH_LOGIN'  : '/login',
         'AUTH_LOGOUT'  : '/logout',
+        'SSO_AUTH_URL': 'https://auth.joyn.de/sso/endpoints',
+        'OAUTH_URL': 'https://www.joyn.de/oauth',
         'CLIENT_NAMES'  : ['web', 'ios', 'android'],
         'EDGE_UA': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134',
         'JOYN_CLIENT_VERSION': '2.3.5',
