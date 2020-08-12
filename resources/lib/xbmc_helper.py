@@ -229,7 +229,7 @@ class xbmc_helper(Singleton):
 		endOfDirectory(handle=pluginhandle,
 		               cacheToDisc=(folder_defs.get('cacheable', False) and (self.get_bool_setting('disable_foldercache') is False)))
 
-		self.wait_for_infolabel('Container.FolderPath', pluginurl + pluginquery)
+		self.wait_for_infolabel('Container.FolderPath', compat._format('{}{}', pluginurl, pluginquery))
 
 		if 'view_mode' in folder_defs.keys():
 			self.set_view_mode(folder_defs['view_mode'])
@@ -256,7 +256,7 @@ class xbmc_helper(Singleton):
 			executebuiltin(cmd)
 			self.log_debug('set current pos executebuiltin({})', cmd)
 
-			#wait for the correct postion to be applied; max 500 msecs
+			# wait for the correct postion to be applied; max 500 msecs
 			self.wait_for_infolabel('Container.CurrentItem', old_postion, cycles=100)
 
 	def set_folder_sort(self, folder_sort_def):

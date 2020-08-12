@@ -63,8 +63,7 @@ def create_config(cached_config, addon_version):
 		config['IS_ARM'] = True
 	elif os_uname[0] == 'Linux':
 		config['USER_AGENT'] = compat._format(
-		        'Mozilla/5.0 (X11; Linux {}) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/78.0.3904.70 Safari/537.36',
-		        os_uname[4])
+		        'Mozilla/5.0 (X11; Linux {}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/84.0.4147.125 Safari/537.36', os_uname[4])
 	elif os_uname[0] == 'Darwin':
 		config['USER_AGENT'] = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.142 Safari/537.36'
 	else:

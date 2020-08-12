@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: KODI-Addons\n"
 "Report-Msgid-Bugs-To: alanwww1@kodi.org\n"
-"POT-Creation-Date: 2019-11-27 18:12+0000\n"
+"POT-Creation-Date: 2020-08-11 18:12+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Kodi Translation Team\n"
 "Language-Team: LANGUAGE\n"
@@ -208,6 +208,10 @@ msgstr ""
 
 msgctxt "#30143"
 msgid "Livestream offset (in seconds)"
+msgstr ""
+
+msgctxt "#30144"
+msgid "Force legacy login method"
 msgstr ""
 
 #empty strings from id 30144 to 30229
