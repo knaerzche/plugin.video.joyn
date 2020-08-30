@@ -544,6 +544,7 @@ class lib_joyn(Singleton):
 				self.auth_token_data = auth_token_data
 				cache.remove_json('EPG')
 				self.landingpage = None
+				self.epg_cache = None
 
 			except Exception as e:
 				xbmc_helper().log_debug('Failed to log in - exception: {}', e)
@@ -569,6 +570,7 @@ class lib_joyn(Singleton):
 				cache.remove_json('ACCOUNT_INFO')
 				cache.remove_json('EPG')
 				self.landingpage = None
+				self.epg_cache = None
 
 		# refresh the token at least 30min before it actual expires
 		if force_refresh is True or time() >= self.auth_token_data['created'] + ((self.auth_token_data['expires_in'] / 1000) - 1800):
