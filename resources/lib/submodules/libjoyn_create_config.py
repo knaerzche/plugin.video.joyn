@@ -90,6 +90,7 @@ def create_config(cached_config, addon_version):
 		        'country': 'Deutschland',
 		        'countryCode': 'DE',
 		}
+
 	config.update({'actual_country': ip_api_response.get('countryCode', 'DE')})
 
 	if county_setting == '' or county_setting == '0':
@@ -100,7 +101,6 @@ def create_config(cached_config, addon_version):
 			xbmc_helper().dialog_action(
 			        compat._format(xbmc_helper().translation('MSG_COUNTRY_INVALID'), ip_api_response.get('country', 'DE')))
 			exit(0)
-
 	else:
 		for supported_country_key, supported_country in CONST['COUNTRIES'].items():
 			if supported_country['setting_id'] == county_setting:
@@ -110,19 +110,6 @@ def create_config(cached_config, addon_version):
 	if config['country'] is None:
 		xbmc_helper().dialog_action(xbmc_helper().translation('MSG_COUNTRY_NOT_DETECTED'))
 		exit(0)
-
-	if config['country'] != config['actual_country']:
-
-		from random import choice
-
-		try:
-			from ipaddress import IPv4Network
-		except ImportError:
-			from ..external.ipaddress import IPv4Network
-
-		config['http_headers'].append(
-		        ('x-forwarded-for',
-		         str(choice(list(IPv4Network(compat._unicode(choice(CONST['NETBLOCKS'][config.get('country', 'DE')]))).hosts())))))
 
 	main_js_src = None
 	for match in findall('<script type="text/javascript" src="(.*?)"></script>', html_content):
