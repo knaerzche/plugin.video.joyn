@@ -67,10 +67,11 @@ def show_lastseen(max_lastseen_count, default_fanart):
 					if len(list_items) < max_lastseen_count:
 						if asset['__typename'] == 'Movie':
 							list_items.extend(get_list_items([asset], prefix_label='CONTINUE_WATCHING', override_fanart=default_fanart))
-						if asset['__typename'] == 'Episode' and 'series' in asset.keys() and 'season' in asset.keys(
-						) and asset['season']['id'] not in season_ids:
+						if asset['__typename'] == 'Episode' and isinstance(
+						        asset.get('series', None),
+						        dict) and asset.get('season', {}).get('id', None) is not None and asset.get('season').get('id') not in season_ids:
 							if xbmc_helper().get_bool_setting('dont_show_watchlist_in_lastseen') is True and check_favorites(
-							        {'seasonId': asset['season']['id']}) is True:
+							        {'seasonId': asset.get('season').get('id')}) is True:
 								continue
 							list_items.extend(
 							        get_list_items([asset],
@@ -94,8 +95,9 @@ def show_lastseen(max_lastseen_count, default_fanart):
 					        'seasonId': lastseen_item['season_id'],
 					        'first': 1,
 					})
-					if season_data.get('season', None) is not None and season_data.get('season').get('episodes', None) is not None and len(
-					        season_data['season']['episodes']) > 0 and lastseen_item['season_id'] not in season_ids:
+					if isinstance(season_data.get('season', None), dict) and isinstance(
+					        season_data.get('season').get('episodes', None),
+					        list) and len(season_data['season']['episodes']) > 0 and lastseen_item['season_id'] not in season_ids:
 
 						list_items.extend(
 						        get_list_items(season_data['season']['episodes'],

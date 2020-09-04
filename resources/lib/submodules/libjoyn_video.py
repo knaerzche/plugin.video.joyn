@@ -5,6 +5,7 @@ from ..xbmc_helper import xbmc_helper
 from .. import compat
 from ..const import CONST
 from ..lib_joyn import lib_joyn
+from base64 import b64decode
 
 if compat.PY2:
 	from urllib import urlencode
@@ -19,10 +20,10 @@ elif compat.PY3:
 
 
 def build_signature(video_id, encoded_client_data, entitlement_token):
-	from codecs import encode
 
 	sha_input = compat._format('{},{},{}{}', video_id, entitlement_token, encoded_client_data,
-	                           compat._decode(encode(lib_joyn().config['SECRET'].encode('utf-8'), 'hex')))
+	                           compat._decode(b64decode(CONST.get('SIGNATURE_KEY'))))
+
 	xbmc_helper().log_debug('Build signature: {}', sha_input)
 	return sha1(sha_input.encode('utf-8')).hexdigest()
 
@@ -99,7 +100,6 @@ def get_entitlement_data(video_id, stream_type, pin_required=False, invalid_pin=
 	from ..request_helper import post_json
 
 	entitlement_request_data = {
-	        'access_id': lib_joyn().config['PSF_CLIENT_CONFIG']['accessId'],
 	        'content_id': video_id,
 	        'content_type': stream_type,
 	}
