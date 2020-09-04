@@ -17,20 +17,18 @@ CONST = {
         'EDGE_UA': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/64.0.3282.140 Safari/537.36 Edge/17.17134',
         'JOYN_CLIENT_VERSION': '2.3.5',
         'MAX_VIDEO_TRIES': 5,
-        'PSF_VAR_DEFS'  : {
-     'SECRET' : {
-       'INDEX'  : 1196,
-       'VAL_BEFORE' : 'vas',
-       'VAL_AFTER' : '@oasis/vas-sdk',
-       'FALLBACK' : '5C7838365C7864665C786638265C783064595C783935245C7865395C7838323F5C7866333D3B5C78386635',
-         },
-      },
+        'SIGNATURE_KEY': 'MzU0MzM3MzgzMzM4MzMzNjM1NDMzNzM4MzYzNDM2MzYzNTQzMz'\
+                         'czODM2MzYzMzM4MzIzNjM1NDMzNzM4MzMzMDM2MzQzNTM5MzU0'\
+                         'MzM3MzgzMzM5MzMzNTMyMzQzNTQzMzczODM2MzUzMzM5MzU0Mz'\
+                         'M3MzgzMzM4MzMzMjMzNDYzNTQzMzczODM2MzYzMzMzMzM0NDMz'\
+                         'NDIzNTQzMzczODMzMzgzNjM2MzMzNQ==',
 
-      'MAIN_JS_CONFIGS': {
-        'PLAYERCONFIG_URL': 'https://playerconfig.*?.json',
-        'API_GW_API_KEY': '"x-api-key":"(.*?)"}',
-      },
-
+        'PRELOAD_JS_CONFIGS': {
+            'API_GW_API_KEY': '"x-api-key":"(.*?)"}',
+        },
+        'CHUNKS_JS_CONFIGS': {
+            'PLAYERCONFIG_URL': 'https://playerconfig.*?.json',
+        },
         'COUNTRIES'  : {
       'DE' : {
        'language'    : 'de',
