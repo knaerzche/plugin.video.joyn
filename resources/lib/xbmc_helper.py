@@ -5,7 +5,7 @@ from distutils.version import LooseVersion
 from io import open as io_open
 from datetime import datetime, timedelta
 from xbmc import translatePath, executeJSONRPC, executebuiltin, getCondVisibility, getInfoLabel, getSkinDir, log, \
-    sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGNOTICE
+    sleep as xbmc_sleep, LOGERROR, LOGDEBUG, LOGINFO
 from xbmcplugin import setContent, endOfDirectory, addDirectoryItems, setPluginCategory
 from xbmcvfs import mkdirs, exists, listdir, delete
 from xbmcgui import Dialog, NOTIFICATION_ERROR
@@ -313,7 +313,7 @@ class xbmc_helper(Singleton):
 		self._log(compat._format(format, *args), LOGERROR)
 
 	def log_notice(self, format, *args):
-		self._log(compat._format(format, *args), LOGNOTICE)
+		self._log(compat._format(format, *args), LOGINFO)
 
 	def log_debug(self, format, *args):
 		if self.get_bool_setting('debug_mode') is True:
@@ -321,7 +321,7 @@ class xbmc_helper(Singleton):
 		elif self.kodi_debug is True:
 			self._log(compat._format(format, *args), LOGDEBUG)
 
-	def _log(self, msg, level=LOGNOTICE):
+	def _log(self, msg, level=LOGINFO):
 		log(compat._encode(compat._format('[{}] {}', self.get_addon_version(), msg)), level)
 
 	def translation(self, id):
